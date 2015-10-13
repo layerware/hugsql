@@ -211,7 +211,7 @@
             (vec (remove #(and (empty? (:hdr %)) (empty? (:sql %)))
                    (conj all
                      {:hdr hdr
-                      :sql (vec (remove empty? (conj sql (str sb))))})))
+                      :sql (vec (remove empty? (conj sql (string/trimr (str sb)))))})))
             
             ;; SQL comments and hugsql header comments
             (or
@@ -223,7 +223,7 @@
               ;; if sql is active, then new section
               (if (or (> (.length sb) 0) (empty? hdr))
                 (recur h [] (nsb)
-                  (conj all {:hdr hdr :sql (vec (remove empty? (conj sql (str sb))))}))
+                  (conj all {:hdr hdr :sql (vec (remove empty? (conj sql (string/trimr (str sb)))))}))
                 (recur (merge hdr h) sql sb all))
               (recur hdr sql sb all))            
             

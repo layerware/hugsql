@@ -5,7 +5,7 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as string]))
 
-(defn- parsed-defs-from-file
+(defn parsed-defs-from-file
   "Given a hugsql SQL file, parse it,
    and return the defs."
   [file]
@@ -21,47 +21,65 @@
   [query-type]
   `jdbc/query)
 
-(defn- sql-or-apply-param
-  "The :sql vector returned from a hugsql
-   parse has sql strings and hashmap parameters
-   interwoven.  This function returns a 
-   vector of [param-applied-sql value(s)]"
-  [param data]
-  (if (string? param)
-    [param nil]
-    (parameters/apply-param param data)))
-
-(defn- build-sql
+(defn prepare-sql
   "Takes an sql template (from hugsql parser)
    and the runtime-provided param data 
    and creates a vector of [\"sql\" val1 val2]
-   suitable for jdbc query/execute."
-  [sql-template param-data]
-  (reduce
-    #(sql-or-apply-param % param-data)
-    sql-template))
+   suitable for jdbc query/execute.
 
-(defmacro def-sql-string-fns
+   The :sql vector (sql-template) has interwoven
+   sql strings and hashmap parameters.  We directly
+   apply parameters to non-prepared parameter types such
+   as identifiers and keywords.  For value parameter types,
+   we replace use the jdbc prepared statement syntax of a
+   '?' to placehold for the value."
+  [sql-template param-data options]
+  (let [applied (mapv #(if (string? %)
+                         [%]
+                         (parameters/apply-param % param-data options))
+                  sql-template)
+        sql    (string/join "" (map first applied))
+        params (remove nil? (map second applied))]
+    (apply vector sql params)))
+
+(def default-options
+  {:quote-identifiers :off})
+
+(defmacro def-sql-str-fns
   "Given a hugsql SQL file, define the <query-name>-sql 
    functions that return the resulting SQL strings"
-  [file]
-  (doseq [d (parsed-defs-from-file file)]
-    (let [hdr (:hdr d)
-          jdbc-fn (jdbc-fn-for (:query-type hdr))
-          db (gensym "db_")
-          pd (gensym "param_data_")]
-      `(defn ~(:name hdr)
-         ~(:doc hdr)
-         [~db ~pd]
-         (build-sql ~(:sql d) ~pd)))
-    ))
+  ([file] (def-sql-str-fns &form &env file {}))
+  ([file options]
+   (doseq [d (parsed-defs-from-file file)]
+     (let [nm (symbol (str (first (:name (:hdr d))) "-sql"))
+           dc (str (first (:doc (:hdr d))) " (sql)")
+           sq (:sql d)
+           op (merge default-options options)]
+       (eval ;; FIXME: get rid of eval
+         `(defn ~nm
+            ~dc
+            ([~'db] (~nm ~'db {} {}))
+            ([~'db ~'param-data] (~nm ~'db ~'param-data {}))
+            ([~'db ~'param-data ~'options]
+             (prepare-sql ~sq ~'param-data (merge ~op ~'options)))))))))
 
 (defmacro def-sql-fns
   "Given a hugsql SQL file, define the database 
    query/execute functions"
-  [file]
-  (let [file-str (slurp file)
-        parsed-defs (parser/parse file-str)]))
+  ([file] (def-sql-fns &form &env file {}))
+  ([file options]
+   (doseq [d (parsed-defs-from-file file)]
+     (let [nm (symbol (first (:name (:hdr d))))
+           dc (first (:doc (:hdr d)))
+           sq (:sql d)
+           op (merge default-options options)]
+       (eval ;; FIXME: get rid of eval
+         `(defn ~nm
+            ~dc
+            ([~'db] (~nm ~'db {} {}))
+            ([~'db ~'param-data] (~nm ~'db ~'param-data {}))
+            ([~'db ~'param-data ~'options]
+             (prepare-sql ~sq ~'param-data (merge ~op ~'options)))))))))
 
 
 

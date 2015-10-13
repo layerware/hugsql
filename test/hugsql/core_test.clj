@@ -1,8 +1,6 @@
 (ns hugsql.core-test
   (:require [clojure.test :refer :all]
-            ;[clojure.java.classpath :as cp]
             [hugsql.core :as hugsql]))
-
 
 (def dbs
   {:postgresql  {:subprotocol "postgresql"
@@ -10,11 +8,25 @@
                  :user "pgtest"
                  :password "pgtest"}})
 
-(hugsql/def-sql-string-fns "hugsql/sql/test.sql")
 
-;; (testing "fn creation"
-;;   (is (= nil (no-params-select-sql db-spec {}))))
+(hugsql/def-sql-fns "hugsql/sql/test.sql")
+(hugsql/def-sql-str-fns "hugsql/sql/test.sql")
 
-(prn (ns-publics *ns*))
+(doseq [[db-name db] dbs]
+  
+  (deftest core  
+    (testing "fn definition"
+      (is (fn? no-params-select))
+      (is (fn? no-params-select-sql))
+      (is (= "No params" (:doc (meta #'no-params-select))))
+      (is (= "No params (sql)" (:doc (meta #'no-params-select-sql)))))
 
-
+    (testing "sql fns"
+      (is (= "select * from test" (first (no-params-select-sql db))))
+      (is (= "select * from test" (first (no-params-select-sql db {}))))
+      (is (= ["select * from test where id = ?" 1]
+            (one-value-param-sql db {:id 1})))
+      (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
+            (multi-value-params-sql db {:id 1 :name "Ed"})))
+      (is (= ["select * from \"test\""]
+            (identifier-param-sql db {:table-name "test"}))))))
