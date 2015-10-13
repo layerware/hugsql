@@ -12,11 +12,8 @@ can do all of these and more with **hugsql**!
 
 ## Installation
 
-[Leiningen](https://github.com/technomancy/leiningen) dependency information:
+**hugsql** *is a work in progress and not yet released.  Do not use yet!*
 
-```clj
-[com.layerware/hugsql "0.1.0"]
-```
 
 ## Getting Started
 
