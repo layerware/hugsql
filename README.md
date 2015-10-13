@@ -2,12 +2,12 @@
 
 A Clojure library for embracing SQL.
 
-*hugsql* takes the opinionated position that SQL is the right tool for
+**hugsql** takes the opinionated position that SQL is the right tool for
 the job when working with a relational database.  This approach is in
 contrast to many other libraries that create a Clojure DSL to generate
 SQL.  Want to do a Postgresql "with recursive" common table expression
 query, or a complex nested query, or create a view dynamically? You
-can do all of these and more with *hugsql*!
+can do all of these and more with **hugsql**!
 
 
 ## Installation
@@ -31,13 +31,13 @@ elsewhere in your classpath:
 -- This is a regular SQL comment and ignored by hugsql,
 -- however, the line starting with "--:" is special.
 
---:name employees :? :*
---:doc Get all employees
+-- :name employees :? :*
+-- :doc Get all employees
 select * from employees;
 
---:name get-employee :? :1
---:doc Get employee by id
-select * from employee where id = :id;
+-- :name get-employee :? :1
+-- :doc Get employee by id
+select * from employees where id = :id;
 ```
 
 You probably noticed the strange `:?`, `:*` and `:1` after the query
@@ -46,7 +46,7 @@ Overview. Press on!
 
 ### Now write some Clojure
 
-Require *hugsql* in your namespace and call `def-sql-fns` with the sql
+Require **hugsql** in your namespace and call `def-sql-fns` with the sql
 file path:
 
 ```clj
@@ -75,18 +75,18 @@ Use the functions created in your namespace.  REPL example here:
 
 ## Detailed Overview
 
-You've only scratched the surface of *hugsql*'s functionality.  Keep
+You've only scratched the surface of **hugsql**'s functionality.  Keep
 reading!
 
 ### SQL
 
-*hugsql* encourages SQL, DDL, and DML statements to be stored in SQL
+**hugsql** encourages SQL, DDL, and DML statements to be stored in SQL
 files such that you are not concatenating large strings or needing to
 use leaky-abstraction DSLs in your Clojure projects.
 
 In order to generate the Clojure functions from your SQL statements,
-*hugsql* requires a simple set of conventions in your SQL files.  These
-conventions allow *hugsql* to:
+**hugsql** requires a simple set of conventions in your SQL files.  These
+conventions allow **hugsql** to:
 
  - define functions by name
  - add a docstring to the defined function
@@ -102,7 +102,7 @@ conventions allow *hugsql* to:
    - any other result-type you implement
  - replace parameters for:
    - values: `where id = :id`
-   - value lists: `where id in (:p*:ids)`
+   - value lists: `where id in (:v*:ids)`
    - identifiers: `from :i:table-name`
    - identifier lists: `select :i*:column-names`
    - raw SQL: `:sql:my-query`
@@ -110,7 +110,7 @@ conventions allow *hugsql* to:
 
 #### SQL: hugsql special comments
 
-*hugsql* SQL files contain special single and multi-line comments in the
+**hugsql** SQL files contain special single and multi-line comments in the
 following forms:
 
 ```
@@ -144,7 +144,7 @@ select * from my_table limit 1
 
 ```
 
-*hugsql* recognizes the following keys:
+**hugsql** recognizes the following keys:
  - `:name` name of the function to create and,
            optionally, query-type and result-type
            as a short-cut for providing these as
@@ -170,7 +170,7 @@ TODO
 
 #### SQL: hugsql Parameter Types
 
-Within an SQL statement itself, *hugsql* understands several types of
+Within an SQL statement itself, **hugsql** understands several types of
 parameters that can be passed in during the function call. All
 parameter types take the form:
 
@@ -180,18 +180,18 @@ OR
 :param-type:param-name
 ```
 
-When a *hugsql*-generated function is called, the parameters in an SQL
+When a **hugsql**-generated function is called, the parameters in an SQL
 statement are replaced at runtime with the hash-map data passed in as
 the function's second argument. The keys of the hash-map are matched
 to the :param-name portion of the parameter. Parameters can be
 repeated throughout an SQL statement, and all instances of a parameter
 will be replaced at runtime.
 
-*hugsql* recognizes the need for different types of parameters in SQL
+**hugsql** recognizes the need for different types of parameters in SQL
 statements.  Specifically, SQL treats data values differently from
 identifiers and SQL keywords.  If you are building dynamic queries to
 select specific columns or choose the `order by` direction, then a
-simple value parameter is not sufficient. *hugsql* supports value
+simple value parameter is not sufficient. **hugsql** supports value
 parameters, identifier parameters, and raw sql (keyword) parameters.
 
 The built-in parameter types are detailed below along with information
