@@ -34,12 +34,13 @@
    we replace use the jdbc prepared statement syntax of a
    '?' to placehold for the value."
   [sql-template param-data options]
-  (let [applied (mapv #(if (string? %)
-                         [%]
-                         (parameters/apply-param % param-data options))
+  (let [applied (mapv
+                  #(if (string? %)
+                     [%]
+                     (parameters/apply-hugsql-param % param-data options))
                   sql-template)
         sql    (string/join "" (map first applied))
-        params (remove nil? (map second applied))]
+        params (flatten (remove empty? (map rest applied)))]
     (apply vector sql params)))
 
 (def default-options

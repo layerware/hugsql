@@ -12,6 +12,11 @@ select * from test
 where id = :id
 and name = :name
 
+-- :name value-list-param
+-- :doc Value List Param
+select * from test
+where id in (:v*:ids)
+
 -- :name identifier-param
 -- :doc Identifier param
 select * from :i:table-name
