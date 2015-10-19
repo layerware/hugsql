@@ -24,9 +24,9 @@
   (sql-param [param data options]))
 
 (defn- identifier-param-quote
-  [value {:keys [quote-identifiers] :as options}]
+  [value {:keys [quoting] :as options}]
   (let [parts (string/split value #"\.")
-        qtfn  (condp = quote-identifiers
+        qtfn  (condp = quoting
                 :ansi #(str \" (string/replace % "\"" "\"\"") \")
                 :mysql #(str \` (string/replace % "`" "``") \`)
                 :mssql #(str \[ (string/replace % "]" "]]") \])
@@ -34,6 +34,7 @@
                 identity)]
     (string/join "." (map qtfn parts))))
 
+;; Default Object implementations
 (extend-type Object
   ValueParam
   (value-param [param data options]
@@ -53,9 +54,12 @@
   IdentifierParamList
   (identifier-param-list [param data options]
     (let [coll (get data (:name param))]
-      (apply vector nil (map identifier-param)
-        (string/join "," (repeat (count coll) "?"))
-        coll))))
+      [(string/join ", "
+         (map #(identifier-param-quote % options) coll))]))
+
+  SQLParam
+  (sql-param [param data options]
+    [(get data (:name param))]))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter

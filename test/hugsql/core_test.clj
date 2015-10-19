@@ -8,12 +8,12 @@
                  :user "pgtest"
                  :password "pgtest"}})
 
+(hugsql/def-db-fns "hugsql/sql/test.sql")
 (hugsql/def-sql-fns "hugsql/sql/test.sql")
-(hugsql/def-sql-str-fns "hugsql/sql/test.sql")
 
-(doseq [[db-name db] dbs]
-  
-  (deftest core
+(deftest core
+  (doseq [[db-name db] dbs]
+    
     (testing "fn definition"
       (is (fn? no-params-select))
       (is (fn? no-params-select-sql))
@@ -30,14 +30,43 @@
       (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
             (value-list-param-sql db {:ids [1,2,3]})))
       (is (= ["select * from test"]
-            (identifier-param-sql db {:table-name "test"}))))
+            (identifier-param-sql db {:table-name "test"})))
+      (is (= ["select id, name from test"]
+            (identifier-param-list-sql db {:columns ["id", "name"]})))
+      (is (= ["select * from test order by id desc"]
+            (sql-param-sql db {:id-order "desc"}))))
 
     (testing "identifier quoting"
       (is (= ["select * from \"schema\".\"te\"\"st\""]
-            (identifier-param-sql db {:table-name "schema.te\"st"} {:quote-identifiers :ansi})))
+            (identifier-param-sql db
+              {:table-name "schema.te\"st"}
+              {:quoting :ansi})))
       (is (= ["select * from `schema`.`te``st`"]
-            (identifier-param-sql db {:table-name "schema.te`st"} {:quote-identifiers :mysql})))
+            (identifier-param-sql db
+              {:table-name "schema.te`st"}
+              {:quoting :mysql})))
       (is (= ["select * from [schema].[te]]st]"]
-            (identifier-param-sql db {:table-name "schema.te]st"} {:quote-identifiers :mssql}))))
+            (identifier-param-sql db
+              {:table-name "schema.te]st"}
+              {:quoting :mssql})))
+      (is (= ["select \"test\".\"id\", \"test\".\"name\" from test"]
+            (identifier-param-list-sql db
+              {:columns ["test.id", "test.name"]}
+              {:quoting :ansi})))
+      (is (= ["select `test`.`id`, `test`.`name` from test"]
+            (identifier-param-list-sql db
+              {:columns ["test.id", "test.name"]}
+              {:quoting :mysql})))
+      (is (= ["select [test].[id], [test].[name] from test"]
+            (identifier-param-list-sql db
+              {:columns ["test.id", "test.name"]}
+              {:quoting :mssql}))))
 
+    (testing "command: execute"
+      (is (= nil (create-test-table db)))
+      (is (= nil (drop-test-table db))))
+
+    
+    (testing "query-type: query"
+      )
     ))
