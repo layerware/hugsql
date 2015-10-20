@@ -1,14 +1,23 @@
-# hugsql
+# Hug SQL
 
 A Clojure library for embracing SQL.
 
 **hugsql** takes the opinionated position that SQL is the right tool for
-the job when working with a relational database.  This approach is in
-contrast to many other libraries that create a Clojure DSL to generate
-SQL.  Want to do a Postgresql "with recursive" common table expression
-query, or a complex nested query, or create a view dynamically? You
-can do all of these and more with **hugsql**!
+the job when working with a relational database.  Embrace SQL!
 
+**hugsql** uses simple conventions in your SQL files to define (at
+  compile time) database functions in your Clojure namespace, creating
+  a clean separation of Clojure and SQL code.
+
+**hugsql** supports run-time replacement of SQL value parameters
+(e.g., `where id = :id`), SQL identifiers (i.e. table/column names),
+and raw SQL keywords.  You can also implement your own parameter
+types.
+
+**hugsql** has protocol-based adapters supporting multiple database
+libraries and ships with adapters for
+[clojure.java.jdbc](https://github.com/clojure/java.jdbc) (default)
+and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/))
 
 ## Installation
 
@@ -26,7 +35,7 @@ elsewhere in your classpath:
 -- src/app/db/sql/employees.sql
 
 -- This is a regular SQL comment and ignored by hugsql,
--- however, the line starting with "--:" is special.
+-- however, the line starting with "-- :" is special.
 
 -- :name employees :? :*
 -- :doc Get all employees

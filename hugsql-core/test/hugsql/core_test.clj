@@ -62,11 +62,11 @@
               {:columns ["test.id", "test.name"]}
               {:quoting :mssql}))))
 
-    (testing "command: execute"
+    #_(testing "command: execute"
       (is (= nil (create-test-table db)))
       (is (= nil (drop-test-table db))))
 
     
-    (testing "query-type: query"
+    #_(testing "query-type: query"
       )
     ))
