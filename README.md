@@ -1,5 +1,7 @@
 # Hug SQL
 
+![alt tag](https://raw.github.com/layerware/hugsql/master/logo/hugsql_alpha_128.png)
+
 A Clojure library for embracing SQL.
 
 **hugsql** takes the opinionated position that SQL is the right tool for
@@ -17,7 +19,7 @@ types.
 **hugsql** has protocol-based adapters supporting multiple database
 libraries and ships with adapters for
 [clojure.java.jdbc](https://github.com/clojure/java.jdbc) (default)
-and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/))
+and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/)
 
 ## Installation
 
