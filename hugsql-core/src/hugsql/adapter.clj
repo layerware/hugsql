@@ -16,4 +16,7 @@
     "Result: returns vector of hashmap records")
 
   (result-affected [this result options]
-    "Result: returns integer of affected rows/records"))
+    "Result: returns integer of affected rows/records")
+
+  (result-raw [this result options]
+    "Result: returns raw result, untouched"))

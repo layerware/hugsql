@@ -21,7 +21,7 @@
   ;; 2) *no* hard-coded default dependency
   ;;    if someone wants to use another adapter
   ;; 3) *no* requirement for an adapter at all unless
-  ;;    def-db-fns is used
+  ;;    def-db-fns is used and calls this function
   (when (nil? @*adapter*)
     (eval
       '(do (clojure.core/require '[hugsql.clojure-java-jdbc-adapter
@@ -67,18 +67,29 @@
 (def default-command :query)
 (def default-result :many)
 
+(defn- str->key
+  [str]
+  (keyword (string/replace-first str #":" "")))
+
 (defn command-sym
   [hdr]
-  (keyword
-    (or (second (:name hdr))
-      (:command hdr)
-      default-command)))
+  (or
+    ;;                ↓ short-hand command position
+    ;; -- :name my-fn :? :1
+    (when-let [c (second (:name hdr))] (str->key c))
+    ;; -- :command :?
+    (when-let [c (first (:command hdr))] (str->key c))
+    default-command))
 
 (defn result-sym
   [hdr]
   (keyword
-    (or (second (next (:name hdr)))
-      (:result hdr)
+    (or
+      ;;                   ↓ short-hand result position
+      ;; -- :name my-fn :? :1
+      (when-let [r (second (next (:name hdr)))] (str->key r))
+      ;; -- :result :1
+      (when-let [r (first (:result hdr))] (str->key r))
       default-result)))
 
 (defmulti hugsql-command-fn identity)
@@ -95,18 +106,27 @@
 (defmethod hugsql-result-fn :many [sym] 'hugsql.adapter/result-many)
 (defmethod hugsql-result-fn :n [sym] 'hugsql.adapter/result-affected)
 (defmethod hugsql-result-fn :affected [sym] 'hugsql.adapter/result-affected)
-(defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-many)
+(defmethod hugsql-result-fn :raw [sym] 'hugsql.adapter/result-raw)
+(defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
 
-(defmacro def-sql-fns
-  "Given a hugsql SQL file, define the <query-name>-sql 
-   functions that returns the vector of prepared SQL and 
-   parameters. (e.g., [\"select * from test where id = ?\" 42])"
-  ([file] (def-sql-fns &form &env file {}))
+(defmacro def-sqlvec-fns
+  "Given a hugsql SQL file, define the <query-name>-sqlvec
+   functions that return the vector of SQL and parameters.
+   (e.g., [\"select * from test where id = ?\" 42])
+
+   The likely use case for the sqlvec format is for 
+   clojure.java.jdbc/query,execute and
+   clojure.jdbc/fetch,execute -- both libraries use this
+   sqlvec convention.
+
+   Replacement of value parameters is deferred to the 
+   underlying library."
+  ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    (doseq [d (parsed-defs-from-file file)]
      (let [hdr (:hdr d)
-           nam (symbol (str (first (:name hdr)) "-sql"))
-           doc (str (first (:doc hdr)) " (sql)")
+           nam (symbol (str (first (:name hdr)) "-sqlvec"))
+           doc (str (first (:doc hdr)) " (sqlvec)")
            sql (:sql d)
            opt (merge default-options options)]
        (eval ;; FIXME: get rid of eval
@@ -125,7 +145,7 @@
    (doseq [d (parsed-defs-from-file file)]
      (let [hdr (:hdr d)
            nam (symbol (first (:name hdr)))
-           doc (first (:doc hdr))
+           doc (or (first (:doc hdr)) "")
            sql (:sql d)
            opt (merge default-options options)
            cmd (hugsql-command-fn (command-sym hdr))
@@ -137,8 +157,10 @@
             ([~'db] (~nam ~'db {} {}))
             ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
             ([~'db ~'param-data ~'options]
-             (~cmd ~adp ~'db
-               (prepare-sql ~sql ~'param-data (merge ~opt ~'options))
+             (~res ~adp
+               (~cmd ~adp ~'db
+                 (prepare-sql ~sql ~'param-data (merge ~opt ~'options))
+                 (merge ~opt ~'options))
                (merge ~opt ~'options)))))))))
 
 

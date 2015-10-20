@@ -32,13 +32,22 @@ select * from test order by id :sql:id-order
 
 -- :name create-test-table
 -- :command :execute
+-- :result :affected
 -- :doc Create test table
 create table test (
   id     integer,
   "name" varchar(20)
 )
 
--- :name drop-test-table
--- :command :execute
+-- :name insert-into-test-table :! :n
+insert into test (id, "name") values (:id, :name)
+
+-- :name update-test-table :! :n
+update test set "name" = :name where id = :id
+
+-- :name select-one-test-by-id :? :1
+select * from test where id = :id
+
+-- :name drop-test-table :! :n
 -- :doc Drop test table
 drop table test

@@ -21,6 +21,9 @@
     result)
 
   (result-affected [this result options]
+    (first result))
+
+  (result-raw [this result options]
     result))
 
 (defn hugsql-clojure-java-jdbc-adapter []
