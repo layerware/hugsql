@@ -228,7 +228,7 @@ These mirror the distinction between `query` and `execute!` in the
 To save some typing, the command function can be specified as the
 second value for the :name key:
 
-```clj
+```sql
 -- :name new-employee :?
 ```
 
@@ -252,7 +252,7 @@ To save some typing, the result function can be specified as the third
 value for the :name key.  You must supply a second command value in
 order to use this shorthand convention:
 
-```clj
+```sql
 -- :name new-employee :? :n
 ```
 
