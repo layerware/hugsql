@@ -27,8 +27,6 @@ and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/)
 
 [Leiningen](https://github.com/technomancy/leiningen) dependency information:
 
-#### Simple path:
-
 ```clj
 [com.layerware/hugsql "0.1.0-SNAPSHOT"]
 ```
@@ -48,28 +46,9 @@ For example, the Postgresql driver:
 [org.postgresql/postgresql "9.4-1201-jdbc41"]
 ```
 
-#### More advanced options:
-
-The `hugsql` clojar is the default meta clojar that pulls in
-`hugsql-core` and the default adapter `hugsql-adapter-clojure-java-jdbc`,
-which uses [clojure.java.jdbc](https://github.com/clojure/java.jdbc)
-to run database queries.
-
-If you wish to use a different adapter, you should bypass the `hugsql`
-clojar and specify `hugsql-core` and the adapter clojar you desire:
-
-```clj
-[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
-[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0-SNAPSHOT"]
-```
-
-You can also use **HugSQL** without an adapter if you only intend to
-use `hugsql.core/def-sqlvec-fns` and not `hugsql.core/def-db-fns`.
-For this case, you only need the `hugsql-core` clojar:
-
-```clj
-[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
-```
+*If you would like to use another underlying database library instead
+ of `clojure.java.jdbc`, such as `clojure.jdbc` please read the
+ section below entitled "Using a Different Database Library"*
 
 
 ## A Quick Example
@@ -475,6 +454,72 @@ order by last_name :sql:last_name_sort
 (sql-keyword-param-sqlvec db {:last_name_sort (validated-asc-or-desc user-input)})
 ;=> ["select * from example\norder by last_name asc"]
 ```
+
+## Advanced Topics
+
+### Using a Different Database Library
+
+**HugSQL** will default to using the adapter for the
+`clojure.java.jdbc` library.  If you would prefer to use the adapter
+for `clojure.jdbc`, you will need to configure your dependencies and
+set the adapter.
+
+Leiningen dependency information:
+
+The `hugsql` clojar is a meta clojar that pulls in `hugsql-core` and
+the default adapter `hugsql-adapter-clojure-java-jdbc`, which uses
+[clojure.java.jdbc](https://github.com/clojure/java.jdbc) to run
+database queries.
+
+If you wish to use a different adapter, you should bypass the `hugsql`
+clojar and specify `hugsql-core` and the adapter clojar you desire:
+
+```clj
+[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0-SNAPSHOT"]
+```
+
+Within your Clojure code, you will need to explicitly set the adapter.
+You can do this globally (i.e., at app startup) with
+`hugsql.core/set-adapter!`, or you can specify the adapter as an
+option when defining your functions with `hugsql.core/def-db-fns`.
+
+```clj
+(ns my-app
+  (:require [hugsql.core :as hugsql]
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(defn app-init []
+  (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-jdbc)))
+```
+OR
+
+```clj
+(ns my-db-stuff
+  (:require [hugsql.core :as hugsql]
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(hugsql/def-db-fns "path/to/db.sql"
+  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+```
+
+### No Database Library Required
+
+You can also use **HugSQL** without an adapter if you only intend to
+use `hugsql.core/def-sqlvec-fns` and not `hugsql.core/def-db-fns`.
+For this case, you only need the `hugsql-core` clojar:
+
+```clj
+[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
+```
+
+## TODO
+
+- More doc examples of advanced usage with underlying db libs
+- Docs on creating additional parameter types
+- Docs on creating additional command-fns, result-fns
+- Error checking on parameter match-ups
+- Consider built-in data type coercion parameter types
 
 ## API Documentation
 
