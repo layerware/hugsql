@@ -23,12 +23,10 @@ and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/)
 
 ## Installation
 
-**HugSQL** *is a work in progress and not yet released.  Do not use yet!*
-
 [Leiningen](https://github.com/technomancy/leiningen) dependency information:
 
 ```clj
-[com.layerware/hugsql "0.1.0-SNAPSHOT"]
+[com.layerware/hugsql "0.1.0"]
 ```
 
 You will also need to specify your JDBC driver dependency from one of the following:
@@ -475,8 +473,8 @@ If you wish to use a different adapter, you should bypass the `hugsql`
 clojar and specify `hugsql-core` and the adapter clojar you desire:
 
 ```clj
-[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
-[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0-SNAPSHOT"]
+[com.layerware/hugsql-core "0.1.0"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0"]
 ```
 
 Within your Clojure code, you will need to explicitly set the adapter.
@@ -510,7 +508,7 @@ use `hugsql.core/def-sqlvec-fns` and not `hugsql.core/def-db-fns`.
 For this case, you only need the `hugsql-core` clojar:
 
 ```clj
-[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
+[com.layerware/hugsql-core "0.1.0"]
 ```
 
 ## TODO
