@@ -396,10 +396,10 @@ your when calling your function.
 
 Valid `:quoting` options are:
 
-- :ansi - double-quotes: `"identifier"`
-- :mysql - backticks: ```identifier```
-- :mssql - square brackets: `[identifier]`
-- :off - no quoting (default)
+- `:ansi` - double-quotes: `"identifier"`
+- `:mysql` - backticks: `` `identifier` ``
+- `:mssql` - square brackets: `[identifier]`
+- `:off` - no quoting (default)
 
 Identifiers containing a period/dot `.` are split, quoted separately,
 and then rejoined.  This support `myschema.mytable` conventions.
