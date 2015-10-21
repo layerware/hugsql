@@ -124,8 +124,8 @@ REPL:
 ; hugsql matches parameters to keys in a hash-map
 (emp/employees db {:ids [1 2 3] :cols ["id", "name", "title"]})
 ; => [{:id 1 :name "Vizzini" :title "Genius"},
-      {:id 2 :name "Fezzik" :title "Giant"},
-      {:id 3 :name "Inigo Montoya" :title "Swordsman"}]
+;     {:id 2 :name "Fezzik" :title "Giant"},
+;     {:id 3 :name "Inigo Montoya" :title "Swordsman"}]
 
 (emp/get-employee db {:id 2})
 ; => {:id 2 :name "Fezzik" :title "Giant"}
@@ -153,7 +153,6 @@ conventions allow **HugSQL** to:
    - DDL create table/index/view, drop ...
    - DML insert, update, delete
    - any other statements (e.g. `vacuum analyze`)
- - execute the appropriate underlying database library function (query/execute)
  - determine the result's type
    - one row (hash-map)
    - many rows (vector of hash-maps)
@@ -226,6 +225,13 @@ These mirror the distinction between `query` and `execute!` in the
 
 `:query` is the default command when no command is specified.
 
+To save some typing, the command function can be specified as the
+second value for the :name key:
+
+```clj
+-- :name new-employee :?
+```
+
 You can create command functions of your own by implementing a
 `hugsql.core/hugsql-command-fn` multimethod.
 
@@ -237,10 +243,18 @@ The available built-in values are:
 
  - `:one`, `:1` one row as a hash-map
  - `:many`, `:*` many rows as a vector of hash-maps
- - `:affected`, `:n` number of rows affected (inserted/updated/deleted) by query
+ - `:affected`, `:n` number of rows affected (inserted/updated/deleted)
  - `:raw` passthrough an untouched result (default)
 
 `:raw` is the default when no result is specified.
+
+To save some typing, the result function can be specified as the third
+value for the :name key.  You must supply a second command value in
+order to use this shorthand convention:
+
+```clj
+-- :name new-employee :? :n
+```
 
 You can create result functions of your own by implementing a
 `hugsql.core/hugsql-result-fn` multimethod.
