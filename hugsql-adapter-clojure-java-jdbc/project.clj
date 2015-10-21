@@ -1,4 +1,4 @@
-(defproject com.layerware/hugsql-clojure-java-jdbc "0.1.0-SNAPSHOT"
+(defproject com.layerware/hugsql-adapter-clojure-java-jdbc "0.1.0-SNAPSHOT"
   :description "clojure.java.jdbc hugsql adapter"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"

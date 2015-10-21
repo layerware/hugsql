@@ -35,15 +35,15 @@ select * from test order by id :sql:id-order
 -- :result :affected
 -- :doc Create test table
 create table test (
-  id     integer,
-  "name" varchar(20)
+  id    integer,
+  name  varchar(20)
 )
 
 -- :name insert-into-test-table :! :n
-insert into test (id, "name") values (:id, :name)
+insert into test (id, name) values (:id, :name)
 
 -- :name update-test-table :! :n
-update test set "name" = :name where id = :id
+update test set name = :name where id = :id
 
 -- :name select-one-test-by-id :? :1
 select * from test where id = :id

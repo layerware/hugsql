@@ -25,6 +25,52 @@ and [clojure.jdbc](http://funcool.github.io/clojure.jdbc/latest/)
 
 **hugsql** *is a work in progress and not yet released.  Do not use yet!*
 
+[Leiningen](https://github.com/technomancy/leiningen) dependency information:
+
+#### Simple path:
+
+```clj
+[com.layerware/hugsql "0.1.0-SNAPSHOT"]
+```
+
+You will also need to specify your JDBC driver dependency from one of the following:
+
+* [Apache Derby](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.apache.derby%22%20AND%20a%3A%22derby%22)
+* [HSQLDB](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22hsqldb%22%20AND%20a%3A%22hsqldb%22)
+* [MS SQL Server jTDS](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22net.sourceforge.jtds%22%20AND%20a%3A%22jtds%22)
+* [MySQL](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22mysql%22%20AND%20a%3A%22mysql-connector-java%22)
+* [PostgreSQL](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.postgresql%22%20AND%20a%3A%22postgresql%22)
+* [SQLite](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.xerial%22%20AND%20a%3A%22sqlite-jdbc%22)
+
+For example, the Postgresql driver:
+
+```clj
+[org.postgresql/postgresql "9.4-1201-jdbc41"]
+```
+
+#### More advanced options:
+
+The `hugsql` clojar is the default meta clojar that pulls in
+`hugsql-core` and the default adapter `hugsql-adapter-clojure-java-jdbc`,
+which uses [clojure.java.jdbc](https://github.com/clojure/java.jdbc)
+to run database queries.
+
+If you wish to use a different adapter, you should bypass the `hugsql`
+clojar and specify `hugsql-core` and the adapter clojar you desire:
+
+```clj
+[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0-SNAPSHOT"]
+```
+
+You can also use **hugsql** without an adapter if you only intend on
+using `hugsql.core/def-sqlvec-fns` and not `hugsql.core/def-db-fns`.
+For this case, you only need the `hugsql-core` clojar:
+
+```clj
+[com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
+```
+
 
 ## Getting Started
 
@@ -41,7 +87,7 @@ elsewhere in your classpath:
 
 -- :name employees :? :*
 -- :doc Get all employees
-select * from employees;
+select * from employees
 
 -- :name get-employee :? :1
 -- :doc Get employee by id
@@ -54,21 +100,21 @@ Overview. Press on!
 
 ### Now write some Clojure
 
-Require **hugsql** in your namespace and call `def-sql-fns` with the sql
+Require **hugsql** in your namespace and call `def-db-fns` with the sql
 file path:
 
 ```clj
 (ns app.db.employees
   (:require [hugsql.core :as hugsql]))
 
-(hugsql/def-sql-fns "app/db/sql/employees.sql")
+(hugsql/def-db-fns "app/db/sql/employees.sql")
 ```
 
 Use the functions created in your namespace.  REPL example here:
 ```
 (require '[app.db.employees :as emp])
 
-; db must be a clojure.java.jdbc compliant db-spec
+; db must be a db-spec or connection
 ; (def db {...})
 
 (emp/employees db)

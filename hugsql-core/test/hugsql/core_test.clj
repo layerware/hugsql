@@ -1,13 +1,41 @@
 (ns hugsql.core-test
   (:require [clojure.test :refer :all]
             [hugsql.core :as hugsql]
-            [clojure.repl :refer :all]))
+            [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(def tmpdir (System/getProperty "java.io.tmpdir"))
 
 (def dbs
+  ;; sudo su - postgres ;; switch to postgres user
+  ;; createuser -P hugtest ;; enter "hugtest" when prompted
+  ;; createdb -O hugtest hugtest
   {:postgresql  {:subprotocol "postgresql"
-                 :subname "//127.0.0.1:5432/pgtest"
-                 :user "pgtest"
-                 :password "pgtest"}})
+                 :subname "//127.0.0.1:5432/hugtest"
+                 :user "hugtest"
+                 :password "hugtest"}
+   
+
+   ;; mysql -u root -p
+   ;; mysql> create database hugtest;
+   ;; mysql> grant all on hugtest.* to hugtest identified by "hugtest";
+   :mysql  {:subprotocol "mysql"
+            :subname "//127.0.0.1:3306/hugtest"
+            :user "hugtest"
+            :password "hugtest"}
+
+   :sqlite {:subprotocol "sqlite"
+            :subname (str tmpdir "/hugtest.sqlite")}                          
+   
+   :h2 {:subprotocol "h2"
+        :subname (str tmpdir "/hugtest.h2")}
+
+   :hsqldb {:dbtype "hsqldb"
+            :dbname (str tmpdir "/hugtest.hsqldb")}
+
+   :derby {:dbtype "derby"
+           :dbname (str tmpdir "/hugtest.derby")
+           :create true}})
 
 (hugsql/def-db-fns "hugsql/sql/test.sql")
 (hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
@@ -62,6 +90,16 @@
             (identifier-param-list-sqlvec db
               {:columns ["test.id", "test.name"]}
               {:quoting :mssql}))))
+
+    (testing "adapter"
+      (is (= hugsql.adapter.clojure_java_jdbc.HugsqlAdapterClojureJavaJdbc
+            (type (hugsql/get-adapter))))
+      (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-jdbc))
+      (is (= hugsql.adapter.clojure_jdbc.HugsqlAdapterClojureJdbc
+            (type (hugsql/get-adapter))))
+      (hugsql/set-adapter! nil)
+      (is (= hugsql.adapter.clojure_java_jdbc.HugsqlAdapterClojureJavaJdbc
+            (type (hugsql/get-adapter)))))
 
     (testing "command: execute"
       (is (= 0 (create-test-table db)))

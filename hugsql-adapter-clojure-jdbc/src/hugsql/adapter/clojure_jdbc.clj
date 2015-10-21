@@ -1,18 +1,18 @@
-(ns hugsql.clojure-java-jdbc-adapter
+(ns hugsql.adapter.clojure-jdbc
   (:gen-class)
   (:require [hugsql.adapter :as adapter]
-            [clojure.java.jdbc :as jdbc]))
+            [jdbc.core :as jdbc]))
 
-(deftype HugsqlClojureJavaJdbcAdapter []
+(deftype HugsqlAdapterClojureJdbc []
 
   adapter/HugsqlAdapter
   (execute
     [this db sqlvec options]
-    (jdbc/execute! db sqlvec))
+    (jdbc/execute db sqlvec))
 
   (query
     [this db sqlvec options]
-    (jdbc/query db sqlvec))
+    (jdbc/fetch db sqlvec))
 
   (result-one [this result options]
     (first result))
@@ -26,5 +26,5 @@
   (result-raw [this result options]
     result))
 
-(defn hugsql-clojure-java-jdbc-adapter []
-  (->HugsqlClojureJavaJdbcAdapter))
+(defn hugsql-adapter-clojure-jdbc []
+  (->HugsqlAdapterClojureJdbc))

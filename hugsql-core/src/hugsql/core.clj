@@ -24,9 +24,8 @@
   ;;    def-db-fns is used and calls this function
   (when (nil? @*adapter*)
     (eval
-      '(do (clojure.core/require '[hugsql.clojure-java-jdbc-adapter
-                      :refer [hugsql-clojure-java-jdbc-adapter]])
-           (hugsql.core/set-adapter! (hugsql-clojure-java-jdbc-adapter)))))
+      '(do (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
+           (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc)))))
   @*adapter*)
 
 (defn parsed-defs-from-file
