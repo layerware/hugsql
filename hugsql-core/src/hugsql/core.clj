@@ -12,7 +12,7 @@
   [the-adapter]
   (reset! *adapter* the-adapter))
 
-(defn get-adapter
+(defn ^:no-doc get-adapter
   []
   ;; nothing set yet? set default adapter
   ;; DEV NOTE: I don't really like dynamically eval'ing
@@ -28,7 +28,7 @@
            (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc)))))
   @*adapter*)
 
-(defn parsed-defs-from-file
+(defn ^:no-doc parsed-defs-from-file
   "Given a hugsql SQL file, parse it,
    and return the defs."
   [file]
@@ -40,7 +40,7 @@
         (io/resource file) ; assume resource
         ))))
 
-(defn prepare-sql
+(defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser)
    and the runtime-provided param data 
    and creates a vector of [\"sql\" val1 val2]
@@ -62,15 +62,13 @@
         params (flatten (remove empty? (map rest applied)))]
     (apply vector sql params)))
 
-(def default-options {:quoting :off})
-(def default-command :query)
-(def default-result :many)
+(def ^:private default-options {:quoting :off})
 
 (defn- str->key
   [str]
   (keyword (string/replace-first str #":" "")))
 
-(defn command-sym
+(defn- command-sym
   [hdr]
   (or
     ;;                ↓ short-hand command position
@@ -78,9 +76,10 @@
     (when-let [c (second (:name hdr))] (str->key c))
     ;; -- :command :?
     (when-let [c (first (:command hdr))] (str->key c))
-    default-command))
+    ;; default
+    :query))
 
-(defn result-sym
+(defn- result-sym
   [hdr]
   (keyword
     (or
@@ -89,7 +88,8 @@
       (when-let [r (second (next (:name hdr)))] (str->key r))
       ;; -- :result :1
       (when-let [r (first (:result hdr))] (str->key r))
-      default-result)))
+      ;; default
+      :raw)))
 
 (defmulti hugsql-command-fn identity)
 (defmethod hugsql-command-fn :! [sym] 'hugsql.adapter/execute)

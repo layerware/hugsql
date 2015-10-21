@@ -186,12 +186,12 @@
   "Parse hugsql SQL string and return
    sequence of statement definitions
    of the form:
-   {:hdr {:name   \"my-query\"
-          :doc    \"my doc string\"
-          :query-type :?
-          :result-type :1}
+   {:hdr {:name   [\"my-query\"]
+          :doc    [\"my doc string\"]
+          :command [:?]
+          :result [:1]}
     :sql [\"select * from emp where id = \"
-          {:ptype :v :pname :id}]}
+          {:type :v :name :id}]}
 
    Throws clojure.lang.ExceptionInfo on error."
   [sql]

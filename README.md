@@ -402,7 +402,7 @@ Valid `:quoting` options are:
 - `:off` - no quoting (default)
 
 Identifiers containing a period/dot `.` are split, quoted separately,
-and then rejoined.  This support `myschema.mytable` conventions.
+and then rejoined.  This supports `myschema.mytable` conventions.
 
 ```clj
 (hugsql.core/def-db-fns "path/to/good.sql" {:quoting :ansi})

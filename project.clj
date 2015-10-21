@@ -7,17 +7,16 @@
                  [com.layerware/hugsql-core "0.1.0-SNAPSHOT"]
                  [com.layerware/hugsql-adapter-clojure-java-jdbc "0.1.0-SNAPSHOT"]]
   :profiles {:dev
-             {:plugins [[codox "0.8.13"]
+             {:plugins [[lein-codox "0.9.0"]
                         [lein-sub "0.3.0"]]
               :sub ["hugsql-core"
                     "hugsql-adapter-clojure-java-jdbc"
                     "hugsql-adapter-clojure-jdbc"]
-              :dependencies []
-              :codox {:src-dir-uri "http://github.com/layerware/hugsql/blob/0.1.0/"
-                      :src-linenum-anchor-prefix "L"
-                      :output-dir "../gh-pages"
-                      :sources ["hugsql-core/src"
-                                "hugsql-adapter-clojure-java-jdbc/src"
-                                "hugsql-adapter-clojure-jdbc/src"]}
+              :dependencies [[com.layerware/hugsql-adapter-clojure-jdbc "0.1.0-SNAPSHOT"]]
+              :codox {:source-uri "http://github.com/layerware/hugsql/blob/0.1.0/{filepath}#L{line}"
+                      :output-path "../gh-pages"
+                      :source-paths ["hugsql-core/src"
+                                     "hugsql-adapter-clojure-java-jdbc/src"
+                                     "hugsql-adapter-clojure-jdbc/src"]}
               :global-vars {*warn-on-reflection* false
                             *assert* false}}})
