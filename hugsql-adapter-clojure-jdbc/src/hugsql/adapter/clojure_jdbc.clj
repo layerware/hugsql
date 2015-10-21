@@ -21,7 +21,7 @@
     result)
 
   (result-affected [this result options]
-    (first result))
+    result)
 
   (result-raw [this result options]
     result))
