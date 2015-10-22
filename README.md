@@ -368,8 +368,8 @@ resulting *sqlvec*:
 ```
 
 By default, identifiers are not quoted.  You can specify your desired
-quoting as an option when defining your functions or as an option to
-your when calling your function.
+quoting as an option when defining your functions or as an option when
+calling your function.
 
 Valid `:quoting` options are:
 
