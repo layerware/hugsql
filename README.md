@@ -319,7 +319,7 @@ select * from example where id = :v:id
 resulting *sqlvec*:
 
 ```clj
-(value-param-sqlvec db {:id 42})
+(value-param-sqlvec {:id 42})
 ;=> ["select * from example where id = ?" 42]
 ```
 
@@ -343,7 +343,7 @@ select * from example where name in (:v*:names)
 resulting *sqlvec*:
 
 ```clj
-(value-list-param-sqlvec db {:names ["Fezzik" "Vizzini"]})
+(value-list-param-sqlvec {:names ["Fezzik" "Vizzini"]})
 ;=> ["select * from examples where name in (?,?)" "Fezzik" "Vizzini"]
 ```
 
@@ -363,7 +363,7 @@ select * from :i:table-name
 resulting *sqlvec*:
 
 ```clj
-(identifier-param-sqlvec db {:table-name "example"})
+(identifier-param-sqlvec {:table-name "example"})
 ;=> ["select * from example"]
 ```
 
@@ -386,12 +386,12 @@ and then rejoined.  This supports `myschema.mytable` conventions.
 ```
 
 ```clj
-(identifier-param-sqlvec db {:table-name "example"})
+(identifier-param-sqlvec {:table-name "example"})
 ;=> ["select * from \"example\""]
 ```
 
 ```clj
-(identifier-param-sqlvec db {:table-name "schema1.example"} {:quoting :mssql})
+(identifier-param-sqlvec {:table-name "schema1.example"} {:quoting :mssql})
 ;=> ["select * from [schema1].[example]"]
 ```
 
@@ -419,7 +419,7 @@ order by :i*:column-names
 ```
 
 ```clj
-(identifier-list-param-sqlvec db {:column-names ["state" "city"]})
+(identifier-list-param-sqlvec {:column-names ["state" "city"]})
 ;=> ["select state, city, count(*) as population\n
 ;     from example\n
 ;     group by state, city\n
@@ -449,7 +449,7 @@ order by last_name :sql:last_name_sort
 ```clj
 (def user-input "asc")
 (defn validated-asc-or-desc [x] (if (= x "desc") "desc" "asc"))
-(sql-keyword-param-sqlvec db {:last_name_sort (validated-asc-or-desc user-input)})
+(sql-keyword-param-sqlvec {:last_name_sort (validated-asc-or-desc user-input)})
 ;=> ["select * from example\norder by last_name asc"]
 ```
 

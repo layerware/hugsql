@@ -131,9 +131,9 @@
        (eval ;; FIXME: get rid of eval
          `(defn ~nam
             ~doc
-            ([~'db] (~nam ~'db {} {}))
-            ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
-            ([~'db ~'param-data ~'options]
+            ([] (~nam {} {}))
+            ([~'param-data] (~nam ~'param-data {}))
+            ([~'param-data ~'options]
              (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
 
 (defmacro def-db-fns

@@ -57,44 +57,44 @@
         (is (= "No params (sqlvec)" (:doc (meta #'no-params-select-sqlvec)))))
 
       (testing "sql fns"
-        (is (= ["select * from test"] (no-params-select-sqlvec db)))
-        (is (= ["select * from test"] (no-params-select-sqlvec db {})))
+        (is (= ["select * from test"] (no-params-select-sqlvec)))
+        (is (= ["select * from test"] (no-params-select-sqlvec {})))
         (is (= ["select * from test where id = ?" 1]
-              (one-value-param-sqlvec db {:id 1})))
+              (one-value-param-sqlvec {:id 1})))
         (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
-              (multi-value-params-sqlvec db {:id 1 :name "Ed"})))
+              (multi-value-params-sqlvec {:id 1 :name "Ed"})))
         (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
-              (value-list-param-sqlvec db {:ids [1,2,3]})))
+              (value-list-param-sqlvec {:ids [1,2,3]})))
         (is (= ["select * from test"]
-              (identifier-param-sqlvec db {:table-name "test"})))
+              (identifier-param-sqlvec {:table-name "test"})))
         (is (= ["select id, name from test"]
-              (identifier-param-list-sqlvec db {:columns ["id", "name"]})))
+              (identifier-param-list-sqlvec {:columns ["id", "name"]})))
         (is (= ["select * from test order by id desc"]
-              (sql-param-sqlvec db {:id-order "desc"}))))
+              (sql-param-sqlvec {:id-order "desc"}))))
 
       (testing "identifier quoting"
         (is (= ["select * from \"schema\".\"te\"\"st\""]
-              (identifier-param-sqlvec db
+              (identifier-param-sqlvec
                 {:table-name "schema.te\"st"}
                 {:quoting :ansi})))
         (is (= ["select * from `schema`.`te``st`"]
-              (identifier-param-sqlvec db
+              (identifier-param-sqlvec
                 {:table-name "schema.te`st"}
                 {:quoting :mysql})))
         (is (= ["select * from [schema].[te]]st]"]
-              (identifier-param-sqlvec db
+              (identifier-param-sqlvec
                 {:table-name "schema.te]st"}
                 {:quoting :mssql})))
         (is (= ["select \"test\".\"id\", \"test\".\"name\" from test"]
-              (identifier-param-list-sqlvec db
+              (identifier-param-list-sqlvec
                 {:columns ["test.id", "test.name"]}
                 {:quoting :ansi})))
         (is (= ["select `test`.`id`, `test`.`name` from test"]
-              (identifier-param-list-sqlvec db
+              (identifier-param-list-sqlvec
                 {:columns ["test.id", "test.name"]}
                 {:quoting :mysql})))
         (is (= ["select [test].[id], [test].[name] from test"]
-              (identifier-param-list-sqlvec db
+              (identifier-param-list-sqlvec
                 {:columns ["test.id", "test.name"]}
                 {:quoting :mssql}))))
 
