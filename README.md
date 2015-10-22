@@ -99,7 +99,7 @@ REPL:
 ; (def db {...})
 
 ; hugsql matches parameters to keys in a hash-map
-(emp/employees db {:ids [1 2 3] :cols ["id", "name", "title"]})
+(emp/employees-by-ids db {:ids [1 2 3] :cols ["id", "name", "title"]})
 ; => [{:id 1 :name "Vizzini" :title "Genius"},
 ;     {:id 2 :name "Fezzik" :title "Giant"},
 ;     {:id 3 :name "Inigo Montoya" :title "Swordsman"}]
