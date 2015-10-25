@@ -18,7 +18,7 @@
                  :subname "//127.0.0.1:5432/hugtest"
                  :user "hugtest"
                  :password "hugtest"}
-   
+
 
    ;; mysql -u root -p
    ;; mysql> create database hugtest;
@@ -29,8 +29,8 @@
             :password "hugtest"}
 
    :sqlite {:subprotocol "sqlite"
-            :subname (str tmpdir "/hugtest.sqlite")}                          
-   
+            :subname (str tmpdir "/hugtest.sqlite")}
+
    :h2 {:subprotocol "h2"
         :subname (str tmpdir "/hugtest.h2")}
 
@@ -49,7 +49,7 @@
 
     (doseq [adapter adapters]
       (hugsql/set-adapter! adapter)
-      
+
       (testing "fn definition"
         (is (fn? no-params-select))
         (is (fn? no-params-select-sqlvec))
@@ -98,7 +98,7 @@
                 {:columns ["test.id", "test.name"]}
                 {:quoting :mssql}))))
 
-      
+
 
       (testing "database commands/queries"
         (is (= 0 (create-test-table db)))

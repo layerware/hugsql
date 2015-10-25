@@ -4,7 +4,7 @@
 
 
 (defn- parse-error
-  ([rdr msg] 
+  ([rdr msg]
    (parse-error rdr msg {}))
   ([rdr msg data]
    (if (r/indexing-reader? rdr)
@@ -25,7 +25,7 @@
   (when c
     (Character/isWhitespace ^Character c)))
 
-(defn- symbol-char? 
+(defn- symbol-char?
   [c]
   (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:]" (str c))))
 
@@ -208,11 +208,11 @@
 
             ;; end of string, so return all, filtering out empty
             (nil? c)
-            (vec (remove #(and (empty? (:hdr %)) (empty? (:sql %)))
+            (vec (filter #(or (seq (:hdr %)) (seq (:sql %)))
                    (conj all
                      {:hdr hdr
-                      :sql (vec (remove empty? (conj sql (string/trimr (str sb)))))})))
-            
+                      :sql (vec (filter seq (conj sql (string/trimr (str sb)))))})))
+
             ;; SQL comments and hugsql header comments
             (or
               (sing-line-comment-start? c rdr)
@@ -223,13 +223,13 @@
               ;; if sql is active, then new section
               (if (or (> (.length sb) 0) (empty? hdr))
                 (recur h [] (nsb)
-                  (conj all {:hdr hdr :sql (vec (remove empty? (conj sql (string/trimr (str sb)))))}))
+                  (conj all {:hdr hdr :sql (vec (filter seq (conj sql (string/trimr (str sb)))))}))
                 (recur (merge hdr h) sql sb all))
-              (recur hdr sql sb all))            
-            
+              (recur hdr sql sb all))
+
 
             ;; quoted SQL (which cannot contain hugsql params,
-            ;; so we consider them separately here before 
+            ;; so we consider them separately here before
             (sql-quoted-start? c)
             (recur hdr sql (sb-append sb (read-sql-quoted rdr c)) all)
 
@@ -244,7 +244,7 @@
             ;; hugsql params
             (hugsql-param-start? c)
             (recur hdr
-              (vec (remove empty?
+              (vec (filter seq
                      (conj sql (str sb) (read-hugsql-param rdr c))))
               (nsb)
               all)

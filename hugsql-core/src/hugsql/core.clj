@@ -5,12 +5,12 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
-(def ^:private ^:dynamic *adapter* (atom nil))
+(def ^:private adapter nil)
 
 (defn set-adapter!
   "Set a global adapter."
   [the-adapter]
-  (reset! *adapter* the-adapter))
+  (alter-var-root #'adapter (constantly the-adapter)))
 
 (defn ^:no-doc get-adapter
   []
@@ -22,11 +22,11 @@
   ;;    if someone wants to use another adapter
   ;; 3) *no* requirement for an adapter at all unless
   ;;    def-db-fns is used and calls this function
-  (when (nil? @*adapter*)
+  (when (nil? adapter)
     (eval
       '(do (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
            (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc)))))
-  @*adapter*)
+  adapter)
 
 (defn ^:no-doc parsed-defs-from-file
   "Given a hugsql SQL file, parse it,
@@ -42,7 +42,7 @@
 
 (defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser)
-   and the runtime-provided param data 
+   and the runtime-provided param data
    and creates a vector of [\"sql\" val1 val2]
    suitable for jdbc query/execute.
 
@@ -113,12 +113,12 @@
    functions that return the vector of SQL and parameters.
    (e.g., [\"select * from test where id = ?\" 42])
 
-   The likely use case for the sqlvec format is for 
+   The likely use case for the sqlvec format is for
    clojure.java.jdbc/query,execute and
    clojure.jdbc/fetch,execute -- both libraries use this
    sqlvec convention.
 
-   Replacement of value parameters is deferred to the 
+   Replacement of value parameters is deferred to the
    underlying library."
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
@@ -137,7 +137,7 @@
              (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
 
 (defmacro def-db-fns
-  "Given a hugsql SQL file, define the database 
+  "Given a hugsql SQL file, define the database
    query/execute functions"
   ([file] (def-db-fns &form &env file {}))
   ([file options]
@@ -161,6 +161,3 @@
                  (prepare-sql ~sql ~'param-data (merge ~opt ~'options))
                  (merge ~opt ~'options))
                (merge ~opt ~'options)))))))))
-
-
-
