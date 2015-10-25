@@ -1,9 +1,10 @@
-(defproject com.layerware/hugsql-core "0.2.1"
+(defproject com.layerware/hugsql-core "0.2.1-SNAPSHOT"
   :description "hugsql core functionality without adapter dependencies"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/tools.reader "0.10.0"]
                  [com.layerware/hugsql-adapter "0.2.1"]]
   :profiles {:dev
              {:plugins [[lein-auto "0.1.2"]]
