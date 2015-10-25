@@ -122,45 +122,46 @@
    underlying library."
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
-   (doseq [d (parsed-defs-from-file file)]
-     (let [hdr (:hdr d)
-           nam (symbol (str (first (:name hdr)) "-sqlvec"))
-           doc (str (first (:doc hdr)) " (sqlvec)")
-           sql (:sql d)
-           opt (merge default-options options)]
-       (eval ;; FIXME: get rid of eval
-         `(defn ~nam
-            ~doc
-            ([] (~nam {} {}))
-            ([~'param-data] (~nam ~'param-data {}))
-            ([~'param-data ~'options]
-             (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
+   `(do
+      ~@(for [d (parsed-defs-from-file file)]
+          (let [hdr (:hdr d)
+                nam (symbol (str (first (:name hdr)) "-sqlvec"))
+                doc (str (first (:doc hdr)) " (sqlvec)")
+                sql (:sql d)
+                opt (merge default-options options)]
+            `(defn ~nam
+               ~doc
+               ([] (~nam {} {}))
+               ([~'param-data] (~nam ~'param-data {}))
+               ([~'param-data ~'options]
+                (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
 
 (defmacro def-db-fns
   "Given a hugsql SQL file, define the database 
    query/execute functions"
   ([file] (def-db-fns &form &env file {}))
   ([file options]
-   (doseq [d (parsed-defs-from-file file)]
-     (let [hdr (:hdr d)
-           nam (symbol (first (:name hdr)))
-           doc (or (first (:doc hdr)) "")
-           sql (:sql d)
-           opt (merge default-options options)
-           cmd (hugsql-command-fn (command-sym hdr))
-           res (hugsql-result-fn (result-sym hdr))
-           adp (or (:adapter opt) (get-adapter))]
-       (eval ;; FIXME: get rid of eval
-         `(defn ~nam
-            ~doc
-            ([~'db] (~nam ~'db {} {}))
-            ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
-            ([~'db ~'param-data ~'options]
-             (~res ~adp
-               (~cmd ~adp ~'db
-                 (prepare-sql ~sql ~'param-data (merge ~opt ~'options))
-                 (merge ~opt ~'options))
-               (merge ~opt ~'options)))))))))
+   `(do
+      ~@(for [d (parsed-defs-from-file file)]
+          (let [hdr (:hdr d)
+                nam (symbol (first (:name hdr)))
+                doc (or (first (:doc hdr)) "")
+                sql (:sql d)
+                opt (merge default-options options)
+                cmd (hugsql-command-fn (command-sym hdr))
+                res (hugsql-result-fn (result-sym hdr))
+                adp (or (:adapter opt) (get-adapter))]
+            `(defn ~nam
+               ~doc
+               ([~'db] (~nam ~'db {} {}))
+               ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
+               ([~'db ~'param-data ~'options]
+                (let [o# (merge ~opt ~'options)]
+                  (~res ~adp
+                        (~cmd ~adp ~'db
+                              (prepare-sql ~sql ~'param-data o#)
+                              o#)
+                        o#)))))))))
 
 
 
