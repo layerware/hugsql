@@ -1,6 +1,10 @@
+-- testing
+
 -- :name no-params-select
 -- :doc No params
 select * from test
+
+-- testing
 
 -- :name one-value-param
 -- :doc One value param

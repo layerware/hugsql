@@ -12,6 +12,11 @@
     (is (= [] (parse "-- an sql comment")))
     (is (= [] (parse "/* a\nmulti-line\ncomment */"))))
 
+  (testing "leading SQL comment followed by hugsql comment"
+    (is (= [{:hdr {:name ["query"]}
+             :sql ["select * from emp"]}]
+          (parse "-- sql comment\n\n-- :name query\nselect * from emp"))))
+
   (testing "hugsql header comments"
     (is (= [{:hdr {:name ["test"]}
              :sql []}]
