@@ -90,6 +90,3 @@
 (defmethod apply-hugsql-param :i* [param data options] (identifier-param-list param data options))
 (defmethod apply-hugsql-param :identifier* [param data options] (identifier-param-list param data options))
 (defmethod apply-hugsql-param :sql [param data options] (sql-param param data options))
-
-
-
