@@ -7,8 +7,23 @@
 
 (defprotocol ValueParamList
   "Protocol to convert a collection of Clojure
-   values to SQL values"
+   values to SQL values. Similar to a TupleParam,
+   but a ValueParamList does NOT enclose its values
+   in parentheses.  Generally ValueParamList values
+   are of the same type."
   (value-param-list [param data options]))
+
+(defprotocol TupleParam
+  "Protocol to convert a collection of Clojure
+   values to an SQL tuple. Similar to a ValueParamList,
+   but a TupleParam encloses its values in parentheses."
+  (tuple-param [param data options]))
+
+(defprotocol TupleParamList
+  "Protocol to convert a collection of collections of
+   Clojure values to an SQL list of tuples.  This is
+   used specifically for multiple-record SQL inserts."
+  (tuple-param-list [param data options]))
 
 (defprotocol IdentifierParam
   "Protocol to convert a Clojure value to SQL identifier"
@@ -46,6 +61,21 @@
       (apply vector
         (string/join "," (repeat (count coll) "?"))
         coll)))
+
+  TupleParam
+  (tuple-param [param data options]
+    (let [vpl (value-param-list param data options)]
+      (apply vector (str "(" (first vpl) ")") (rest vpl))))
+
+  TupleParamList
+  (tuple-param-list [param data options]
+    (reduce
+      #(apply vector
+         (string/join "," [(first %1) (first %2)])
+         (concat (rest %1) (rest %2))) 
+      (map (juxt first rest)
+        (map #(tuple-param {:name :x} {:x %} options)
+          (get data (:name param))))))
 
   IdentifierParam
   (identifier-param [param data options]
@@ -85,6 +115,10 @@
 (defmethod apply-hugsql-param :value [param data options] (value-param param data options))
 (defmethod apply-hugsql-param :v*  [param data options] (value-param-list param data options))
 (defmethod apply-hugsql-param :value* [param data options] (value-param-list param data options))
+(defmethod apply-hugsql-param :t [param data options] (tuple-param param data options))
+(defmethod apply-hugsql-param :tuple [param data options] (tuple-param param data options))
+(defmethod apply-hugsql-param :t* [param data options] (tuple-param-list param data options))
+(defmethod apply-hugsql-param :tuple* [param data options] (tuple-param-list param data options))
 (defmethod apply-hugsql-param :i [param data options] (identifier-param param data options))
 (defmethod apply-hugsql-param :identifier [param data options] (identifier-param param data options))
 (defmethod apply-hugsql-param :i* [param data options] (identifier-param-list param data options))

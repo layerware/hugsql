@@ -65,6 +65,10 @@
               (multi-value-params-sqlvec {:id 1 :name "Ed"})))
         (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
               (value-list-param-sqlvec {:ids [1,2,3]})))
+        (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
+              (tuple-param-sqlvec {:ids [1,2,3]})))
+        (is (= ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
+              (tuple-param-list-sqlvec {:people [[1 "Ed"] [2 "Al"] [3 "Bo"]]})))
         (is (= ["select * from test"]
               (identifier-param-sqlvec {:table-name "test"})))
         (is (= ["select id, name from test"]
@@ -97,7 +101,6 @@
               (identifier-param-list-sqlvec
                 {:columns ["test.id", "test.name"]}
                 {:quoting :mssql}))))
-
 
 
       (testing "database commands/queries"

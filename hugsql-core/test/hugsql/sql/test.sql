@@ -21,6 +21,16 @@ and name = :name
 select * from test
 where id in (:v*:ids)
 
+-- :name tuple-param
+-- :doc Tuple Param
+select * from test
+where id in :t:ids
+
+-- :name tuple-param-list
+-- :doc Tuple Param List
+insert into test (id, name)
+values :t*:people
+
 -- :name identifier-param
 -- :doc Identifier param
 select * from :i:table-name
