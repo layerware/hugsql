@@ -1,6 +1,7 @@
 (ns hugsql.core-test
   (:require [clojure.test :refer :all]
             [hugsql.core :as hugsql]
+            [hugsql.adapter]
             [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
             [hugsql.adapter.clojure-jdbc :as cj-adapter]))
 
@@ -34,21 +35,31 @@
    :h2 {:subprotocol "h2"
         :subname (str tmpdir "/hugtest.h2")}
 
-   :hsqldb {:dbtype "hsqldb"
-            :dbname (str tmpdir "/hugtest.hsqldb")}
+   :hsqldb {:subprotocol "hsqldb"
+            :subname (str tmpdir "/hugtest.hsqldb")}
 
-   :derby {:dbtype "derby"
-           :dbname (str tmpdir "/hugtest.derby")
-           :create true}})
+   :derby {:subprotocol "derby"
+           :subname (str tmpdir "/hugtest.derby")
+           :create true}
+   }
+  )
 
-(hugsql/def-db-fns "hugsql/sql/test.sql")
-(hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
+
 
 (deftest core
+
+  (testing "adapter not set during fn def"
+    (is (= nil hugsql/adapter))
+    (hugsql/def-db-fns "hugsql/sql/test.sql")
+    (hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
+    (is (= nil hugsql/adapter)))
+  
   (doseq [[db-name db] dbs]
 
     (doseq [adapter adapters]
-      (hugsql/set-adapter! adapter)
+
+      (testing "adapter set"
+        (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
 
       (testing "fn definition"
         (is (fn? no-params-select))

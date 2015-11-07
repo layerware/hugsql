@@ -5,7 +5,7 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
-(def ^:private adapter nil)
+(def ^:no-doc adapter nil)
 
 (defn set-adapter!
   "Set a global adapter."
@@ -13,8 +13,10 @@
   (alter-var-root #'adapter (constantly the-adapter)))
 
 (defn ^:no-doc get-adapter
+  "Get an adapter.  Sets default
+   hugsql.adapter.clojure-java-jdbc 
+   adapter if no adapter is set."
   []
-  ;; nothing set yet? set default adapter
   ;; DEV NOTE: I don't really like dynamically eval'ing
   ;; and require'ing here, but I do prefer to have:
   ;; 1) an easy-path/just-works default adapter
@@ -149,16 +151,16 @@
                 sql (:sql d)
                 opt (merge default-options options)
                 cmd (hugsql-command-fn (command-sym hdr))
-                res (hugsql-result-fn (result-sym hdr))
-                adp (or (:adapter opt) (get-adapter))]
+                res (hugsql-result-fn (result-sym hdr))]
             `(defn ~nam
                ~doc
                ([~'db] (~nam ~'db {} {}))
                ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
                ([~'db ~'param-data ~'options]
-                (let [o# (merge ~opt ~'options)]
-                  (~res ~adp
-                        (~cmd ~adp ~'db
+                (let [o# (merge ~opt ~'options)
+                      a# (or (:adapter o#) (get-adapter))]
+                  (~res a#
+                        (~cmd a# ~'db
                               (prepare-sql ~sql ~'param-data o#)
                               o#)
-                        o#)))))))))
+                        o#)))))))));
