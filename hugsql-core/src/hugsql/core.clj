@@ -45,6 +45,19 @@
           (throw (ex-info (str "Can not read file: " file) {}))) 
         ))))
 
+(defn ^:no-doc validate-parameters!
+  "Ensure SQL template parameters match provided param-data,
+   and send or throw an exception if mismatch.  If maybe-adapter is
+   not nil, then send exception to the adapter, otherwise, throw here."
+  [sql-template param-data maybe-adapter]
+  (doseq [k (map :name (filter map? sql-template))]
+    (when-not (contains? param-data k)
+      (let [e (ex-info
+                (str "Parameter Mismatch: " k " parameter data not found.") {})]
+        (if maybe-adapter
+          (adapter/on-exception maybe-adapter e)
+          (throw e))))))
+
 (defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser)
    and the runtime-provided param data
@@ -57,15 +70,18 @@
    as identifiers and keywords.  For value parameter types,
    we replace use the jdbc prepared statement syntax of a
    '?' to placehold for the value."
-  [sql-template param-data options]
-  (let [applied (mapv
-                  #(if (string? %)
-                     [%]
-                     (parameters/apply-hugsql-param % param-data options))
-                  sql-template)
-        sql    (string/join "" (map first applied))
-        params (flatten (remove empty? (map rest applied)))]
-    (apply vector sql params)))
+  ([sql-template param-data options]
+   (prepare-sql sql-template param-data options nil))
+  ([sql-template param-data options maybe-adapter]
+   (validate-parameters! sql-template param-data maybe-adapter)
+   (let [applied (mapv
+                   #(if (string? %)
+                      [%]
+                      (parameters/apply-hugsql-param % param-data options))
+                   sql-template)
+         sql    (string/join "" (map first applied))
+         params (flatten (remove empty? (map rest applied)))]
+     (apply vector sql params))))
 
 (def ^:private default-sqlvec-options
   {:quoting :off
@@ -152,7 +168,27 @@
 
 (defmacro def-db-fns
   "Given a hugsql SQL file, define the database
-   query/execute functions"
+   query/execute functions.
+
+   Usage:
+
+   (def-db-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) is a hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :adapter adapter }
+
+   :adapter specifies the HugSQL adapter to use for all defined
+   functions. The default adapter used is
+   (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
+   when none is specified.
+
+   See hugsql.core/set-adapter! to set this to another adapter for all
+   def-db-fns calls.  :adapter can also be specified for individual
+   function calls (overriding set-adapter! and the :adapter option
+   here)."
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(do
@@ -173,6 +209,6 @@
                       a# (or (:adapter o#) (get-adapter))]
                   (~res a#
                         (~cmd a# ~'db
-                              (prepare-sql ~sql ~'param-data o#)
+                              (prepare-sql ~sql ~'param-data o# a#)
                               o#)
                         o#)))))))))

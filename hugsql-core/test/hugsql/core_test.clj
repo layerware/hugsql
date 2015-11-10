@@ -119,6 +119,12 @@
       (testing "adapter set"
         (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
 
+      (testing "parameter placeholder vs data mismatch"
+        (is (thrown-with-msg? ExceptionInfo #"Parameter Mismatch: :id parameter data not found."
+              (one-value-param-sqlvec {:x 1})))
+        (is (thrown-with-msg? ExceptionInfo #"Parameter Mismatch: :id parameter data not found."
+              (one-value-param db {:x 1}))))
+
       (testing "database commands/queries"
         (is (= 0 (create-test-table db)))
         (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
