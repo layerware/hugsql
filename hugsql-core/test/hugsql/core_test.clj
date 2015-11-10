@@ -61,65 +61,63 @@
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
           (eval '(hugsql.core/def-db-fns "non/existent/file.sql")))))
   
-  (doseq [[db-name db] dbs]
+  (testing "fn definition"
+    (is (fn? no-params-select))
+    (is (fn? no-params-select-sqlvec))
+    (is (= "No params" (:doc (meta #'no-params-select))))
+    (is (= "No params (sqlvec)" (:doc (meta #'no-params-select-sqlvec)))))
 
+  (testing "sql fns"
+    (is (= ["select * from test"] (no-params-select-sqlvec)))
+    (is (= ["select * from test"] (no-params-select-sqlvec {})))
+    (is (= ["select * from test where id = ?" 1]
+          (one-value-param-sqlvec {:id 1})))
+    (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
+          (multi-value-params-sqlvec {:id 1 :name "Ed"})))
+    (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
+          (value-list-param-sqlvec {:ids [1,2,3]})))
+    (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
+          (tuple-param-sqlvec {:id-name [1 "A"]})))
+    (is (= ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
+          (tuple-param-list-sqlvec {:people [[1 "Ed"] [2 "Al"] [3 "Bo"]]})))
+    (is (= ["select * from test"]
+          (identifier-param-sqlvec {:table-name "test"})))
+    (is (= ["select id, name from test"]
+          (identifier-param-list-sqlvec {:columns ["id", "name"]})))
+    (is (= ["select * from test order by id desc"]
+          (sql-param-sqlvec {:id-order "desc"}))))
+
+  (testing "identifier quoting"
+    (is (= ["select * from \"schema\".\"te\"\"st\""]
+          (identifier-param-sqlvec
+            {:table-name "schema.te\"st"}
+            {:quoting :ansi})))
+    (is (= ["select * from `schema`.`te``st`"]
+          (identifier-param-sqlvec
+            {:table-name "schema.te`st"}
+            {:quoting :mysql})))
+    (is (= ["select * from [schema].[te]]st]"]
+          (identifier-param-sqlvec
+            {:table-name "schema.te]st"}
+            {:quoting :mssql})))
+    (is (= ["select \"test\".\"id\", \"test\".\"name\" from test"]
+          (identifier-param-list-sqlvec
+            {:columns ["test.id", "test.name"]}
+            {:quoting :ansi})))
+    (is (= ["select `test`.`id`, `test`.`name` from test"]
+          (identifier-param-list-sqlvec
+            {:columns ["test.id", "test.name"]}
+            {:quoting :mysql})))
+    (is (= ["select [test].[id], [test].[name] from test"]
+          (identifier-param-list-sqlvec
+            {:columns ["test.id", "test.name"]}
+            {:quoting :mssql}))))
+  
+  (doseq [[db-name db] dbs]
     (doseq [adapter adapters]
 
       (testing "adapter set"
         (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
-
-      (testing "fn definition"
-        (is (fn? no-params-select))
-        (is (fn? no-params-select-sqlvec))
-        (is (= "No params" (:doc (meta #'no-params-select))))
-        (is (= "No params (sqlvec)" (:doc (meta #'no-params-select-sqlvec)))))
-
-      (testing "sql fns"
-        (is (= ["select * from test"] (no-params-select-sqlvec)))
-        (is (= ["select * from test"] (no-params-select-sqlvec {})))
-        (is (= ["select * from test where id = ?" 1]
-              (one-value-param-sqlvec {:id 1})))
-        (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
-              (multi-value-params-sqlvec {:id 1 :name "Ed"})))
-        (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
-              (value-list-param-sqlvec {:ids [1,2,3]})))
-        (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
-              (tuple-param-sqlvec {:id-name [1 "A"]})))
-        (is (= ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
-              (tuple-param-list-sqlvec {:people [[1 "Ed"] [2 "Al"] [3 "Bo"]]})))
-        (is (= ["select * from test"]
-              (identifier-param-sqlvec {:table-name "test"})))
-        (is (= ["select id, name from test"]
-              (identifier-param-list-sqlvec {:columns ["id", "name"]})))
-        (is (= ["select * from test order by id desc"]
-              (sql-param-sqlvec {:id-order "desc"}))))
-
-      (testing "identifier quoting"
-        (is (= ["select * from \"schema\".\"te\"\"st\""]
-              (identifier-param-sqlvec
-                {:table-name "schema.te\"st"}
-                {:quoting :ansi})))
-        (is (= ["select * from `schema`.`te``st`"]
-              (identifier-param-sqlvec
-                {:table-name "schema.te`st"}
-                {:quoting :mysql})))
-        (is (= ["select * from [schema].[te]]st]"]
-              (identifier-param-sqlvec
-                {:table-name "schema.te]st"}
-                {:quoting :mssql})))
-        (is (= ["select \"test\".\"id\", \"test\".\"name\" from test"]
-              (identifier-param-list-sqlvec
-                {:columns ["test.id", "test.name"]}
-                {:quoting :ansi})))
-        (is (= ["select `test`.`id`, `test`.`name` from test"]
-              (identifier-param-list-sqlvec
-                {:columns ["test.id", "test.name"]}
-                {:quoting :mysql})))
-        (is (= ["select [test].[id], [test].[name] from test"]
-              (identifier-param-list-sqlvec
-                {:columns ["test.id", "test.name"]}
-                {:quoting :mssql}))))
-
 
       (testing "database commands/queries"
         (is (= 0 (create-test-table db)))
@@ -136,6 +134,4 @@
 
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
-        (is (= 0 (drop-test-table db))))
-      )))
-
+        (is (= 0 (drop-test-table db)))))))
