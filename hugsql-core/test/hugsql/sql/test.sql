@@ -24,7 +24,7 @@ where id in (:v*:ids)
 -- :name tuple-param
 -- :doc Tuple Param
 select * from test
-where id in :t:ids
+where (id, name) = :tuple:id-name
 
 -- :name tuple-param-list
 -- :doc Tuple Param List
@@ -55,6 +55,9 @@ create table test (
 
 -- :name insert-into-test-table :! :n
 insert into test (id, name) values (:id, :name)
+
+-- :name insert-multi-into-test-table :! :n
+insert into test (id, name) values :tuple*:values
 
 -- :name update-test-table :! :n
 update test set name = :name where id = :id

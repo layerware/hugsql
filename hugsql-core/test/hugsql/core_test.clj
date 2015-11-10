@@ -3,7 +3,8 @@
             [hugsql.core :as hugsql]
             [hugsql.adapter]
             [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+            [hugsql.adapter.clojure-jdbc :as cj-adapter])
+  (:import [clojure.lang ExceptionInfo]))
 
 (def adapters
   [(cjj-adapter/hugsql-adapter-clojure-java-jdbc)
@@ -53,6 +54,12 @@
     (hugsql/def-db-fns "hugsql/sql/test.sql")
     (hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
     (is (= nil hugsql/adapter)))
+
+  (testing "sql file does not exist/can't be read"
+    ;; Some eval/quote weirdness here to deal with macro throwing
+    ;; the exception upon compile; this defers compile for test
+    (is (thrown-with-msg? ExceptionInfo #"Can not read file"
+          (eval '(hugsql.core/def-db-fns "non/existent/file.sql")))))
   
   (doseq [[db-name db] dbs]
 
@@ -76,8 +83,8 @@
               (multi-value-params-sqlvec {:id 1 :name "Ed"})))
         (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
               (value-list-param-sqlvec {:ids [1,2,3]})))
-        (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
-              (tuple-param-sqlvec {:ids [1,2,3]})))
+        (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
+              (tuple-param-sqlvec {:id-name [1 "A"]})))
         (is (= ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
               (tuple-param-list-sqlvec {:people [[1 "Ed"] [2 "Al"] [3 "Bo"]]})))
         (is (= ["select * from test"]
@@ -118,6 +125,15 @@
         (is (= 0 (create-test-table db)))
         (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
         (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+        ;; tuple use is not supported by certain dbs
+        (when (not-any? #(= % db-name) [:derby :sqlite :hsqldb])
+          (is (= [{:id 1 :name "A"}] (tuple-param db {:id-name [1 "A"]}))))
+
+        ;; only hsqldb appears to not support multi-insert values for :tuple*
+        (when (not (= db-name :hsqldb))
+          (is (= 3 (insert-multi-into-test-table db {:values [[4 "D"] [5 "E"] [6 "F"]]}))))
+
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
         (is (= 0 (drop-test-table db))))

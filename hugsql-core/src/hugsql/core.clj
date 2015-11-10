@@ -39,7 +39,10 @@
       (condp isa? file
         java.io.File file ; already file
         java.net.URL file ; already resource
-        (io/resource file) ; assume resource
+        ; assume resource path (on classpath)
+        (if-let [f (io/resource file)]
+          f
+          (throw (ex-info (str "Can not read file: " file) {}))) 
         ))))
 
 (defn ^:no-doc prepare-sql
@@ -64,7 +67,11 @@
         params (flatten (remove empty? (map rest applied)))]
     (apply vector sql params)))
 
-(def ^:private default-options {:quoting :off})
+(def ^:private default-sqlvec-options
+  {:quoting :off
+   :fn-suffix "-sqlvec"})
+
+(def ^:private default-db-options {:quoting :off})
 
 (defn- str->key
   [str]
@@ -111,17 +118,22 @@
 (defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
 
 (defmacro def-sqlvec-fns
-  "Given a hugsql SQL file, define the <query-name>-sqlvec
-   functions that return the vector of SQL and parameters.
+  "Given a HugSQL SQL file, define the <name>-sqlvec functions that
+   return the vector of SQL and parameters.
    (e.g., [\"select * from test where id = ?\" 42])
 
-   The likely use case for the sqlvec format is for
-   clojure.java.jdbc/query,execute and
-   clojure.jdbc/fetch,execute -- both libraries use this
-   sqlvec convention.
+  Usage:
 
-   Replacement of value parameters is deferred to the
-   underlying library."
+   (def-sqlvec-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) is a hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :fn-suffix \"-sqlvec\" (default)
+
+   :fn-suffix is appended to the defined function names to
+   differentiate them from the functions defined by def-db-fns."
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    `(do
@@ -130,7 +142,7 @@
                 nam (symbol (str (first (:name hdr)) "-sqlvec"))
                 doc (str (first (:doc hdr)) " (sqlvec)")
                 sql (:sql d)
-                opt (merge default-options options)]
+                opt (merge default-sqlvec-options options)]
             `(defn ~nam
                ~doc
                ([] (~nam {} {}))
@@ -149,7 +161,7 @@
                 nam (symbol (first (:name hdr)))
                 doc (or (first (:doc hdr)) "")
                 sql (:sql d)
-                opt (merge default-options options)
+                opt (merge default-db-options options)
                 cmd (hugsql-command-fn (command-sym hdr))
                 res (hugsql-result-fn (result-sym hdr))]
             `(defn ~nam
@@ -163,4 +175,4 @@
                         (~cmd a# ~'db
                               (prepare-sql ~sql ~'param-data o#)
                               o#)
-                        o#)))))))));
+                        o#)))))))))
