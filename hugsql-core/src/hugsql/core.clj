@@ -207,8 +207,11 @@
                ([~'db ~'param-data ~'options]
                 (let [o# (merge ~opt ~'options)
                       a# (or (:adapter o#) (get-adapter))]
-                  (~res a#
-                        (~cmd a# ~'db
-                              (prepare-sql ~sql ~'param-data o# a#)
-                              o#)
-                        o#)))))))))
+                  (try
+                    (~res a#
+                      (~cmd a# ~'db
+                        (prepare-sql ~sql ~'param-data o# a#)
+                        o#)
+                      o#)
+                    (catch Exception e#
+                      (adapter/on-exception a# e#)))))))))))
