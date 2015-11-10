@@ -24,7 +24,10 @@
     result)
 
   (result-raw [this result options]
-    result))
+    result)
+
+  (on-exception [this exception]
+    (throw exception)))
 
 (defn hugsql-adapter-clojure-jdbc []
   (->HugsqlAdapterClojureJdbc))
