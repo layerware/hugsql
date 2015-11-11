@@ -1,0 +1,93 @@
+body {
+    position: relative;
+    font-size: 16px;
+    color: #444444;
+}
+
+code, kbd, pre, samp {
+    font-family: Inconsolata;
+    background-color: #111111;
+    color: #eeeeee;
+}
+
+code {
+    font-size: 1em;
+    color: #9103A9;
+    background-color: #f0f0f0;
+}
+
+h3, h4, h5 {
+    margin-top: 2em;
+}
+
+.xtra-top {
+    margin-top: 2em;
+}
+
+.navbar {
+    border-radius: 0px;
+}
+
+.logo {
+    padding: 4px;
+    height: 64px;
+}
+
+.doc-nav {
+    font-size: 0.86em;
+}
+
+.doc-nav.affix {
+    top: 40px;
+}
+.doc-nav.affix-bottom {
+    position: absolute;
+    bottom: 100px;
+}
+
+.doc-nav .nav>li>a {
+    padding: 0em;
+    padding-left: 0.5em;
+}
+
+.doc-nav .nav .nav>li>a {
+    padding: 0em;
+    padding-left: 2em;
+}
+
+.doc-nav .nav .nav .nav>li>a {
+    padding: 0em;
+    padding-left: 3em;
+}
+
+.doc-nav .nav>li.active>a,
+.doc-nav .nav .nav>li.active>a,
+.doc-nav .nav .nav .nav>li.active>a {
+    color: #4CAF50;
+    background: #fcfcfc;
+}
+
+.doc-nav .nav>li.active>a {
+    border-left: 4px solid #4CAF50;
+}
+
+.doc-nav .nav .nav>li.active>a {
+    border-left: 2px solid #4CAF50;
+    margin-left: 2px;
+    padding-left: -2px;
+}
+
+.doc-nav .nav .nav .nav>li.active>a {
+    border-left: 1px solid #4CAF50;
+    margin-left: 3px;
+    padding-left: -3px
+}
+
+
+
+pre {
+    padding: 1em;
+    line-height: 1em;
+    font-size: 1.1em;
+    border-radius: 8px;
+}

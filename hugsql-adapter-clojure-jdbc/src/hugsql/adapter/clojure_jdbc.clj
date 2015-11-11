@@ -8,11 +8,11 @@
   adapter/HugsqlAdapter
   (execute
     [this db sqlvec options]
-    (jdbc/execute db sqlvec))
+    (apply jdbc/execute db sqlvec (:command-options options)))
 
   (query
     [this db sqlvec options]
-    (jdbc/fetch db sqlvec))
+    (apply jdbc/fetch db sqlvec (:command-options options)))
 
   (result-one [this result options]
     (first result))
@@ -24,7 +24,10 @@
     result)
 
   (result-raw [this result options]
-    result))
+    result)
+
+  (on-exception [this exception]
+    (throw exception)))
 
 (defn hugsql-adapter-clojure-jdbc []
   (->HugsqlAdapterClojureJdbc))

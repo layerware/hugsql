@@ -1,6 +1,10 @@
+-- testing
+
 -- :name no-params-select
 -- :doc No params
 select * from test
+
+-- testing
 
 -- :name one-value-param
 -- :doc One value param
@@ -16,6 +20,16 @@ and name = :name
 -- :doc Value List Param
 select * from test
 where id in (:v*:ids)
+
+-- :name tuple-param
+-- :doc Tuple Param
+select * from test
+where (id, name) = :tuple:id-name
+
+-- :name tuple-param-list
+-- :doc Tuple Param List
+insert into test (id, name)
+values :t*:people
 
 -- :name identifier-param
 -- :doc Identifier param
@@ -42,11 +56,18 @@ create table test (
 -- :name insert-into-test-table :! :n
 insert into test (id, name) values (:id, :name)
 
+-- :name insert-multi-into-test-table :! :n
+insert into test (id, name) values :tuple*:values
+
 -- :name update-test-table :! :n
 update test set name = :name where id = :id
 
 -- :name select-one-test-by-id :? :1
 select * from test where id = :id
+
+-- :name select-ordered :?
+select :i*:cols from test
+order by :i*:sort-by
 
 -- :name drop-test-table :! :n
 -- :doc Drop test table

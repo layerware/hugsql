@@ -251,7 +251,7 @@
 
             ;; all else is SQL
             :else
-            (if (empty? hdr)
+            (if (and (> (.length sb) 0) (empty? hdr))
               (parse-error rdr (str "Encountered SQL with no hugsql header"))
               (recur hdr sql (sb-append sb c) all))))))))
 

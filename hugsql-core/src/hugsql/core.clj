@@ -5,7 +5,7 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
-(def ^:private adapter nil)
+(def ^:no-doc adapter nil)
 
 (defn set-adapter!
   "Set a global adapter."
@@ -13,8 +13,10 @@
   (alter-var-root #'adapter (constantly the-adapter)))
 
 (defn ^:no-doc get-adapter
+  "Get an adapter.  Sets default
+   hugsql.adapter.clojure-java-jdbc 
+   adapter if no adapter is set."
   []
-  ;; nothing set yet? set default adapter
   ;; DEV NOTE: I don't really like dynamically eval'ing
   ;; and require'ing here, but I do prefer to have:
   ;; 1) an easy-path/just-works default adapter
@@ -37,8 +39,24 @@
       (condp isa? file
         java.io.File file ; already file
         java.net.URL file ; already resource
-        (io/resource file) ; assume resource
+        ; assume resource path (on classpath)
+        (if-let [f (io/resource file)]
+          f
+          (throw (ex-info (str "Can not read file: " file) {}))) 
         ))))
+
+(defn ^:no-doc validate-parameters!
+  "Ensure SQL template parameters match provided param-data,
+   and send or throw an exception if mismatch.  If maybe-adapter is
+   not nil, then send exception to the adapter, otherwise, throw here."
+  [sql-template param-data maybe-adapter]
+  (doseq [k (map :name (filter map? sql-template))]
+    (when-not (contains? param-data k)
+      (let [e (ex-info
+                (str "Parameter Mismatch: " k " parameter data not found.") {})]
+        (if maybe-adapter
+          (adapter/on-exception maybe-adapter e)
+          (throw e))))))
 
 (defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser)
@@ -52,17 +70,24 @@
    as identifiers and keywords.  For value parameter types,
    we replace use the jdbc prepared statement syntax of a
    '?' to placehold for the value."
-  [sql-template param-data options]
-  (let [applied (mapv
-                  #(if (string? %)
-                     [%]
-                     (parameters/apply-hugsql-param % param-data options))
-                  sql-template)
-        sql    (string/join "" (map first applied))
-        params (flatten (remove empty? (map rest applied)))]
-    (apply vector sql params)))
+  ([sql-template param-data options]
+   (prepare-sql sql-template param-data options nil))
+  ([sql-template param-data options maybe-adapter]
+   (validate-parameters! sql-template param-data maybe-adapter)
+   (let [applied (mapv
+                   #(if (string? %)
+                      [%]
+                      (parameters/apply-hugsql-param % param-data options))
+                   sql-template)
+         sql    (string/join "" (map first applied))
+         params (flatten (remove empty? (map rest applied)))]
+     (apply vector sql params))))
 
-(def ^:private default-options {:quoting :off})
+(def ^:private default-sqlvec-options
+  {:quoting :off
+   :fn-suffix "-sqlvec"})
+
+(def ^:private default-db-options {:quoting :off})
 
 (defn- str->key
   [str]
@@ -109,17 +134,34 @@
 (defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
 
 (defmacro def-sqlvec-fns
-  "Given a hugsql SQL file, define the <query-name>-sqlvec
-   functions that return the vector of SQL and parameters.
-   (e.g., [\"select * from test where id = ?\" 42])
+  "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
+  current namespace.  Returns sqlvec format: a vector of SQL and
+  parameter values. (e.g., [\"select * from test where id = ?\" 42])
 
-   The likely use case for the sqlvec format is for
-   clojure.java.jdbc/query,execute and
-   clojure.jdbc/fetch,execute -- both libraries use this
-   sqlvec convention.
+  Usage:
 
-   Replacement of value parameters is deferred to the
-   underlying library."
+   (def-sqlvec-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :fn-suffix \"-sqlvec\" (default)
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: \"identifier\"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
+
+   :fn-suffix is appended to the defined function names to
+   differentiate them from the functions defined by def-db-fns."
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    `(do
@@ -128,7 +170,7 @@
                 nam (symbol (str (first (:name hdr)) "-sqlvec"))
                 doc (str (first (:doc hdr)) " (sqlvec)")
                 sql (:sql d)
-                opt (merge default-options options)]
+                opt (merge default-sqlvec-options options)]
             `(defn ~nam
                ~doc
                ([] (~nam {} {}))
@@ -137,8 +179,39 @@
                 (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
 
 (defmacro def-db-fns
-  "Given a hugsql SQL file, define the database
-   query/execute functions"
+  "Given a HugSQL SQL file, define the database
+   functions in the current namespace.
+
+   Usage:
+
+   (def-db-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :adapter adapter }
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: \"identifier\"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
+
+   :adapter specifies the HugSQL adapter to use for all defined
+   functions. The default adapter used is
+   (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
+   when :adapter is not given.
+
+   See also hugsql.core/set-adapter! to set adapter for all def-db-fns
+   calls.  Also, :adapter can be specified for individual function
+   calls (overriding set-adapter! and the :adapter option here)."
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(do
@@ -147,18 +220,24 @@
                 nam (symbol (first (:name hdr)))
                 doc (or (first (:doc hdr)) "")
                 sql (:sql d)
-                opt (merge default-options options)
+                opt (merge default-db-options options)
                 cmd (hugsql-command-fn (command-sym hdr))
-                res (hugsql-result-fn (result-sym hdr))
-                adp (or (:adapter opt) (get-adapter))]
+                res (hugsql-result-fn (result-sym hdr))]
             `(defn ~nam
                ~doc
                ([~'db] (~nam ~'db {} {}))
                ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
-               ([~'db ~'param-data ~'options]
-                (let [o# (merge ~opt ~'options)]
-                  (~res ~adp
-                        (~cmd ~adp ~'db
-                              (prepare-sql ~sql ~'param-data o#)
-                              o#)
-                        o#)))))))))
+               ([~'db ~'param-data ~'options & ~'command-options]
+                (let [o# (merge ~opt ~'options)
+                      o# (if (seq ~'command-options)
+                           (assoc o# :command-options ~'command-options)
+                           o#)
+                      a# (or (:adapter o#) (get-adapter))]
+                  (try
+                    (~res a#
+                      (~cmd a# ~'db
+                        (prepare-sql ~sql ~'param-data o# a#)
+                        o#)
+                      o#)
+                    (catch Exception e#
+                      (adapter/on-exception a# e#)))))))))))

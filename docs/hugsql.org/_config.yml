@@ -1,0 +1,16 @@
+# Site settings
+title: HugSQL Documentation
+description: "HugSQL documentation site"
+baseurl: ""
+url: "http://hugsql.org"
+
+# Build settings
+markdown: kramdown
+permalink: pretty
+
+host: 127.0.0.1
+port: 7501
+highlighter: pygments
+include: [./css ./img ./js]
+exclude: [publish]
+

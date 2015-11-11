@@ -19,4 +19,7 @@
     "Result: returns integer of affected rows/records")
 
   (result-raw [this result options]
-    "Result: returns raw result, untouched"))
+    "Result: returns raw result, untouched")
+
+  (on-exception [this exception]
+    "Exception handler allows adapter to redirect exceptions from HugSQL"))
