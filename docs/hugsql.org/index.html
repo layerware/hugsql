@@ -1,0 +1,1430 @@
+---
+layout: default
+page: docs
+---
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-lg-3 xtra-top scrollspy">
+      <nav id="doc-nav" class="doc-nav hidden-print hidden-sm hidden-xs"
+           data-spy="affix" data-offset-top="0" data-offset-bottom="100">
+        <ul class="nav">
+          <li><a href="#introduction">Introduction</a></li>
+          <li><a href="#install">Installation</a></li>
+          <li><a href="#start">Getting Started</a>
+            <ul class="nav">
+              <li><a href="#start-sql">Start with SQL</a></li>
+              <li><a href="#start-clj">Now Some Clojure</a></li>
+            </ul>
+          </li>
+          <li><a href="#using-hugsql">Using HugSQL</a>
+            <ul class="nav">
+              <li><a href="#using-def-db-fns">def-db-fns</a></li>
+              <li><a href="#using-def-sqlvec-fns">def-sqlvec-fns</a></li>
+              <li><a href="#using-ddl">Create,Drop,...(DDL)</a></li>
+              <li><a href="#using-insert">Insert</a></li>
+              <li><a href="#using-update">Update</a></li>
+              <li><a href="#using-delete">Delete</a></li>
+              <li><a href="#using-select">Select</a></li>
+              <li><a href="#using-transactions">Transactions</a></li>
+              <li><a href="#using-advanced">Advanced Usage</a></li>
+            </ul>
+          </li>
+          <li><a href="#detail">HugSQL in Detail</a>
+            <ul class="nav">
+              <li><a href="#sql-file">SQL File Conventions</a></li>
+              <li><a href="#command">Command</a></li>
+              <li><a href="#result">Result</a></li>
+              <li><a href="#param-types">Parameter Types</a>
+                <ul class="nav">
+                  <li><a href="#param-value">SQL Values</a></li>
+                  <li><a href="#param-value-list">SQL Value Lists</a></li>
+                  <li><a href="#param-tuple">SQL Tuples</a></li>
+                  <li><a href="#param-tuple-list">SQL Tuple Lists</a></li>                  
+                  <li><a href="#param-identifier">SQL Identifiers</a></li>
+                  <li><a href="#param-identifier-list">SQL Identifier Lists</a></li>
+                  <li><a href="#param-sql">Raw SQL (Keywords)</a></li>
+                  <li><a href="#param-custom">Custom Parameter Types</a></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li><a href="#adapter">HugSQL Adapters</a>
+            <ul class="nav">
+              <li><a href="#adapter-other">Using Other Adapters</a></li>
+              <li><a href="#adapter-creation">Create an Adapter</a></li>
+              <li><a href="#adapter-community">Adapters from the Community</a></li>
+            </ul>
+          <li><a href="#faq">FAQ</a>
+            <ul class="nav">
+              <li><a href="#faq-yesql">Comparison with Yesql</a></li>
+              <li><a href="#faq-wacky-sql">Does it support my wacky SQL?</a></li>
+              <li><a href="#faq-dsls">What about DSLs for SQL?</a></li>
+            </ul>            
+          </li>
+          <li><a href="#license">License</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="col-lg-1"></div>
+
+    <div class="col-lg-8">
+
+      <h2 id="introduction">HugSQL <img class="pull-right" src="/img/hugsql_alpha_128.png"> </h2>
+
+      <p class="lead"><em>A Clojure library for embracing SQL.</em></p>
+
+      <ul>
+        <li>HugSQL takes the position that SQL is the right tool for the
+          job when working with a relational database.</li>
+        <li>HugSQL uses <a href="#detail">simple conventions</a> in your SQL files to define
+          (at compile time) database functions in your Clojure namespace,
+          creating a clean separation of Clojure and SQL code.</li>
+        <li>HugSQL supports run-time replacement
+          of <a href="#param-value">SQL Value Parameters</a>
+          (e.g., <code>where id =
+          :id</code>), <a href="#param-identifier">SQL
+          Identifiers</a> (i.e. table/column names), and <a href="#param-sql">SQL Keywords</a>.
+          You can also <a href="#param-custom">implement your own parameter types</a>.</li>
+        <li>HugSQL has <a href="#adapter">protocol-based adapters</a> supporting multiple database
+          libraries and ships with adapters for
+          <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a> (default)
+          and <a href="http://funcool.github.io/clojure.jdbc/latest/">clojure.jdbc</a></li>
+      </ul>
+
+
+      <h3 class="page-header" id="install">Installation</h3>
+
+      <p><a href="https://github.com/technomancy/leiningen">Leiningen</a>
+        dependency information:</p>
+
+{% highlight clj %}
+[com.layerware/hugsql "0.3.0"]
+{% endhighlight %}
+
+      <p>You will also need to specify your JDBC driver dependency
+        from one of the following:</p>
+
+      <ul>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.apache.derby%22%20AND%20a%3A%22derby%22">Apache Derby</a></li>
+        <li><a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.h2database%22%20AND%20a%3A%22h2%22">H2</a></li>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22hsqldb%22%20AND%20a%3A%22hsqldb%22">HSQLDB</a></li>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22net.sourceforge.jtds%22%20AND%20a%3A%22jtds%22">MS SQL Server jTDS</a></li>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22mysql%22%20AND%20a%3A%22mysql-connector-java%22">MySQL</a></li>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.postgresql%22%20AND%20a%3A%22postgresql%22">Postgresql</a></li>
+        <li><a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.xerial%22%20AND%20a%3A%22sqlite-jdbc%22">SQLite</a></li>
+      </ul>
+
+      <p>For example, the Postgresql driver:</p>
+
+{% highlight clj %}
+[org.postgresql/postgresql "9.4-1201-jdbc41"]
+{% endhighlight %}
+
+      <p><em>HugSQL defaults to using
+          the <code>clojure.java.jdbc</code> library to run underlying
+          database commands.  If you would prefer to use another
+          underlying database library instead
+          of <code>clojure.java.jdbc</code>, such
+          as <code>clojure.jdbc</code>, please see <a href="#adapter">HugSQL Adapters</a></em></p>
+
+      <h3 class="page-header" id="start">Getting Started</h3>
+
+      <p>This documentation make use
+          of <a href="https://github.com/layerware/hugsql/tree/master/examples/princess-bride"><em>The
+          Princess Bride</em> example application</a> in the HugSQL
+          repository.  Feel free to view or clone the repo and run the
+        application with <code>lein as-you-wish</code>.</p>
+
+        <p><img src="/img/princess_bride_hug.jpg" height="200" title="The Princess Bride"></p>
+
+      <h4 id="start-sql">Start with SQL</h4>
+
+      <p>HugSQL provides a clean separation of SQL and Clojure code.
+        You can start developing with HugSQL by deciding where to put
+        your SQL files in your application.</p>
+
+      <p>HugSQL can find any SQL file in your classpath.  You can
+        place your SQL files under <code>resources</code>,
+        <code>src</code>, or elsewhere in your classpath.</p>
+
+      <p>Our example application puts SQL files under <code>src</code>:</p>
+
+<pre>
+  .../examples/princess-bride $ tree
+  .
+  ├── LICENSE
+  ├── project.clj
+  ├── README.md
+  ├── resources
+  ├── src
+  │   └── princess_bride
+  │       ├── core.clj
+  │       ├── db
+  │       │   ├── characters.clj
+  │       │   ├── quotes.clj
+  │       │   └── sql
+  │       │       ├── characters.sql
+  │       │       └── quotes.sql
+  │       └── db.clj
+</pre>
+
+<p>Our SQL for <em>The Princess Bride</em> characters is as follows:</p>
+
+{% highlight sql %}
+
+-- src/princess_bride/db/sql/characters.sql
+-- The Princess Bride Characters
+
+-- :name create-characters-table
+-- :command :execute
+-- :result :raw
+-- :doc Create characters table
+--  auto_increment and current_timestamp are
+--  H2 Database specific (adjust to your DB)
+create table characters (
+  id         integer auto_increment primary key, 
+  name       varchar(40),
+  specialty  varchar(40),
+  created_at timestamp not null default current_timestamp
+)
+
+/* ...snip... */
+
+-- A :result value of :n below will return affected rows:
+-- :name insert-character :! :n
+-- :doc Insert a single character returning affected row count
+insert into characters (name, specialty)
+values (:name, :specialty)
+
+-- :name insert-characters :! :n
+-- :doc Insert multiple characters with :tuple* parameter type
+insert into characters (name, specialty)
+values :tuple*:characters
+
+/* ...snip... */
+
+-- A ":result" value of ":1" specifies a single record
+-- (as a hashmap) will be returned
+-- :name character-by-id :? :1
+-- :doc Get character by id
+select * from characters
+where id = :id
+
+-- Let's specify some columns with the
+-- identifier list parameter type :i* and
+-- use a value list parameter type :v* for IN()
+-- :name characters-by-ids-specify-cols :? :*
+-- :doc Characters with returned columns specified
+select :i*:cols from characters
+where id in (:v*:ids)
+
+{% endhighlight %}
+
+      <p>HugSQL uses special SQL comments to accomplish its work.
+      These conventions are explained later in this document. Keep
+      reading!</p>
+
+      <h4 id="start-clj">Now Some Clojure</h4>
+
+      <p>Now we write a bit of Clojure to define our database functions.</p>
+
+{% highlight clj %}
+
+(ns princess-bride.db.characters
+  (:require [hugsql.core :as hugsql]))
+
+;; The path is relative to the classpath (not proj dir!),
+;; so "src" is not included in the path.
+;; The same would apply if the sql was under "resources/..."
+;; Also, notice the under_scored path compliant with
+;; Clojure file paths for hyphenated namespaces
+(hugsql/def-db-fns "princess_bride/db/sql/characters.sql")
+
+
+;; For most HugSQL usage, you will not need the sqlvec functions.
+;; However, sqlvec versions are useful during development and
+;; for advanced usage with database functions.
+(hugsql/def-sqlvec-fns "princess_bride/db/sql/characters.sql")
+
+{% endhighlight %}
+
+      <p>The <code>princess-bride.db.characters</code> namespace now
+      has several functions defined based on the SQL statements in the
+      SQL file.  Here's an example of the sqlvec output and a sample
+      run of the <code>characters-by-ids-specify-cols</code> function:</p>
+
+{% highlight clj %}
+
+(characters/characters-by-ids-specify-cols-sqlvec
+  {:ids [1 2], :cols ["name" "specialty"]})  ;;=>
+["select name, specialty from characters
+  where id in (?,?)"
+,1
+,2]
+
+(characters/characters-by-ids-specify-cols db
+  {:ids [1 2], :cols ["name" "specialty"]})  ;;=>
+({:name "Westley", :specialty "love"}
+ {:name "Buttercup", :specialty "beauty"})
+
+{% endhighlight %}
+
+      <p>You've only scratched the surface of HugSQL's functionality.  Keep
+        reading for full usage examples.</p>
+
+      
+
+      <h3 class="page-header" id="using-hugsql">Using HugSQL</h3>
+
+      <p>This section provides practical usage examples with HugSQL.
+        Most examples come
+        from <a href="https://github.com/layerware/hugsql/tree/master/examples/princess-bride"><em>The
+        Princess Bride</em> example application</a> in the HugSQL
+        repository.</p>
+
+      <h4 id="using-def-db-fns">def-db-fns</h4>
+
+      <p><code>hugsql.core/def-db-fns</code> is a macro that creates
+      functions in your Clojure namespace based on the SQL queries and
+        statements in your HugSQL-flavored SQL file.</p>
+
+      <p><code>hugsql.core/def-db-fns</code> doc:</p>
+
+{% highlight text %}
+=> (doc hugsql.core/def-db-fns)
+-------------------------
+hugsql.core/def-db-fns
+([file] [file options])
+Macro
+  Given a HugSQL SQL file, define the database
+   functions in the current namespace.
+
+   Usage:
+
+   (def-db-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :adapter adapter }
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: "identifier"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
+
+   :adapter specifies the HugSQL adapter to use for all defined
+   functions. The default adapter used is
+   (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
+   when :adapter is not given.
+
+   See also hugsql.core/set-adapter! to set adapter for all def-db-fns
+   calls.  Also, :adapter can be specified for individual function
+   calls (overriding set-adapter! and the :adapter option here).
+{% endhighlight %}
+
+      <p>The functions defined by <code>def-db-fns</code> have the following arities:</p>
+
+{% highlight clj %}
+      [db]
+      [db param-data]
+      [db param-data options & command-options]
+{% endhighlight %}
+
+      <p>where:</p>
+
+      <ul>
+        <li><code>db</code> is a db-spec, a connection, a connection
+        pool, or a transaction object</li>
+        <li><code>param-data</code> is a hashmap of parameter data
+        where the keys match parameter placeholder names in your
+          SQL</li>
+        <li><code>options</code> is a hashmap of HugSQL-specific
+          options (e.g., <code>:quoting</code> and <code>:adapter</code>)</li>
+        <li><code>& command-options</code> is a variable number of
+        options to be passed down into the underlying adapter and
+          database library functions.  See <a href="#using-advanced">Advanced Usage</a> for more detail.</li>
+        </ul>
+      
+      <h4 id="using-def-sqlvec-fns">def-sqlvec-fns</h4>
+
+      <p>HugSQL generates a format internally known
+        as <b>sqlvec</b>. The <b>sqlvec</b> format is a vector with an
+        SQL string in the first position containing any <code>?</code>
+        placeholders, followed by any number of parameter values to be
+        applied to the SQL in positional order.  For example:
+
+{% highlight clj %}
+["select * from characters where id = ?", 2]
+{% endhighlight %}
+
+      <p>The <b>sqlvec</b> format is a convention used
+        by <code>clojure.java.jdbc</code> and
+        <code>clojure.jdbc</code> for value parameter replacement.
+        Because of the underlying support in these libraries and the
+        JDBC-driver-specific issues for data type handling, HugSQL
+        also uses the <b>sqlvec</b> format by default for value
+        parameters.</p>
+
+      <p>HugSQL provides the <code>hugsql.core/def-sqlvec-fns</code>
+        macro to create functions returning the <b>sqlvec</b> format.
+        The created functions have an <code>-sqlvec</code> suffix by
+        default, though this is configurable with
+        the <code>:fn-suffix</code> option.  These functions are
+        helpful during development/debugging and for the purpose of
+        using the parameter-replacing functionality of HugSQL without
+        using the built-in adapter database functions to execute
+        queries.</p>
+
+      <p><code>hugsql.core/def-sqlvec-fns</code> doc:</p>
+
+{% highlight text %}
+=> (doc hugsql.core/def-sqlvec-fns)
+-------------------------
+hugsql.core/def-sqlvec-fns
+([file] [file options])
+Macro
+  Given a HugSQL SQL file, define the <name>-sqlvec functions in the
+  current namespace.  Returns sqlvec format: a vector of SQL and
+  parameter values. (e.g., ["select * from test where id = ?" 42])
+
+  Usage:
+
+   (def-sqlvec-fns file options?)
+
+   where:
+    - file is a file in your classpath
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :fn-suffix "-sqlvec" (default)
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: "identifier"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
+
+   :fn-suffix is appended to the defined function names to
+   differentiate them from the functions defined by def-db-fns.
+{% endhighlight %}
+
+      <h4 id="using-ddl">Create,Drop,... (DDL)</h4>
+
+      <p>SQL</p>
+
+{% highlight sql %}
+-- :name create-characters-table
+-- :command :execute
+-- :result :raw
+-- :doc Create characters table
+--  auto_increment and current_timestamp are
+--  H2 Database specific (adjust to your DB)
+create table characters (
+  id         integer auto_increment primary key, 
+  name       varchar(40),
+  specialty  varchar(40),
+  created_at timestamp not null default current_timestamp
+)
+
+/* The create-character-table definition above uses the full,
+long-hand "-- :key :value" syntax to specify the :command and
+:result.  We can save some typing by using the short-hand notation
+as the second and (optionally) third values for the :name.  Below, the
+:! is equivalent to ":command :!", where :! is an alias for
+:execute.  The default :result is :raw when not specified, so
+there is no need to specify it as the third value. */
+
+-- :name drop-characters-table :!
+-- :doc Drop characters table if exists
+drop table if exists characters
+{% endhighlight %}
+
+      <p>Clojure:</p>
+      
+{% highlight clj %}
+(characters/create-characters-table-sqlvec)  ;;=>
+["create table characters (
+    id         integer auto_increment primary key, 
+    name       varchar(40),
+    specialty  varchar(40),
+    created_at timestamp not null default current_timestamp
+  )"]
+
+(characters/create-characters-table db)  ;;=>
+[0]
+
+(characters/drop-characters-table-sqlvec)  ;;=>
+["drop table if exists characters"]
+
+(characters/drop-characters-table db)  ;;=>
+[0]
+      
+{% endhighlight %}
+
+
+      <h4 id="using-insert">Insert</h4>
+
+      <p>SQL</p>
+
+{% highlight sql %}
+-- A :result value of :n below will return affected row count:
+-- :name insert-character :! :n
+-- :doc Insert a single character
+insert into characters (name, specialty)
+values (:name, :specialty)
+
+-- :name insert-characters :! :n
+-- :doc Insert multiple characters with :tuple* parameter type
+insert into characters (name, specialty)
+values :tuple*:characters
+{% endhighlight %}
+
+      <p>Clojure:</p>
+      
+{% highlight clj %}
+(characters/insert-character-sqlvec
+ {:name "Westley", :specialty "love"})  ;;=>
+["insert into characters (name, specialty)
+  values (?, ?)"
+,"Westley"
+,"love"]
+
+(characters/insert-character db
+  {:name "Westley", :specialty "love"})  ;;=>
+1
+
+(characters/insert-character db
+  {:name "Buttercup", :specialty "beauty"})  ;;=>
+1
+
+(characters/insert-characters-sqlvec
+ {:characters
+  [["Vizzini" "intelligence"]
+   ["Fezzik" "strength"]
+   ["Inigo Montoya" "swordmanship"]]})  ;;=>
+["insert into characters (name, specialty)
+  values (?,?),(?,?),(?,?)"
+,"Vizzini"
+,"intelligence"
+,"Fezzik"
+,"strength"
+,"Inigo Montoya"
+,"swordmanship"]
+
+(characters/insert-characters
+ db
+ {:characters
+  [["Vizzini" "intelligence"]
+   ["Fezzik" "strength"]
+   ["Inigo Montoya" "swordmanship"]]})  ;;=>
+3
+{% endhighlight %}
+
+
+        <p><em>What about returning auto-generated IDs or records upon insert?</em></p>
+
+        <p>It is often the case that you want to return the record
+        just inserted or at least the auto-generated ID.  This
+        functionality varies greatly across databases and JDBC
+        drivers, so we do not yet have a built-in solution in
+        HugSQL. However, you do have options:</p>
+
+        <p>You can use your database's SQL support for the RETURNING clause of
+          INSERT.
+          (e.g., <a href="http://www.postgresql.org/docs/current/static/sql-insert.html">Postgresql
+          supports this</a>).  Since you are using SQL to solve the
+          issue, HugSQL should just work.</p>
+        
+         <p>You can also use HugSQL's passthrough command-options (the
+         4th variable-arity argument of your HugSQL functions) to
+         request <code>:return-keys true</code> if you are using the
+         default <code>clojure.java.jdbc</code>
+         adapter. See <a href="#using-advanced">Advanced Usage</a> for
+         a passthrough example.</p>
+
+          
+      <h4 id="using-update">Update</h4>
+
+<p>SQL</p>
+
+{% highlight sql %}
+-- :name update-character-specialty :! :n
+update characters
+set specialty = :specialty
+where id = :id
+{% endhighlight %}
+
+      <p>Clojure:</p>
+      
+{% highlight clj %}
+
+(let [vizzini (characters/character-by-name db {:name "vizzini"})]
+ (characters/update-character-specialty-sqlvec
+  {:id (:id vizzini), :specialty "boasting"}))  ;;=>
+["update characters
+  set specialty = ?
+  where id = ?"
+,"boasting"
+,3]
+
+(let [vizzini (characters/character-by-name db {:name "vizzini"})]
+ (characters/update-character-specialty db
+  {:id (:id vizzini), :specialty "boasting"}))  ;;=>
+1
+      
+{% endhighlight %}
+
+      <h4 id="using-delete">Delete</h4>
+
+<p>SQL</p>
+
+{% highlight sql %}
+-- :name delete-character-by-id :! :n
+delete from characters where id = :id
+{% endhighlight %}
+
+      <p>Clojure:</p>
+      
+{% highlight clj %}
+(let [vizzini (characters/character-by-name db {:name "vizzini"})]
+  (characters/delete-character-by-id-sqlvec {:id (:id vizzini)}))  ;;=>
+["delete from characters where id = ?",3]
+
+(let [vizzini (characters/character-by-name db {:name "vizzini"})]
+  (characters/delete-character-by-id db {:id (:id vizzini)}))  ;;=>
+1      
+{% endhighlight %}      
+
+      <h4 id="using-select">Select</h4>
+
+<p>SQL</p>
+
+{% highlight sql %}
+-- A ":result" value of ":*" specifies a vector of records
+-- (as hashmaps) will be returned
+-- :name all-characters :? :*
+-- :doc Get all characters
+select * from characters
+order by id
+
+-- A ":result" value of ":1" specifies a single record
+-- (as a hashmap) will be returned
+-- :name character-by-id :? :1
+-- :doc Get character by id
+select * from characters
+where id = :id
+
+-- :name character-by-name :? :1
+-- :doc Get character by case-insensitive name
+select * from characters
+where upper(name) = upper(:name)
+
+-- :name characters-by-name-like :?
+-- :doc Get characters by name like, :name-like should include % wildcards
+select * from characters
+where name like :name-like
+
+-- Let's specify some columns with the
+-- identifier list parameter type :i* and
+-- use a value list parameter type :v* for SQL IN()
+-- :name characters-by-ids-specify-cols :? :*
+-- :doc Characters with returned columns specified
+select :i*:cols from characters
+where id in (:v*:ids)
+
+
+{% endhighlight %}
+
+      <p>Clojure:</p>
+      
+{% highlight clj %}
+(characters/all-characters-sqlvec)  ;;=>
+["select * from characters
+  order by id"]
+
+(characters/all-characters db)  ;;=>
+({:id 1,
+  :name "Westley",
+  :specialty "love",
+  :created_at #inst "2015-11-09T19:33:58.472000000-00:00"}
+ {:id 2,
+  :name "Buttercup",
+  :specialty "beauty",
+  :created_at #inst "2015-11-09T19:33:58.492000000-00:00"}
+ {:id 3,
+  :name "Vizzini",
+  :specialty "boasting",
+  :created_at #inst "2015-11-09T19:33:58.530000000-00:00"}
+ {:id 4,
+  :name "Fezzik",
+  :specialty "strength",
+  :created_at #inst "2015-11-09T19:33:58.530000000-00:00"}
+ {:id 5,
+  :name "Inigo Montoya",
+  :specialty "swordmanship",
+  :created_at #inst "2015-11-09T19:33:58.530000000-00:00"})
+
+(characters/character-by-id-sqlvec {:id 1})  ;;=>
+["select * from characters
+  where id = ?"
+,1]
+
+(characters/character-by-id db {:id 1})  ;;=>
+{:id 1,
+ :name "Westley",
+ :specialty "love",
+ :created_at #inst "2015-11-09T19:33:58.472000000-00:00"}
+
+(characters/character-by-name-sqlvec {:name "buttercup"})  ;;=>
+["select * from characters
+  where upper(name) = upper(?)"
+,"buttercup"]
+
+(characters/character-by-name db {:name "buttercup"})  ;;=>
+{:id 2,
+ :name "Buttercup",
+ :specialty "beauty",
+ :created_at #inst "2015-11-09T19:33:58.492000000-00:00"}
+
+(characters/characters-by-name-like-sqlvec {:name-like "%zz%"})  ;;=>
+["select * from characters
+  where name like ?"
+,"%zz%"]
+
+(characters/characters-by-name-like db {:name-like "%zz%"})  ;;=>
+({:id 3,
+  :name "Vizzini",
+  :specialty "boasting",
+  :created_at #inst "2015-11-09T19:33:58.530000000-00:00"}
+ {:id 4,
+  :name "Fezzik",
+  :specialty "strength",
+  :created_at #inst "2015-11-09T19:33:58.530000000-00:00"})
+
+(characters/characters-by-ids-specify-cols-sqlvec
+ {:ids [1 2], :cols ["name" "specialty"]})  ;;=>
+["select name, specialty from characters
+  where id in (?,?)"
+,1
+,2]
+
+(characters/characters-by-ids-specify-cols
+ db
+ {:ids [1 2], :cols ["name" "specialty"]})  ;;=>
+({:name "Westley", :specialty "love"}
+ {:name "Buttercup", :specialty "beauty"})
+{% endhighlight %}
+
+      <h4 id="using-transactions">Transactions</h4>
+
+      <p>The second argument of a function generated
+      by <code>def-db-fns</code> can take a database spec, a
+      connection, a connection pool, or a transaction object. Use your
+      underlying database library to get a transaction object.  Here's
+      an example
+      with <code>clojure.java.jdbc/with-db-transaction</code>:</p>
+
+{% highlight clj %}
+(clojure.java.jdbc/with-db-transaction [tx db]
+  (characters/insert-character tx
+   {:name "Miracle Max", :specialty "miracles"})
+  (characters/insert-character tx
+   {:name "Valerie", :specialty "speech interpreter"}))      
+{% endhighlight %}
+
+      <h4 id="using-advanced">Advanced Usage</h4>
+
+      <p>Each underlying database library and corresponding HugSQL
+        adapter may support additional options for the execute/query
+        commands.  Functions defined by <code>def-db-fns</code> have a
+        variable-arity 4th argument that passes any options through to
+        the underlying database library.</p>
+
+      <p>Below is an assertion from the HugSQL test suite showing a
+      query passing along the <code>:as-arrays?</code> option
+      to <code>clojure.java.jdbc/query</code>.  Please note the
+      required 3rd argument (the HugSQL-specific options) when using
+      this passthrough feature:</p>
+
+{% highlight clj %}
+(is (= [[:name] ["A"] ["B"]]
+      (select-ordered db
+        {:cols ["name"] :sort-by ["name"]} {} :as-arrays? true)))
+{% endhighlight %}
+
+
+      <h3 class="page-header" id="detail">HugSQL in Detail</h3>
+
+      <p>HugSQL encourages SQL, DDL, and DML statements to be stored in SQL
+        files such that you are not concatenating large strings or needing to
+        use leaky-abstraction DSLs in your Clojure projects.</p>
+
+      <p>In order to generate the Clojure functions from your SQL statements,
+        HugSQL requires a simple set of conventions in your SQL files.  These
+        conventions allow HugSQL to:</p>
+
+      <ul>
+        <li>define functions by name</li>
+        <li>add docstrings to defined functions</li>
+        <li>determine how to execute (the command type):
+          <ul>
+            <li>SQL select</li>
+            <li>DDL create table/index/view, drop ...</li>
+            <li>DML insert, update, delete</li>
+            <li>any other statements (e.g. <code>vacuum analyze</code>)</li>
+          </ul>
+        </li>
+        <li>determine the result type:
+          <ul>
+            <li>one row (hash-map)</li>
+            <li>many rows (vector of hash-maps)</li>
+            <li>affected rows</li>
+            <li>any other result you implement</li>
+          </ul>
+        </li>
+        <li>replace parameters for:
+          <ul>
+            <li>Values: <code>where id = :id</code></li>
+            <li>Value lists: <code>where id in (:v*:ids)</code></li>
+            <li>Tuple lists (for multi-insert): <code>values :tuple*:my-records</code></li>
+            <li>SQL identifiers: <code>from :i:table-name</code></li>
+            <li>SQL identifier lists: <code>select :i*:column-names</code></li>
+            <li>SQL keywords: <code>:sql:my-query</code></li>
+          </ul>
+        </li>
+      </ul>
+
+      <h4 id="sql-file">SQL File Conventions</h4>
+
+      <p>HugSQL SQL files contain special single-line comments and multi-line
+        comments in the following forms:</p>
+
+{% highlight sql %}
+      
+ -- :key value1 value2 value3
+ OR
+ /* :key
+ value1
+ value2
+ value3
+ */
+
+{% endhighlight %}
+
+Examples:
+
+{% highlight sql %}
+
+-- regular SQL comment ignored by hugsql
+/*
+regular SQL multi-line comment ignored by hugsql
+*/
+
+-- :name query-get-many :? :*
+-- :doc My query doc string to end of this line
+select * from my_table;
+
+-- :name query-get-one :? :1
+/* :doc
+My multi-line
+comment doc string
+*/
+select * from my_table limit 1
+
+{% endhighlight %}
+
+      <p>HugSQL recognizes the following keys:</p>
+
+      <ul>
+        <li><code>:name</code> name of the function to create and,
+          optionally, the command and result as a shorthand in place
+          of providing these as separate key/value pairs</li>
+        <li><code>:doc</code> docstring for the created function</li>
+        <li><code>:command</code> underlying database command to run</li>
+        <li><code>:result</code> expected result type</li>
+      </ul>
+      
+      <h4 id="command">Command</h4>
+
+      <p>The <code>:command</code> specifies the underlying database command to run for
+        the given SQL.  The two built-in values are:</p>
+
+      <ul>
+        <li><code>:query</code>, or for short, <code>:?</code> query with a result-set (default)</li>
+        <li><code>:execute</code>, or for short, <code>:!</code> any statement</li>
+      </ul>
+
+      <p>These mirror the distinction between <code>query</code> and <code>execute!</code> in the
+          <code>clojure.java.jdbc</code> library and <code>fetch</code> and <code>execute</code> in the
+          <code>clojure.jdbc</code> library.</p>
+
+      <p><code>:query</code> is the default command when no command is specified.</p>
+
+      <p>To save some typing, the command can be specified as the
+          second value for the <code>:name</code> key:</p>
+
+{% highlight sql %}
+-- :name all-characters :?
+{% endhighlight %}
+
+      <p>You can create command functions of your own by implementing a
+        <code>hugsql.core/hugsql-command-fn</code> multimethod.</p>
+      
+      <h4 id="result">Result</h4>
+
+      <p>The <code>:result</code> specifies the expected result type for the given SQL.
+        The available built-in values are:</p>
+
+      <ul>
+        <li><code>:one</code>, or for short, <code>:1</code> one row as a hash-map</li>
+        <li><code>:many</code>, or for short, <code>:*</code> many rows as a vector of hash-maps</li>
+        <li><code>:affected</code>, or for short, <code>:n</code> number of rows affected (inserted/updated/deleted)</li>
+        <li><code>:raw</code> passthrough an untouched result (default)</li>
+      </ul>
+
+      <p><code>:raw</code> is the default when no result is specified.</p>
+
+      <p>To save some typing, the result function can be specified as the third
+        value for the <code>:name</code> key.  You must supply a second command value in
+        order to use this shorthand convention:</p>
+
+{% highlight sql %}
+-- :name all-characters :? :*
+{% endhighlight %}
+
+      
+      <p>You can create result functions of your own by implementing a
+        <code>hugsql.core/hugsql-result-fn</code> multimethod.</p>
+
+
+
+      
+      <h4 id="param-types">Parameter Types</h4>
+
+      <p>Within an SQL statement itself, HugSQL understands several types of
+        parameters that can be passed in during the function call. All
+        parameter types take the form:</p>
+
+{% highlight clj %}
+:param-name
+{% endhighlight %}
+
+<p>OR</p>
+
+{% highlight clj %}
+:param-type:param-name
+{% endhighlight %}
+
+          <p>When a HugSQL-generated function is called, the parameters in an SQL
+          statement are replaced at runtime with the hash-map data passed in as
+          the function's second argument. The keys of the hash-map are matched
+          to the <code>:param-name</code> portion of the parameter. Parameters can be
+          repeated throughout an SQL statement, and all instances of a parameter
+          will be replaced.</p>
+
+          <p>HugSQL recognizes the need for different types of parameters in SQL
+          statements.  Specifically, SQL treats data values differently from
+          identifiers and SQL keywords.  If you are building dynamic queries to
+          select specific columns or choose the <code>order by</code> direction, then a
+          simple value parameter is not sufficient. HugSQL supports value
+          parameters, identifier parameters, and raw sql (keyword) parameters.</p>
+
+          <p>The built-in parameter types are detailed below along with information
+          on extending these types and creating new types.</p>
+
+          <h5 id="param-value">SQL Values</h5>
+
+
+          <p>Value Parameters are replaced at runtime with an
+            appropriate SQL data type for the given Clojure data type.</p>
+
+          <p>HugSQL defers the Clojure-to-SQL conversion to the underlying
+            database driver using the <a href="#sqlvec">sqlvec</a> format.</p>
+
+          <p>Value Parameters' type is <code>:value</code>, or <code>:v</code> for short.</p>
+
+          <p>Value Parameters are the default parameter type, so you can
+            omit the type portion of the parameter placeholder in your SQL
+            statements.</p>
+
+          <p>An example:</p>
+
+{% highlight sql %}
+--:name value-param :? :*
+select * from characters where id = :id
+
+--name value-param-with-param-type :? :*
+select * from characters where id = :v:id
+{% endhighlight %}
+
+      <p>resulting sqlvec:</p>
+
+{% highlight clj %}
+(value-param-sqlvec {:id 42})
+;=> ["select * from characters where id = ?" 42]
+{% endhighlight %}
+
+          
+      <h5 id="param-value-list">SQL Value Lists</h5>
+
+      <p>Value List Parameters are similar to Value Parameters, but work on
+        lists of values needed for <code>in (...)</code> queries.</p>
+
+      <p>Value List Parameters' type is <code>:value*</code>, or <code>:v*</code> for short.</p>
+
+      <p>The <code>*</code> indicates a sequence of zero or more values.</p>
+
+      <p>Each value in the list is treated as a value parameter, and the
+        list is joined with a comma.</p>
+
+{% highlight sql %}
+--:name value-list-param :? :*
+select * from characters where name in (:v*:names)
+{% endhighlight %}
+
+ <p>resulting sqlvec:</p>
+
+{% highlight clj %}
+(value-list-param-sqlvec {:names ["Fezzik" "Vizzini"]})
+;=> ["select * from characters where name in (?,?)" "Fezzik" "Vizzini"]
+{% endhighlight %}
+
+
+      <h5 id="param-tuple">SQL Tuples</h5>
+
+      <p>Tuple Parameters are similar to Value List Parameters in
+        that they both work with lists of values.</p>  Tuple
+        Parameters differ in that they enclose their values in
+        parentheses.  Additionally, while a Tuple Parameter can be
+        used like a Value List Parameter (e.g., for an <code>in
+        ()</code> clause), it is generally understood that a Tuple
+        Parameter's data values may have different data types, but
+        Value Parameters values are of the same data type.</p>
+
+      <p>Tuple Parameters' type is <code>:tuple</code>.
+
+      <p>Each value in the list is treated as a Value Parameter. The
+      list is joined with a comma and enclosed in parentheses.</p>
+
+{% highlight sql %}
+-- :name tuple-param
+-- :doc Tuple Param
+select * from test
+where (id, name) = :tuple:id-name
+{% endhighlight %}
+
+ <p>resulting sqlvec:</p>
+
+{% highlight clj %}
+(tuple-param-sqlvec {:id-name [1 "A"]})
+;=> ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
+{% endhighlight %}
+
+      <p><em>The use of a tuple in the above manner is not supported
+      by all databases.  Postgresql, MySQL, and H2 support it.  Derby,
+      HSQLDB, and SQLite do not support it.</em></p>
+
+ 
+      <h5 id="param-tuple-list">SQL Tuple Lists</h5>
+
+      <p>Tuple List Parameters support lists of tuples.  This is specifically useful for multi-record insert.</p>
+
+      <p>Tuple List Parameters' type is <code>:tuple*</code>.
+
+      <p>Each tuple in the list is treated as a Tuple Parameter. The list is joined with a comma.</p>
+
+{% highlight sql %}
+-- :name tuple-param-list
+-- :doc Tuple Param List
+insert into test (id, name)
+values :t*:people
+{% endhighlight %}
+
+ <p>resulting sqlvec:</p>
+
+{% highlight clj %}
+(tuple-param-list-sqlvec {:people [[1 "Ed"] [2 "Al"] [3 "Bo"]]})
+;=> ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
+{% endhighlight %}
+
+
+      <p><em>The use of a tuple list in the above manner is not
+      supported by all databases.  Postgresql, MySQL, H2, Derby, and
+      SQLite support it. HSQLDB does not support it.</em></p>
+ 
+      <h5 id="param-identifier">SQL Identifiers</h5>
+
+      <p>Identifier Parameters are replaced at runtime with an
+        optionally-quoted SQL identifier.</p>
+
+      <p>Identifier Parameters' type is <code>:identifier</code>, or <code>:i</code> for short.
+
+{% highlight sql %}
+--:name identifier-param :? :*
+select * from :i:table-name
+{% endhighlight %}
+
+<p>resulting sqlvec:</p>
+
+{% highlight clj %}
+(identifier-param-sqlvec {:table-name "example"})
+;=> ["select * from example"]
+{% endhighlight %}
+
+          <p>By default, identifiers are not quoted.  You can specify your desired
+          quoting as an option when defining your functions or as an option when
+          calling your function.</p>
+
+          <p>Valid <code>:quoting</code> options are:</p>
+
+          <ul>
+            <li><code>:ansi</code> double-quotes: <code>"identifier"</code></li>
+            <li><code>:mysql</code> backticks: <code>`identifier`</code></li>
+            <li><code>:mssql</code> square brackets: <code>[identifier]</code></li>
+            <li><code>:off</code> no quoting (default)</li>
+          </ul>
+
+      <p>Identifiers containing a period/dot <code>.</code> are split, quoted separately,
+          and then rejoined.  This supports <code>myschema.mytable</code> conventions.
+
+{% highlight clj %}
+(hugsql.core/def-db-fns "path/to/good.sql" {:quoting :ansi})
+{% endhighlight %}
+
+{% highlight clj %}
+(identifier-param-sqlvec {:table-name "example"})
+;=> ["select * from \"example\""]
+{% endhighlight %}
+
+
+{% highlight clj %}
+(identifier-param-sqlvec {:table-name "schema1.example"} {:quoting :mssql})
+;=> ["select * from [schema1].[example]"]
+{% endhighlight %}
+
+
+      
+        <h5 id="param-identifier-list">SQL Identifier Lists</h5>
+
+
+        <p>Identifier List Parameters are similar to identifier
+          parameters, but work on lists of identifiers.  You might use
+          these to replace column lists found
+          in <code>select</code>, <code>group by</code>, <code>order
+          by</code> clauses.</p>
+
+        <p>Identifier List Parameter's type
+          is <code>:identifier*</code>, or <code>:i*</code> for
+          short.</p>
+
+        <p>The <code>*</code> indicates a sequence of zero or more
+          identifiers.</p>
+
+        <p>Each identifier in the list is treated as an identifier
+          parameter, and the list is joined with a comma.</p>
+
+{% highlight sql %}
+--:name identifier-list-param :? :*
+select :i*:column-names, count(*) as population
+from example
+group by :i*:column-names
+order by :i*:column-names
+{% endhighlight %}
+
+{% highlight clj %}
+(identifier-list-param-sqlvec {:column-names ["state" "city"]})
+;=> ["select state, city, count(*) as population\n
+;     from example\n
+;     group by state, city\n
+;     order by state, city"]
+{% endhighlight %}
+
+        <h5 id="param-sql">Raw SQL (Keywords)</h5>
+
+
+        <p>Raw SQL Parameters allow full, un-quoted,
+          parameter replacement with raw SQL, allowing you to
+          parameterize SQL keywords (and any other SQL parts). You
+          might use this to set <code>asc</code> or <code>desc</code>
+          on an <code>order by</code> column clause, or you can use
+          this to compose many SQL statements into a single statement.</p>
+
+        <p><em>You should take special care to always properly validate any incoming
+          user input before using Raw SQL Parameters to prevent an SQL
+          injection security issue.</em></p>
+
+         <p>SQL Parameters' type is <code>:sql</code></p>
+
+{% highlight sql %}
+--:name sql-keyword-param :? :*
+select * from example
+order by last_name :sql:last_name_sort
+{% endhighlight %}
+
+{% highlight clj %}
+(def user-input "asc")
+(defn validated-asc-or-desc [x] (if (= x "desc") "desc" "asc"))
+(sql-keyword-param-sqlvec {:last_name_sort (validated-asc-or-desc user-input)})
+;=> ["select * from example\norder by last_name asc"]
+{% endhighlight %}
+
+      <h5 id="param-custom">Custom Parameter Types</h5>
+
+      <p>You can create your own parameter types by implementing a
+        method for the multimethod <code>hugsql.parameters/hugsql-apply-param.</code>:</p>
+
+{% highlight text %}
+=> (doc hugsql.parameters/apply-hugsql-param)
+-------------------------
+hugsql.parameters/apply-hugsql-param
+  Implementations of this multimethod apply a hugsql parameter
+   for a specified parameter type.  For example:
+
+   (defmethod apply-hugsql-param :value
+     [param data options]
+     (value-param param data options)
+
+   - :value keyword is the parameter type to match on.
+   - param is the parameter map as parsed from SQL
+     (e.g., {:type :value :name "id"} )
+   - data is the run-time parameter map data to be applied
+     (e.g., {:id 42} )
+   - options contain hugsql options (see hugsql.core/def-sqlvec-fns)
+
+   Implementations must return a vector containing any resulting SQL
+   in the first position and any values in the remaining positions.
+   (e.g., ["?" 42])
+{% endhighlight %}      
+
+      <h3 class="page-header" id="adapter">HugSQL Adapters</h3>
+
+      <p>One of HugSQL's design goals is to balance the coupling of an
+        SQL-template library (itself) with an underlying database
+        library of the developer's choosing. We could concede to no
+        coupling at all--providing only <code>def-sqlvec-fns</code>.
+        However, wrapping a few underlying database library functions in
+        a protocol provides a nice easy-path for most use cases.  And,
+        where necessary to use the underlying database libraries
+        directly, HugSQL attempts to stay out of the way and give you
+        the tools to do what you want to do.</p>
+
+      <p>In the spirit of the above thoughts, HugSQL provides an
+      adapter protocol to allow your choice of underlying database
+      library.</p>
+
+ 
+
+      <h4 id="adapter-other">Using Other Adapters</h4>
+
+      <p>HugSQL will default to using the adapter for the
+          <code>clojure.java.jdbc</code> library.  If you would prefer
+          to use the adapter for <code>clojure.jdbc</code> or another
+          adapter, you will need to configure your dependencies and
+          set the adapter.</p>
+
+          <p>Leiningen dependency information:</p>
+
+          <p>The <code>hugsql</code> clojar is a meta clojar that pulls in <code>hugsql-core</code>,
+          <code>hugsql-adapter</code>, and the default adapter
+          <code>hugsql-adapter-clojure-java-jdbc</code>, which uses
+          <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a>
+          to run database queries.</p>
+
+          <p>If you wish to use a different adapter, you should bypass the <code>hugsql</code>
+          clojar and specify <code>hugsql-core</code> and the adapter clojar you desire:
+
+{% highlight clj %}
+[com.layerware/hugsql-core "0.3.0"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.3.0"]
+{% endhighlight %}
+
+          <p>Within your Clojure code, you will need to explicitly set the adapter.
+          You can do this globally (i.e., at app startup) with
+          <code>hugsql.core/set-adapter!</code>, or you can specify
+          the <code>:adapter</code> as an option when defining your functions
+          with <code>hugsql.core/def-db-fns</code>, or you can pass in
+          an <code>:adapter</code> option when calling your defined function.
+
+{% highlight clj %}
+(ns my-app
+  (:require [hugsql.core :as hugsql]
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(defn app-init []
+  (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-jdbc)))
+{% endhighlight %}
+
+          <p>OR</p>
+
+{% highlight clj %}
+(ns my-db-stuff
+  (:require [hugsql.core :as hugsql]
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(hugsql/def-db-fns "path/to/db.sql"
+  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+{% endhighlight %}
+      
+<p>OR</p>
+
+{% highlight clj %}
+(ns my-db-stuff
+(:require [hugsql.core :as hugsql]
+          [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+
+(def db ;;a db-spec here)
+
+(hugsql/def-db-fns "path/to/db.sql")
+
+(my-query db {:id 1}
+  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+{% endhighlight %}
+
+      <h4 id="adapter-creation">Create an Adapter</h4>
+
+      <p>Creating a HugSQL Adapter is as simple as implementing
+      the <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter/src/hugsql/adapter.clj">hugsql.adapter/HugsqlAdapter
+      protocol</a>.  For examples, see the implementations
+      for <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-clojure-java-jdbc/src/hugsql/adapter/clojure_java_jdbc.clj">clojure.java.jdbc</a>
+      and <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-clojure-jdbc/src/hugsql/adapter/clojure_jdbc.clj">clojure.jdbc</a>.</p>
+
+      <h4 id="adapter-community">Adapters from the Community</h4>
+
+      <p>HugSQL's adapter protocol encourages alternative adapters to
+      support your preferred database library. Write your own!</p>
+
+      <ul>
+        <li><a href="https://github.com/Skinney/hugsql-async">HugSQL Adapter for postgres.async</a>
+          by Robin Heggelund Hansen</li>
+      </ul>
+
+      <p>Did you write an
+      adapter?  <a href="https://github.com/layerware/hugsql/issues">Add
+      an issue</a> and we'll add your adapter here.</p>
+      
+
+      <h3 class="page-header" id="faq">FAQ</h3>
+
+      <h4 id="faq-yesql">Comparison with Yesql</h4>
+
+      <p><a href="https://github.com/krisajenkins/yesql">Yesql</a> is
+      a Clojure library written by Kris Jenkins.  It has a similar
+      take on <em>using SQL</em> that HugSQL <em>embraces</em> whole-heartedly.
+        Certainly, HugSQL would not exist were it not for Kris' great library.</p>
+
+      <p><b>So why build a another similar library?</b>  A recent
+      project with some fairly hairy SQL required me to generate
+      dynamically-named tables and views with variable columns, and I
+      found myself having to revert back to string concatenation for
+      building up my SQL. I realized I needed something similar to
+      Yesql, but with support for different types of parameter
+      placeholders: namely, SQL Identifiers and SQL Keywords.  This
+      was the seed that grew into HugSQL, and the two libraries have
+        quite a few differences now.</p>
+
+      <p>Differences between Yesql and HugSQL:</p>
+
+      <ul>
+        <li>Yesql is coupled to <code>clojure.java.jdbc</code>.
+        HugSQL has protocol-based adapters to allow multiple database
+        backend libraries and ships with support
+        for <code>clojure.java.jdbc</code>
+        and <code>clojure.jdbc</code>. This functionality has enabled
+        the <a href="https://github.com/Skinney/hugsql-async">adapter
+        for postgres.async</a>. See <a href="#adapter">Hugsql
+        Adapters</a> for more information.</li>
+        <li>Yesql only supports SQL Value parameters. HugSQL supports
+        SQL Values, SQL Identifiers, SQL Tuples, SQL Keywords (Raw
+        SQL), and you can create your own customer parameter
+        types. See <a href="#detail">HugSQL in Detail</a> for more
+        info.</li>
+        <li>Yesql supports positional parameter
+        placeholders <code>?</code> and named parameter placeholders
+        <code>:id</code>.  HugSQL only supports named parameter
+        placeholders and there are no plans to support positional
+        placeholders.</li>
+        <li>Yesql tends to favor naming conventions of the function
+        name (<code>!</code>, and <code>&lt!</code> suffixes) to indicate
+        functionality.  HugSQL prefers explicit configuration in the
+        SQL file.</li>
+        <li>HugSQL features a <code>:result</code> configuration that
+        indicates the expected return format (e.g., <code>:many</code>
+        = vector of hashmaps, <code>:one</code> = hashmap). Yesql
+        supports a similar functionality by passing
+        the <code>:result-set-fn</code> option through
+        to <code>clojure.java.jdbc/query</code>.</li>
+        <li>Yesql (as of 0.5.x) supports setting a default database
+        connection at the time of function definition, and optionally
+        overriding this connection at function call time.  HugSQL
+        requires a database spec, connection, or transaction object as
+        the first argument to your function call.</li>
+      </ul>        
+
+      <p><em>--Curtis Summers (Nov 2015)</em></p>
+      <p>P.S. I'd like to keep the above comparison up-to-date as both
+      libraries grow.  See something that's not
+      right?  <a href="https://github.com/layerware/hugsql/issues">Add
+          an issue!</a></p>
+
+      <h4 id="faq-wacky-sql">Does HugSQL support my wacky SQL?</h4>
+
+      <p>Yes, HugSQL's parsing strategy is to extract the parts it
+      cares about and leave the rest of your SQL as is.  If you find
+      some SQL is not being handled properly by HugSQL, it may be a
+      bug. <a href="https://github.com/layerware/hugsql/issues">File
+      an issue.</a></p>
+
+      <h4 id="faq-dsls">What about DSLs for SQL?</h4>
+
+      <p>Can't I get the same flexible SQL generation for a library
+        that uses a Clojure DSL, say, like <a href="https://github.com/jkk/honeysql">Honey SQL</a>?</p>
+
+      <p><b>Yes</b>, HoneySQL and other Clojure DSL libraries can
+      generate most any SQL you can fathom.  You may prefer this over
+      HugSQL.  That's fine with me.  I personally prefer to <em>think
+      in SQL</em> and <em>think in Clojure</em> separately, and I do
+      not enjoy the workflow and cognitive overhead of translating
+      complex SQL queries to Clojure when I've already adequately
+      expressed a query directly in SQL. --Curtis Summers</p>
+      
+      <h3 class="page-header" id="license">License</h3>
+
+      <p>Copyright © 2015 <a href="http://www.layerware.com">Layerware, Inc.</a></p>
+
+      <p>Distributed under
+      the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache
+          License, Version 2.0</a></p>
+
+      <p class="xtra-top"></p>
+                 
+    </div>
+    
+  </div>
+
+</div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70045003-1', 'auto');
+  ga('send', 'pageview');
+</script>
