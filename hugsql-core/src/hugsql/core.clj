@@ -236,7 +236,7 @@
                   (try
                     (~res a#
                       (~cmd a# ~'db
-                        (prepare-sql ~sql ~'param-data o#)
+                        (prepare-sql ~sql ~'param-data o# a#)
                         o#)
                       o#)
                     (catch Exception e#
