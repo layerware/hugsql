@@ -10,7 +10,7 @@ create table quotes (
   text         varchar(40),
   created_at   timestamp not null default current_timestamp
 )
-  
+
 -- :name drop-quotes-table :!
 -- :doc Drop quotes table if exists
 drop table if exists quotes

@@ -5,7 +5,8 @@
 -- :command :execute
 -- :result :raw
 -- :doc Create characters table
--- auto_increment and current_timestamp are H2 Database specific (adjust to your DB)
+--  auto_increment and current_timestamp are
+--  H2 Database specific (adjust to your DB)
 create table characters (
   id         integer auto_increment primary key, 
   name       varchar(40),
@@ -25,9 +26,9 @@ there is no need to specify it as the third value. */
 -- :doc Drop characters table if exists
 drop table if exists characters
 
--- A :result value of :n below will return affected rows:
+-- A :result value of :n below will return affected row count:
 -- :name insert-character :! :n
--- :doc Insert a single character returning affected row count
+-- :doc Insert a single character
 insert into characters (name, specialty)
 values (:name, :specialty)
 
@@ -36,10 +37,13 @@ values (:name, :specialty)
 insert into characters (name, specialty)
 values :tuple*:characters
 
--- :name update-character-specialty :!
+-- :name update-character-specialty :! :n
 update characters
 set specialty = :specialty
 where id = :id
+
+-- :name delete-character-by-id :! :n
+delete from characters where id = :id
 
 -- A ":result" value of ":*" specifies a vector of records
 -- (as hashmaps) will be returned
@@ -64,7 +68,6 @@ where upper(name) = upper(:name)
 -- :doc Get characters by name like, :name-like should include % wildcards
 select * from characters
 where name like :name-like
-
 
 -- Let's specify some columns with the
 -- identifier list parameter type :i* and

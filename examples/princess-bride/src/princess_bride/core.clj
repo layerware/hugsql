@@ -3,7 +3,8 @@
             [princess-bride.db.characters :as characters]
             [princess-bride.db.quotes :as quotes]
             [clojure.pprint :as pprint]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.java.jdbc]))
 
 ;; save some typing
 (def pp pprint/pprint)
@@ -70,7 +71,7 @@
   ;; single record
   (exsv (characters/insert-character-sqlvec {:name "Westley" :specialty "love"}))
   (ex (characters/insert-character db {:name "Westley" :specialty "love"}))
-  
+
   (ex (characters/insert-character db {:name "Buttercup" :specialty "beauty"}))
 
 
@@ -83,20 +84,35 @@
                                                      ["Fezzik" "strength"]
                                                      ["Inigo Montoya" "swordmanship"]]}))
 
+  ;; transactions
+  (ex (clojure.java.jdbc/with-db-transaction [tx db]
+    (characters/insert-character tx {:name "Miracle Max" :specialty "miracles"})
+    (characters/insert-character tx {:name "Valerie" :specialty "speech interpreter"})))
+
   )
 
 (defn updates []
 
-  (let [vizzini (characters/character-by-name db {:name "vizzini"})]
-    (exsv (characters/update-character-specialty-sqlvec {:id (:id vizzini)
-                                                         :specialty "boasting"}))
-    (ex (characters/update-character-specialty db {:id (:id vizzini)
-                                                   :specialty "boasting"})))
+  (exsv
+    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+      (characters/update-character-specialty-sqlvec {:id (:id vizzini)
+                                                     :specialty "boasting"})))
+  (ex
+    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+      (characters/update-character-specialty db {:id (:id vizzini)
+                                                 :specialty "boasting"})))
 
   )
 
 (defn deletes []
 
+  ;; spoiler alert; Vizzini dies, so let's delete him
+  (exsv
+    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+      (characters/delete-character-by-id-sqlvec {:id (:id vizzini)})))
+  (ex
+    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+      (characters/delete-character-by-id db {:id (:id vizzini)})))
   )
 
 (defn selects []
@@ -104,16 +120,21 @@
   (exsv (characters/all-characters-sqlvec))
   (ex (characters/all-characters db))
 
+  (exsv (characters/character-by-id-sqlvec {:id 1}))
+  (ex (characters/character-by-id db {:id 1}))
+
+  (exsv (characters/character-by-name-sqlvec {:name "buttercup"}))
+  (ex (characters/character-by-name db {:name "buttercup"}))
+
+  (exsv (characters/characters-by-name-like-sqlvec {:name-like "%zz%"}))
+  (ex (characters/characters-by-name-like db {:name-like "%zz%"}))
+
   (exsv (characters/characters-by-ids-specify-cols-sqlvec
           {:ids [1 2]
            :cols ["name" "specialty"]}))
   (ex (characters/characters-by-ids-specify-cols db
         {:ids [1 2]
          :cols ["name" "specialty"]}))
-
-  (exsv (characters/characters-by-name-like-sqlvec {:name-like "%zz%"}))
-
-  (ex (characters/characters-by-name-like db {:name-like "%zz%"}))
 
   )
 
@@ -126,8 +147,8 @@
   (create-tables)
   (inserts)
   (updates)
+  (selects)  
   (deletes)
-  (selects)
   (drop-tables)
 
   (println "\n\nTHE END\n"))
