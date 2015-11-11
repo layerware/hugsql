@@ -99,12 +99,12 @@
      [param data options]
      (value-param param data options)
 
-   - :value keyword is the parameter type to match on.
+   - the :value keyword is the parameter type to match on.
    - param is the parameter map as parsed from SQL
      (e.g., {:type :value :name \"id\"} )
    - data is the run-time parameter map data to be applied
      (e.g., {:id 42} )
-   - options contain hugsql options (see hugsql.core/def-sql-fns)
+   - options contain hugsql options (see hugsql.core/def-sqlvec-fns)
 
    Implementations must return a vector containing any resulting SQL
    in the first position and any values in the remaining positions.

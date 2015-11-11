@@ -134,9 +134,9 @@
 (defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
 
 (defmacro def-sqlvec-fns
-  "Given a HugSQL SQL file, define the <name>-sqlvec functions that
-   return the vector of SQL and parameters.
-   (e.g., [\"select * from test where id = ?\" 42])
+  "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
+  current namespace.  Returns sqlvec format: a vector of SQL and
+  parameter values. (e.g., [\"select * from test where id = ?\" 42])
 
   Usage:
 
@@ -144,9 +144,21 @@
 
    where:
     - file is a file in your classpath
-    - options (optional) is a hashmap:
+    - options (optional) hashmap:
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :fn-suffix \"-sqlvec\" (default)
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: \"identifier\"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
@@ -167,8 +179,8 @@
                 (prepare-sql ~sql ~'param-data (merge ~opt ~'options)))))))))
 
 (defmacro def-db-fns
-  "Given a hugsql SQL file, define the database
-   query/execute functions.
+  "Given a HugSQL SQL file, define the database
+   functions in the current namespace.
 
    Usage:
 
@@ -176,19 +188,30 @@
 
    where:
     - file is a file in your classpath
-    - options (optional) is a hashmap:
+    - options (optional) hashmap:
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :adapter adapter }
+
+   :quoting options for identifiers are:
+     :ansi double-quotes: \"identifier\"
+     :mysql backticks: `identifier`
+     :mssql square brackets: [identifier]
+     :off no quoting (default)
+
+   Identifiers containing a period/dot . are split, quoted separately,
+   and then rejoined. This supports myschema.mytable conventions.
+
+   :quoting can be overridden as an option in the calls to functions
+   created by def-db-fns.
 
    :adapter specifies the HugSQL adapter to use for all defined
    functions. The default adapter used is
    (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
-   when none is specified.
+   when :adapter is not given.
 
-   See hugsql.core/set-adapter! to set this to another adapter for all
-   def-db-fns calls.  :adapter can also be specified for individual
-   function calls (overriding set-adapter! and the :adapter option
-   here)."
+   See also hugsql.core/set-adapter! to set adapter for all def-db-fns
+   calls.  Also, :adapter can be specified for individual function
+   calls (overriding set-adapter! and the :adapter option here)."
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(do
