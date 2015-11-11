@@ -65,6 +65,10 @@ update test set name = :name where id = :id
 -- :name select-one-test-by-id :? :1
 select * from test where id = :id
 
+-- :name select-ordered :?
+select :i*:cols from test
+order by :i*:sort-by
+
 -- :name drop-test-table :! :n
 -- :doc Drop test table
 drop table test

@@ -7,8 +7,8 @@
   (:import [clojure.lang ExceptionInfo]))
 
 (def adapters
-  [(cjj-adapter/hugsql-adapter-clojure-java-jdbc)
-   (cj-adapter/hugsql-adapter-clojure-jdbc)])
+  {:clojure.java.jdbc (cjj-adapter/hugsql-adapter-clojure-java-jdbc)
+   :clojure.jdbc (cj-adapter/hugsql-adapter-clojure-jdbc)})
 
 (def tmpdir (System/getProperty "java.io.tmpdir"))
 
@@ -41,11 +41,7 @@
 
    :derby {:subprotocol "derby"
            :subname (str tmpdir "/hugtest.derby")
-           :create true}
-   }
-  )
-
-
+           :create true}})
 
 (deftest core
 
@@ -114,7 +110,7 @@
             {:quoting :mssql}))))
   
   (doseq [[db-name db] dbs]
-    (doseq [adapter adapters]
+    (doseq [[adapter-name adapter] adapters]
 
       (testing "adapter set"
         (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
@@ -140,4 +136,16 @@
 
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
+        (is (= 0 (drop-test-table db))))
+
+      (testing "adapter-specific command option pass-through"
+        (is (= 0 (create-test-table db)))
+        (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+        (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+        (when (= adapter-name :clojure.java.jdbc)
+          (is (= [[:name] ["A"] ["B"]]
+                (select-ordered db
+                  {:cols ["name"] :sort-by ["name"]} {} :as-arrays? true))))
+
         (is (= 0 (drop-test-table db)))))))

@@ -227,13 +227,16 @@
                ~doc
                ([~'db] (~nam ~'db {} {}))
                ([~'db ~'param-data] (~nam ~'db ~'param-data {}))
-               ([~'db ~'param-data ~'options]
+               ([~'db ~'param-data ~'options & ~'command-options]
                 (let [o# (merge ~opt ~'options)
+                      o# (if (seq ~'command-options)
+                           (assoc o# :command-options ~'command-options)
+                           o#)
                       a# (or (:adapter o#) (get-adapter))]
                   (try
                     (~res a#
                       (~cmd a# ~'db
-                        (prepare-sql ~sql ~'param-data o# a#)
+                        (prepare-sql ~sql ~'param-data o#)
                         o#)
                       o#)
                     (catch Exception e#
