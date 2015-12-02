@@ -42,21 +42,17 @@
         ; assume resource path (on classpath)
         (if-let [f (io/resource file)]
           f
-          (throw (ex-info (str "Can not read file: " file) {}))) 
-        ))))
+          (throw (ex-info (str "Can not read file: " file) {})))))))
 
 (defn ^:no-doc validate-parameters!
   "Ensure SQL template parameters match provided param-data,
-   and send or throw an exception if mismatch.  If maybe-adapter is
-   not nil, then send exception to the adapter, otherwise, throw here."
-  [sql-template param-data maybe-adapter]
+   and throw an exception if mismatch."
+  [sql-template param-data]
   (doseq [k (map :name (filter map? sql-template))]
     (when-not (contains? param-data k)
-      (let [e (ex-info
-                (str "Parameter Mismatch: " k " parameter data not found.") {})]
-        (if maybe-adapter
-          (adapter/on-exception maybe-adapter e)
-          (throw e))))))
+      (throw (ex-info
+               (str "Parameter Mismatch: "
+                 k " parameter data not found.") {})))))
 
 (defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser)
@@ -71,9 +67,7 @@
    we replace use the jdbc prepared statement syntax of a
    '?' to placehold for the value."
   ([sql-template param-data options]
-   (prepare-sql sql-template param-data options nil))
-  ([sql-template param-data options maybe-adapter]
-   (validate-parameters! sql-template param-data maybe-adapter)
+   (validate-parameters! sql-template param-data)
    (let [applied (mapv
                    #(if (string? %)
                       [%]
@@ -236,7 +230,7 @@
                   (try
                     (~res a#
                       (~cmd a# ~'db
-                        (prepare-sql ~sql ~'param-data o# a#)
+                        (prepare-sql ~sql ~'param-data o#)
                         o#)
                       o#)
                     (catch Exception e#
