@@ -52,6 +52,13 @@
                      {:type :v :name :id}]}]
             (parse "-- :name test\nselect id::text as id-str from emp where id = :id"))))
 
+    (testing "Escaping colons"
+      ;; note that this test must take into account Clojure's string escaping,
+      ;; so the test below has a triple backslash to represent a single backslash in hugsql
+      (is (= [{:hdr {:name ["test"]}
+               :sql ["select my_arr[1:3] from emp where contrived \\ backslash"]}]
+            (parse "-- :name test\nselect my_arr[1\\:3] from emp where contrived \\ backslash"))))
+
 
      (testing "SQL quoted strings (ignored and do not replace params)"
       (is (= [{:hdr {:name ["test"]}

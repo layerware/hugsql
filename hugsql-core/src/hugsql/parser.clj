@@ -111,6 +111,11 @@
   [rdr c]
   (and (= \: c) (= \: (r/peek-char rdr))))
 
+(defn- escape-start?
+  [rdr c]
+  (let [p (r/peek-char rdr)]
+    (and (= \\ c) (or (= \: p) (= \\ p)))))
+
 (defn- hugsql-param-start?
   [c]
   (= \: c))
@@ -240,6 +245,10 @@
             ;; postgresql :: type cast is not hugsql param, so skip double-colon
             (pg-type-cast-start? rdr c)
             (recur hdr sql (sb-append (sb-append sb c) (r/read-char rdr)) all)
+
+            ;; escaped colon
+            (escape-start? rdr c)
+            (recur hdr sql (sb-append sb (r/read-char rdr)) all)
 
             ;; hugsql params
             (hugsql-param-start? c)
