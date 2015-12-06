@@ -54,7 +54,7 @@
 
     (testing "Escaping colons"
       ;; note that this test must take into account Clojure's string escaping,
-      ;; so the test below has a triple backslash to represent a single backslash in hugsql
+      ;; so the test below has a double backslash to represent a single backslash in hugsql
       (is (= [{:hdr {:name ["test"]}
                :sql ["select my_arr[1:3] from emp where contrived \\ backslash"]}]
             (parse "-- :name test\nselect my_arr[1\\:3] from emp where contrived \\ backslash"))))
