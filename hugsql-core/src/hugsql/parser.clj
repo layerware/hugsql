@@ -2,7 +2,6 @@
   (:require [clojure.string :as string]
             [clojure.tools.reader.reader-types :as r]))
 
-
 (defn- parse-error
   ([rdr msg]
    (parse-error rdr msg {}))

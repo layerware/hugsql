@@ -127,6 +127,12 @@
   (testing "sqlvec"
     (is (= ["select * from test where id = ?" 1]
            (hugsql/sqlvec "select * from test where id = :id" {:id 1}))))
+
+  (testing "metadata"
+    (is (:private (meta #'a-private-fn)))
+    (is (:private (meta #'another-private-fn)))
+    (is (= 1 (:one (meta #'user-meta))))
+    (is (= 2 (:two (meta #'user-meta)))))
   
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]

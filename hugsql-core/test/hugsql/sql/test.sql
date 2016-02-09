@@ -76,3 +76,17 @@ order by :i*:sort-by
 -- :name drop-test-table :! :n
 -- :doc Drop test table
 drop table test
+
+-- :name- a-private-fn :?
+-- notice the dash suffix on :name- above
+select * from test
+
+-- :name another-private-fn
+-- :meta {:private true}
+select * from test
+
+-- :name user-meta
+/* :meta {:one 1
+          :two 2
+          :three 3} */
+select * from test

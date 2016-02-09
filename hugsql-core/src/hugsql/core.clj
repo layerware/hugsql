@@ -3,7 +3,8 @@
             [hugsql.parameters :as parameters]
             [hugsql.adapter :as adapter]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.tools.reader.edn :as edn]))
 
 (def ^:no-doc adapter nil)
 
@@ -159,6 +160,22 @@
    (let [f (sqlvec-fn sql options)]
      (f param-data))))
 
+(defn intern-sqlvec-fn
+  "Intern the sqlvec fn from a parsed def"
+  [pdef options]
+  (let [sql (:sql pdef)
+        pnm (:name- (:hdr pdef))
+        nam (symbol
+             (str (first (or (:name (:hdr pdef)) pnm))
+                  (:fn-suffix (merge default-sqlvec-options options))))
+        doc (str (or (first (:doc (:hdr pdef))) "") " (sqlvec)")
+        mta (if-let [m (:meta (:hdr pdef))]
+              (edn/read-string (string/join " " m)) {})
+        met (merge mta {:doc doc} (when pnm {:private true}))]
+    (intern *ns*
+            (with-meta nam met)
+            (sqlvec-fn* sql options))))
+
 (defmacro def-sqlvec-fns
   "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
@@ -193,14 +210,7 @@
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (let [~'sql (:sql ~'pdef)
-            ~'nam (symbol
-                   (str (first (:name (:hdr ~'pdef)))
-                        (:fn-suffix (merge default-sqlvec-options ~options))))
-            ~'doc (str (or (first (:doc (:hdr ~'pdef))) "") " (sqlvec)")]
-        (intern *ns*
-                (with-meta ~'nam {:doc ~'doc})
-                (sqlvec-fn* ~'sql ~options))))))
+     (intern-sqlvec-fn ~'pdef ~options))))
 
 (defmacro def-sqlvec-fns-from-string
   "Given a HugSQL SQL string, define the <name>-sqlvec functions in the
@@ -234,14 +244,7 @@
   ([s] (def-sqlvec-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (let [~'sql (:sql ~'pdef)
-            ~'nam (symbol
-                   (str (first (:name (:hdr ~'pdef)))
-                        (:fn-suffix (merge default-sqlvec-options ~options))))
-            ~'doc (str (or (first (:doc (:hdr ~'pdef))) "") " (sqlvec)")]
-        (intern *ns*
-                (with-meta ~'nam {:doc ~'doc})
-                (sqlvec-fn* ~'sql ~options))))))
+      (intern-sqlvec-fn ~'pdef ~options))))
 
 (defn db-fn*
   "Given parsed sql and optionally a command, result, and options,
@@ -277,6 +280,22 @@
   ([sql command result options]
    (let [psql (:sql (first (parser/parse sql {:no-header true})))]
      (db-fn* psql command result options))))
+
+(defn intern-db-fn
+  "Intern the db fn from a parsed def"
+  [pdef options]
+  (let [sql (:sql pdef)
+            pnm (:name- (:hdr pdef))
+            nam (symbol (first (or (:name (:hdr pdef)) pnm)))
+            doc (or (first (:doc (:hdr pdef))) "")
+            cmd (command-sym (:hdr pdef))
+            res (result-sym (:hdr pdef))
+            mta (if-let [m (:meta (:hdr pdef))]
+                    (edn/read-string (string/join " " m)) {})
+            met (merge mta {:doc doc} (when pnm {:private true}))]
+        (intern *ns*
+                (with-meta nam met)
+                (db-fn* sql cmd res options))))
 
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
@@ -317,14 +336,7 @@
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (let [~'sql (:sql ~'pdef)
-            ~'nam (symbol (first (:name (:hdr ~'pdef))))
-            ~'doc (or (first (:doc (:hdr ~'pdef))) "")
-            ~'cmd (command-sym (:hdr ~'pdef))
-            ~'res (result-sym (:hdr ~'pdef))]
-        (intern *ns*
-                (with-meta ~'nam {:doc ~'doc})
-                (db-fn* ~'sql ~'cmd ~'res ~options))))))
+      (intern-db-fn ~'pdef ~options))))
 
 (defmacro def-db-fns-from-string
   "Given a HugSQL SQL string, define the database
@@ -363,14 +375,7 @@
   ([s] (def-db-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (let [~'sql (:sql ~'pdef)
-            ~'nam (symbol (first (:name (:hdr ~'pdef))))
-            ~'doc (or (first (:doc (:hdr ~'pdef))) "")
-            ~'cmd (command-sym (:hdr ~'pdef))
-            ~'res (result-sym (:hdr ~'pdef))]
-        (intern *ns*
-                (with-meta ~'nam {:doc ~'doc})
-                (db-fn* ~'sql ~'cmd ~'res ~options))))))
+      (intern-db-fn ~'pdef ~options))))
 
 (defn db-run
   "Given a database spec/connection, sql string,
