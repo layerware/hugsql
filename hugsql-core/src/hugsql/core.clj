@@ -120,6 +120,10 @@
 (defmulti hugsql-command-fn identity)
 (defmethod hugsql-command-fn :! [sym] 'hugsql.adapter/execute)
 (defmethod hugsql-command-fn :execute [sym] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :insert! [sym] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :i! [sym] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :<! [sym] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :returning-execute [sym] 'hugsql.adapter/query)
 (defmethod hugsql-command-fn :? [sym] 'hugsql.adapter/query)
 (defmethod hugsql-command-fn :query [sym] 'hugsql.adapter/query)
 (defmethod hugsql-command-fn :default [sym] 'hugsql.adapter/query)
@@ -258,7 +262,8 @@
      ([db] (y db {} {}))
      ([db param-data] (y db param-data {}))
      ([db param-data opts & command-opts]
-      (let [o (merge default-db-options options opts)
+      (let [o (merge default-db-options options opts
+                     {:command command :result result})
             o (if (seq command-opts)
                 (assoc o :command-options command-opts) o)
             a (or (:adapter o) (get-adapter))]

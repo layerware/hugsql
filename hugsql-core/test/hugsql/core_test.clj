@@ -149,7 +149,11 @@
               (one-value-param db {:x 1}))))
 
       (testing "database commands/queries"
-        (is (= 0 (create-test-table db)))
+        (condp = db-name
+          :mysql (is (= 0 (create-test-table-mysql db)))
+          :h2 (is (= 0 (create-test-table-h2 db)))
+          :hsqldb (is (= 0 (create-test-table-hsqldb db)))
+          (is (= 0 (create-test-table db))))
         (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
         (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
 
@@ -164,7 +168,27 @@
         ;; returning support is lacking in many dbs
         (when (not-any? #(= % db-name) [:mysql :h2 :derby :sqlite :hsqldb])
           (is (= [{:id 7}]
-                (insert-into-test-table-returning db {:id 7 :name "G"}))))
+                 (insert-into-test-table-returning db {:id 7 :name "G"}))))
+
+        ;; return generated keys, which has varying support and return values
+        (when (= adapter-name :clojure.java.jdbc)
+          (condp = db-name
+            :postgresql
+            (is (= {:id 8 :name "H"}
+                   (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
+
+            :mysql
+            (is (= {:generated_key 9} (insert-into-test-table-return-keys db {:id 9 :name "I"})))
+
+            :sqlite
+            (is (= {(keyword "last_insert_rowid()") 10}
+                   (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
+            :h2
+            (is (= {(keyword "scope_identity()") 11}
+                   (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
+
+            ;; hsql and derby don't seem to support .getGeneratedKeys
+            nil))
 
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))

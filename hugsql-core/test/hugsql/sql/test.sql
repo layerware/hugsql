@@ -49,16 +49,43 @@ select * from test order by id :sql:id-order
 -- :result :affected
 -- :doc Create test table
 create table test (
-  id    integer,
+  id    integer primary key,
+  name  varchar(20)
+)
+
+-- :name create-test-table-mysql :! :n
+-- :doc Create test table
+create table test (
+  id    integer auto_increment primary key,
+  name  varchar(20)
+)
+
+-- :name create-test-table-h2 :! :n
+-- :doc Create test table
+create table test (
+  id    integer auto_increment primary key,
+  name  varchar(20)
+)
+
+-- :name create-test-table-hsqldb :! :n
+-- :doc Create test table
+create table test (
+  id    integer identity primary key,
   name  varchar(20)
 )
 
 -- :name insert-into-test-table :! :n
+-- :doc insert with a regular execute
 insert into test (id, name) values (:id, :name)
 
--- :name insert-into-test-table-returning :?
+-- :name insert-into-test-table-returning :<!
+-- :doc insert with an sql returning clause
 -- only some db's support this
 insert into test (id, name) values (:id, :name) returning id
+
+-- :name insert-into-test-table-return-keys :insert!
+-- behavior of this adapter-specific and db-specific
+insert into test (id, name) values (:id, :name)
 
 -- :name insert-multi-into-test-table :! :n
 insert into test (id, name) values :tuple*:values
