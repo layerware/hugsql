@@ -54,7 +54,7 @@
       (io/copy (io/file (io/resource "hugsql/sql/test2.sql")) tmpfile)
       (hugsql/def-db-fns tmpfile))
 
-;; Use a java.io.BufferedInputStream object
+;; Use a string
 (hugsql/def-db-fns-from-string "-- :name test3-select\n select * from test3")
 
 (deftest core
@@ -65,7 +65,7 @@
   (testing "File outside of classpath with java.io.File worked"
     (is (fn? test2-select)))
 
-  (testing "Input Stream with java.io.BufferedInputStream worked"
+  (testing "defs from string worked"
     (is (fn? test3-select)))
 
   (testing "sql file does not exist/can't be read"
