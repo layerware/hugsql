@@ -3,7 +3,8 @@
             [hugsql.core :as hugsql]
             [hugsql.adapter]
             [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter])
+            [hugsql.adapter.clojure-jdbc :as cj-adapter]
+            [clojure.java.io :as io])
   (:import [clojure.lang ExceptionInfo]))
 
 (def adapters
@@ -12,15 +13,14 @@
 
 (def tmpdir (System/getProperty "java.io.tmpdir"))
 
-(def dbs
+(def dbs {
   ;; sudo su - postgres ;; switch to postgres user
   ;; createuser -P hugtest ;; enter "hugtest" when prompted
   ;; createdb -O hugtest hugtest
-  {:postgresql  {:subprotocol "postgresql"
+  :postgresql  {:subprotocol "postgresql"
                  :subname "//127.0.0.1:5432/hugtest"
                  :user "hugtest"
                  :password "hugtest"}
-
 
    ;; mysql -u root -p
    ;; mysql> create database hugtest;
@@ -41,19 +41,34 @@
 
    :derby {:subprotocol "derby"
            :subname (str tmpdir "/hugtest.derby")
-           :create true}})
+           :create true}
+})
+
+;; Call def-db-fns outside of deftest so that namespace is 'hugsql.core-test
+;; Use a file path in the classpath
+(hugsql/def-db-fns "hugsql/sql/test.sql")
+(hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
+
+;; Use a java.io.File object
+(let [tmpfile (io/file (str tmpdir "/test.sql"))]
+      (io/copy (io/file (io/resource "hugsql/sql/test2.sql")) tmpfile)
+      (hugsql/def-db-fns tmpfile))
+
+;; Use a java.io.BufferedInputStream object
+(hugsql/def-db-fns-from-string "-- :name test3-select\n select * from test3")
 
 (deftest core
 
-  (testing "adapter not set during fn def"
-    (is (= nil hugsql/adapter))
-    (hugsql/def-db-fns "hugsql/sql/test.sql")
-    (hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
+  (testing "adapter was not set during fn def"
     (is (= nil hugsql/adapter)))
 
+  (testing "File outside of classpath with java.io.File worked"
+    (is (fn? test2-select)))
+
+  (testing "Input Stream with java.io.BufferedInputStream worked"
+    (is (fn? test3-select)))
+
   (testing "sql file does not exist/can't be read"
-    ;; Some eval/quote weirdness here to deal with macro throwing
-    ;; the exception upon compile; this defers compile for test
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
           (eval '(hugsql.core/def-db-fns "non/existent/file.sql")))))
   
@@ -108,6 +123,10 @@
           (identifier-param-list-sqlvec
             {:columns ["test.id", "test.name"]}
             {:quoting :mssql}))))
+
+  (testing "sqlvec"
+    (is (= ["select * from test where id = ?" 1]
+           (hugsql/sqlvec "select * from test where id = :id" {:id 1}))))
   
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
@@ -116,9 +135,11 @@
         (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
 
       (testing "parameter placeholder vs data mismatch"
-        (is (thrown-with-msg? ExceptionInfo #"Parameter Mismatch: :id parameter data not found."
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Parameter Mismatch: :id parameter data not found."
               (one-value-param-sqlvec {:x 1})))
-        (is (thrown-with-msg? ExceptionInfo #"Parameter Mismatch: :id parameter data not found."
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Parameter Mismatch: :id parameter data not found."
               (one-value-param db {:x 1}))))
 
       (testing "database commands/queries"
@@ -134,8 +155,29 @@
         (when (not (= db-name :hsqldb))
           (is (= 3 (insert-multi-into-test-table db {:values [[4 "D"] [5 "E"] [6 "F"]]}))))
 
+        ;; returning support is lacking in many dbs
+        (when (not-any? #(= % db-name) [:mysql :h2 :derby :sqlite :hsqldb])
+          (is (= [{:id 7}]
+                (insert-into-test-table-returning db {:id 7 :name "G"}))))
+
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
+        (is (= 0 (drop-test-table db))))
+
+      (testing "db-fn"
+        (is (= 0 (create-test-table db)))
+        (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+        (is (fn? (hugsql/db-fn "select * from test where id = :id" :? :1)))
+        (is (= "A" (:name
+                    (let [f (hugsql/db-fn "select * from test where id = :id" :? :1)]
+                      (f db {:id 1})))))
+        (is (= 0 (drop-test-table db))))
+
+      (testing "db-run"
+        (is (= 0 (create-test-table db)))
+        (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+        (is (= "A" (:name
+                    (hugsql/db-run db "select * from test where id = :id" {:id 1} :? :1))))
         (is (= 0 (drop-test-table db))))
 
       (testing "adapter-specific command option pass-through"

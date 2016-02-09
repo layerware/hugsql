@@ -10,11 +10,11 @@
              {:plugins [[lein-auto "0.1.2"]]
               :dependencies [[com.layerware/hugsql-adapter-clojure-java-jdbc "0.4.0-SNAPSHOT"]
                              [com.layerware/hugsql-adapter-clojure-jdbc "0.4.0-SNAPSHOT"]
-                             [org.postgresql/postgresql "9.4-1201-jdbc41"]
-                             [mysql/mysql-connector-java "5.1.37"]
+                             [org.postgresql/postgresql "9.4.1207"]
+                             [mysql/mysql-connector-java "5.1.38"]
                              [org.xerial/sqlite-jdbc "3.8.11.2"]
                              [org.apache.derby/derby "10.12.1.1"]
                              [hsqldb/hsqldb "1.8.0.10"]
-                             [com.h2database/h2 "1.4.190"]]
+                             [com.h2database/h2 "1.4.191"]]
               :global-vars {*warn-on-reflection* false
                             *assert* false}}})

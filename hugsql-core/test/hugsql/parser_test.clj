@@ -27,7 +27,10 @@
 
   (testing "SQL"
     (testing "no hugsql header"
-      (is (thrown? ExceptionInfo (parse "select * from emp"))))
+      (is (thrown? ExceptionInfo (parse "select * from emp")))
+      (is (= [{:hdr {}
+               :sql ["select * from emp"]}]
+            (parse "select * from emp" {:no-header true}))))
 
     (testing "hugsql header"
       (is (= [{:hdr {:name ["test"]}

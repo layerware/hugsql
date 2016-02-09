@@ -56,6 +56,10 @@ create table test (
 -- :name insert-into-test-table :! :n
 insert into test (id, name) values (:id, :name)
 
+-- :name insert-into-test-table-returning :?
+-- only some db's support this
+insert into test (id, name) values (:id, :name) returning id
+
 -- :name insert-multi-into-test-table :! :n
 insert into test (id, name) values :tuple*:values
 
