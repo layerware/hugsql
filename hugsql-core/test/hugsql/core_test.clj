@@ -192,6 +192,7 @@
 
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
+        (is (= {:id 1 :name "C"} (select-deep-get db {:records [{:id 1}]})))
         (is (= 0 (drop-test-table db))))
 
       (testing "db-fn"

@@ -47,7 +47,13 @@
       (is (= [{:hdr {:name ["test"]}
                :sql ["select * from emp where id = "
                      {:type :value :name :id}]}]
-            (parse "-- :name test\nselect * from emp where id = :value:id"))))
+             (parse "-- :name test\nselect * from emp where id = :value:id"))))
+
+    (testing "Deep get (get-in) parameter name"
+      (is (= [{:hdr {:name ["test"]}
+               :sql ["select * from emp where id = "
+                     {:type :value :name :employees.123.id}]}]
+            (parse "-- :name test\nselect * from emp where id = :value:employees.123.id"))))
 
     (testing "::sometype is a Postgresql cast and not a hugsql param"
       (is (= [{:hdr {:name ["test"]}

@@ -57,7 +57,7 @@
    and throw an exception if mismatch."
   [sql-template param-data]
   (doseq [k (map :name (filter map? sql-template))]
-    (when-not (contains? param-data k)
+    (when-not (get-in param-data (parameters/deep-get-vec k))
       (throw (ex-info
               (str "Parameter Mismatch: "
                    k " parameter data not found.") {})))))

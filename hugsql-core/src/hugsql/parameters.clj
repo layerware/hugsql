@@ -49,15 +49,29 @@
                 identity)]
     (string/join "." (map qtfn parts))))
 
+(defn deep-get-vec
+  "Takes a param :name and returns a vector
+   suitable for get-in lookups where the
+   param :name starts with the form:
+     :employees.0.id
+   Names must be keyword keys in hashmaps in
+   param data.
+   Numbers must be vector indexes in vectors
+   in param data."
+  [nam]
+  (mapv
+   (fn [x] (if (re-find #"^\d+$" x) (Long. x) (keyword x)))
+   (string/split (name nam) #"\.")))
+
 ;; Default Object implementations
 (extend-type Object
   ValueParam
   (value-param [param data options]
-    ["?" (get data (:name param))])
+    ["?" (get-in data (deep-get-vec (:name param)))])
 
   ValueParamList
   (value-param-list [param data options]
-    (let [coll (get data (:name param))]
+    (let [coll (get-in data (deep-get-vec (:name param)))]
       (apply vector
         (string/join "," (repeat (count coll) "?"))
         coll)))
@@ -75,21 +89,21 @@
          (concat (rest %1) (rest %2))) 
       (map (juxt first rest)
         (map #(tuple-param {:name :x} {:x %} options)
-          (get data (:name param))))))
+          (get-in data (deep-get-vec (:name param)))))))
 
   IdentifierParam
   (identifier-param [param data options]
-    [(identifier-param-quote (get data (:name param)) options)])
+    [(identifier-param-quote (get-in data (deep-get-vec (:name param))) options)])
 
   IdentifierParamList
   (identifier-param-list [param data options]
-    (let [coll (get data (:name param))]
+    (let [coll (get-in data (deep-get-vec (:name param)))]
       [(string/join ", "
          (map #(identifier-param-quote % options) coll))]))
 
   SQLParam
   (sql-param [param data options]
-    [(get data (:name param))]))
+    [(get-in data (deep-get-vec (:name param)))]))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter
