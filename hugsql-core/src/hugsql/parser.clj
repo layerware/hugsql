@@ -147,20 +147,40 @@
     (skip-to-next-line rdr)
     {key values}))
 
+(defn- read-sing-line-expr
+  [rdr]
+  (let [_    (r/read-char rdr) ; eat ~
+        expr (string/trim (read-to-char rdr \newline))]
+    (skip-to-next-line rdr)
+    [expr :end]))
+
+(defn- read-mult-line-expr
+  [rdr]
+  (let [_ (r/read-char rdr) ; eat ~
+        expr (string/trim (read-to-chars rdr \* \/))
+        _    (skip-to-chars rdr \* \/)
+        end? (= \~ (last expr))
+        expr (if end? (string/trim (string/join "" (butlast expr))) expr)
+        sign (if end? :end :cont)]
+    (skip-to-next-line rdr)
+    (if (string/blank? expr) [sign] [expr sign])))
+
 (defn- read-sing-line-comment
   [rdr c]
   (r/read-char rdr) ; eat second dash (-) of comment start
   (skip-ws rdr)
-  (if (= \: (r/peek-char rdr))
-    (read-sing-line-header rdr)
+  (condp = (r/peek-char rdr)
+    \: (read-sing-line-header rdr)
+    \~ (read-sing-line-expr rdr)
     (skip-to-next-line rdr)))
 
 (defn- read-mult-line-comment
   [rdr c]
   (r/read-char rdr) ; eat second comment char (*)
   (skip-ws rdr)
-  (if (= \: (r/peek-char rdr))
-    (read-mult-line-header rdr)
+  (condp = (r/peek-char rdr)
+    \: (read-mult-line-header rdr)
+    \~ (read-mult-line-expr rdr)
     (skip-to-chars rdr \* \/)))
 
 (defn- read-sql-quoted
@@ -222,14 +242,20 @@
              (or
                (sing-line-comment-start? c rdr)
                (mult-line-comment-start? c rdr))
-             (if-let [h (if (sing-line-comment-start? c rdr)
+             (if-let [x (if (sing-line-comment-start? c rdr)
                           (read-sing-line-comment rdr c)
                           (read-mult-line-comment rdr c))]
-               ;; if sql is active, then new section
-               (if (or (> (.length sb) 0) (empty? hdr))
-                 (recur h [] (nsb)
-                   (conj all {:hdr hdr :sql (vec (filter seq (conj sql (string/trimr (str sb)))))}))
-                 (recur (merge hdr h) sql sb all))
+               ;; hdr was read from comment
+               (if (map? x)
+                 ;; if sql is active, then new hdr section
+                 (if (or (> (.length sb) 0) (empty? hdr))
+                   (recur x [] (nsb)
+                          (conj all
+                                {:hdr hdr
+                                 :sql (vec (filter seq (conj sql (string/trimr (str sb)))))}))
+                   (recur (merge hdr x) sql sb all))
+                 ;; clj expr was read from comment
+                 (recur hdr (conj sql (string/trimr (str sb)) x) (nsb) all))
                (recur hdr sql sb all))
 
 

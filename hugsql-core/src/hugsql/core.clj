@@ -2,6 +2,7 @@
   (:require [hugsql.parser :as parser]
             [hugsql.parameters :as parameters]
             [hugsql.adapter :as adapter]
+            [hugsql.expr-run]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.tools.reader.edn :as edn]))
@@ -61,28 +62,106 @@
               (str "Parameter Mismatch: "
                    k " parameter data not found.") {})))))
 
-(defn ^:no-doc prepare-sql
-  "Takes an sql template (from hugsql parser)
-   and the runtime-provided param data
-   and creates a vector of [\"sql\" val1 val2]
-   suitable for jdbc query/execute.
+(defn ^:no-doc run-expr
+  "Run expression and return result:
 
-   The :sql vector (sql-template) has interwoven
-   sql strings and hashmap parameters.  We directly
-   apply parameters to non-prepared parameter types such
-   as identifiers and keywords.  For value parameter types,
-   we replace use the jdbc prepared statement syntax of a
-   '?' to placehold for the value."
+   Example assuming cols is [\"id\"]:
+   [[\"(if (seq cols)\" :cont]
+     {:type :i* :name :cols}
+     [:cont] \"*\" [\")\" :end]]
+   to:
+   {:type :i* :name :cols}"
+  [expr params options]
+  (let [arg (vec (distinct
+                         (concat
+                          (mapv name (keys params))
+                          (mapv (comp name :name) (filter map? expr)))))
+        hsh (hash (pr-str [expr arg]))
+        nam (str "expr-" hsh)
+        ;; tag expressions vs others
+        ;; and collect interspersed items together into a vector
+        tag (reduce
+             (fn [r c]
+               (if (vector? c)
+                 (conj r {:expr c})
+                 (if-let [o (:other (last r))]
+                   (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
+                   (conj r {:other [c]}))))
+             []
+             expr)
+        clj (str
+             "(ns hugsql.expr-run)\n"
+             "(defn " nam
+             " [{:keys [" (string/join " " arg) "] :as params} options]"
+             (string/join
+              " "
+              (filter
+               #(not (= % :cont))
+               (map (fn [x]
+                      (if (:expr x)
+                        (first (:expr x))
+                        (pr-str (:other x)))) tag)))
+             ")")
+        expr-fn #(ns-resolve 'hugsql.expr-run (symbol nam))]
+    (when (nil? (expr-fn))
+      (load-string clj))
+    ((expr-fn) params options)))
+
+(defn ^:no-doc spacer
+  "Check for string s with no leading or
+   trailing space and add one if needed."
+  [s]
+  (let [s (if (Character/isWhitespace (first s)) s (str " " s))
+        s (if (Character/isWhitespace (last s)) s (str s " "))]
+    s))
+
+(defn ^:no-doc template-code-pass
+  "Takes an sql template (from hugsql parser) and evaluates the
+  Clojure expressions resulting in returning an sql template
+  containing only sql strings and hashmap parameters"
+  [sql-template params options]
+  (loop [curr (first sql-template)
+         pile (rest sql-template)
+         rsql []
+         expr []]
+    (if-not curr
+      rsql
+      (cond
+        (or (vector? curr) (seq expr)) ;; expr start OR already in expr
+        ;; expr end found, so run
+        (if (and (vector? curr) (= :end (last curr)))
+          (recur (first pile) (rest pile)
+                 (if-let [r (run-expr (conj expr curr) params options)]
+                   (vec (concat rsql (if (string? r) (vector r) r)))
+                   rsql) [])
+          (recur (first pile) (rest pile)
+                 rsql (conj expr curr)))
+
+        :else
+        (recur (first pile) (rest pile)
+               (conj rsql (if (string? curr) (spacer curr) curr)) expr)))))
+
+(defn ^:no-doc prepare-sql
+  "Takes an sql template (from hugsql parser) and the runtime-provided
+  param data and creates a vector of [\"sql\" val1 val2] suitable for
+  jdbc query/execute.
+
+  The :sql vector (sql-template) has interwoven sql strings, vectors
+  of Clojure code, and hashmap parameters.  We directly apply
+  parameters to non-prepared parameter types such as identifiers and
+  keywords.  For value parameter types, we replace use the jdbc
+  prepared statement syntax of a '?' to placehold for the value."
   ([sql-template param-data options]
-   (validate-parameters! sql-template param-data)
-   (let [applied (mapv
+   (let [sql-template (template-code-pass sql-template param-data options)
+         _ (validate-parameters! sql-template param-data)
+         applied (mapv
                   #(if (string? %)
                      [%]
                      (parameters/apply-hugsql-param % param-data options))
                   sql-template)
          sql    (string/join "" (map first applied))
          params (flatten (remove empty? (map rest applied)))]
-     (apply vector sql params))))
+     (apply vector (string/trim sql) params))))
 
 (def default-sqlvec-options
   {:quoting :off

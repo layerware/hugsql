@@ -117,3 +117,43 @@ select * from test
           :two 2
           :three 3} */
 select * from test
+
+-- :name clj-expr-single :? :1
+-- clj expression is expected to return
+-- a string or nil
+-- A single-line comment expects a full
+-- expression within the line
+-- The string returned from the expression
+-- is NOT parsed with a second pass of the hugsql
+-- parser: it is treated directly as sql.
+-- Use multi-line comment clj expressions to
+-- intersperse sql parameters within a clj expression
+select
+--~ (if (= :all cols) "*"  "name")
+from test
+order by id
+
+-- :name clj-expr-multi :? :1
+--  A multi-line comment clj expression can have
+-- interspersed sql.  The clj expression
+-- starts with /*~, all "continuing" parts
+-- start with /*~, and the expression ends with ~*/
+-- When a clj expression needs to represent
+-- advancing to the  "next" form as in the
+-- if expression below,then an empty
+-- separator /*~*/ is needed:
+select
+/*~ (if (seq cols) */
+:i*:cols
+/*~*/
+*
+/*~ ) ~*/
+from test
+order by id
+
+-- :name clj-expr-multi-when :? :1
+select * from test
+/*~ (when id */
+where id = :id
+/*~ ) ~*/
+order by id

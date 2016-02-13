@@ -85,7 +85,7 @@
           (one-value-param-sqlvec {:id 1})))
     (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
           (multi-value-params-sqlvec {:id 1 :name "Ed"})))
-    (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
+    (is (= ["select * from test\nwhere id in ( ?,?,? )" 1 2 3]
           (value-list-param-sqlvec {:ids [1,2,3]})))
     (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
           (tuple-param-sqlvec {:id-name [1 "A"]})))
@@ -219,5 +219,21 @@
           (is (= [[:name] ["A"] ["B"]]
                 (select-ordered db
                   {:cols ["name"] :sort-by ["name"]} {} :as-arrays? true))))
+
+        (is (= 0 (drop-test-table db))))
+
+      (testing "Clojure expressions"
+        (is (= 0 (create-test-table db)))
+        (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+        (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+        (is (= {:name "A"} (clj-expr-single db {:cols :not-all})))
+        (is (= {:id 1 :name "A"} (clj-expr-single db {:cols :all})))
+
+        (is (= {:name "A"} (clj-expr-multi db {:cols ["name"]})))
+        (is (= {:id 1 :name "A"} (clj-expr-multi db)))
+
+        (is (= {:id 1 :name "A"} (clj-expr-multi-when db)))
+        (is (= {:id 2 :name "B"} (clj-expr-multi-when db {:id 2})))
 
         (is (= 0 (drop-test-table db)))))))
