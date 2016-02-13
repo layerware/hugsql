@@ -128,6 +128,13 @@
     (is (= ["select * from test where id = ?" 1]
            (hugsql/sqlvec "select * from test where id = :id" {:id 1}))))
 
+  (testing "Snippets"
+        (is (= ["select id, name"] (select-snip {:cols ["id","name"]})))
+        (is (= ["from test"] (from-snip {:tables ["test"]})))
+        (is (= ["select id, name\nfrom test"]
+               (snip-select-from-sqlvec {:select (select-snip {:cols ["id","name"]})
+                                         :from (from-snip {:tables ["test"]})}))))
+
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
     (is (:private (meta #'another-private-fn)))
@@ -241,4 +248,18 @@
         (is (= 1 (clj-expr-generic-update db {:table "test"
                                               :updates {:name "X"}
                                               :id 3})))
-        (is (= 0 (drop-test-table db)))))))
+        (is (= 0 (drop-test-table db))))
+
+      (testing "Snippets"
+        (is (= 0 (create-test-table db)))
+        (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+        (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+        (is (= [{:id 1 :name "A"}
+                {:id 2 :name "B"}]
+               (snip-select-from db {:select (select-snip {:cols ["id","name"]})
+                                     :from (from-snip {:tables ["test"]})})))
+
+        (is (= 0 (drop-test-table db))))
+
+      )))

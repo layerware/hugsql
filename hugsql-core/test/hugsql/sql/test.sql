@@ -174,3 +174,13 @@ update :i:table set
       " = :v:updates." (name field))))
 ~*/
 where id = :id
+
+-- :snip select-snip
+select :i*:cols
+
+-- :snip from-snip
+from :i*:tables
+
+-- :name snip-select-from :? :*
+:snip:select
+:snip:from

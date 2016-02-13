@@ -263,14 +263,18 @@
   "Intern the sqlvec fn from a parsed def"
   [pdef options]
   (let [sql (:sql pdef)
-        pnm (:name- (:hdr pdef))
+        hdr (:hdr pdef)
+        sn- (:snip- hdr) ;; private snippet
+        snn (:snip hdr)  ;; public snippet
+        nm- (:name- hdr) ;; private name
+        nmn (:name hdr)  ;; public name
         nam (symbol
-             (str (first (or (:name (:hdr pdef)) pnm))
-                  (:fn-suffix (merge default-sqlvec-options options))))
-        doc (str (or (first (:doc (:hdr pdef))) "") " (sqlvec)")
-        mta (if-let [m (:meta (:hdr pdef))]
+             (str (first (or sn- snn nm- nmn))
+                  (when (or nm- nmn) (:fn-suffix (merge default-sqlvec-options options)))))
+        doc (str (or (first (:doc hdr)) "") (when (or nm- nmn) " (sqlvec)"))
+        mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
-        met (merge mta {:doc doc} (when pnm {:private true}))]
+        met (merge mta {:doc doc} (when (or sn- nm-) {:private true}))]
     (intern *ns*
             (with-meta nam met)
             (sqlvec-fn* sql options))))
@@ -439,7 +443,9 @@
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (compile-exprs ~'pdef)
-      (intern-db-fn ~'pdef ~options))))
+      (if (or (:snip- (:hdr ~'pdef)) (:snip (:hdr ~'pdef)))
+        (intern-sqlvec-fn ~'pdef ~options)
+        (intern-db-fn ~'pdef ~options)))))
 
 (defmacro def-db-fns-from-string
   "Given a HugSQL SQL string, define the database

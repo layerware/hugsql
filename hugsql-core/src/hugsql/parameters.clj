@@ -38,6 +38,11 @@
   "Protocol to convert a Clojure value to raw SQL"
   (sql-param [param data options]))
 
+(defprotocol SQLVecParam
+  "Protocol to splice in an sqlvec (or snippet)"
+  (sqlvec-param [param data options]))
+
+
 (defn identifier-param-quote
   "Quote the identifier value based on options."
   [value {:keys [quoting] :as options}]
@@ -104,7 +109,11 @@
 
   SQLParam
   (sql-param [param data options]
-    [(get-in data (deep-get-vec (:name param)))]))
+    [(get-in data (deep-get-vec (:name param)))])
+
+  SQLVecParam
+  (sqlvec-param [param data options]
+    (get-in data (deep-get-vec (:name param)))))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter
@@ -139,3 +148,5 @@
 (defmethod apply-hugsql-param :i* [param data options] (identifier-param-list param data options))
 (defmethod apply-hugsql-param :identifier* [param data options] (identifier-param-list param data options))
 (defmethod apply-hugsql-param :sql [param data options] (sql-param param data options))
+(defmethod apply-hugsql-param :sqlvec [param data options] (sqlvec-param param data options))
+(defmethod apply-hugsql-param :snip [param data options] (sqlvec-param param data options))
