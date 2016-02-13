@@ -62,18 +62,13 @@
               (str "Parameter Mismatch: "
                    k " parameter data not found.") {})))))
 
-(defn ^:no-doc run-expr
-  "Run expression and return result:
+(defn ^:no-doc expr-name
+  [expr]
+  (str "expr-" (hash (pr-str expr))))
 
-   Example assuming cols is [\"id\"]:
-   [[\"(if (seq cols)\" :cont]
-     {:type :i* :name :cols}
-     [:cont] \"*\" [\")\" :end]]
-   to:
-   {:type :i* :name :cols}"
-  [expr params options]
-  (let [hsh (hash (pr-str expr))
-        nam (str "expr-" hsh)
+(defn ^:no-doc def-expr
+  [expr]
+  (let [nam (expr-name expr)
         ;; tag expressions vs others
         ;; and collect interspersed items together into a vector
         tag (reduce
@@ -98,8 +93,26 @@
                         (pr-str (:other x)))) tag)))
              ")")
         expr-fn #(ns-resolve 'hugsql.expr-run (symbol nam))]
-    (when (nil? (expr-fn))
-      (load-string clj))
+    (when (nil? (expr-fn)) (load-string clj))))
+
+(defn ^:no-doc compile-exprs
+  "Compile (def) all expressions in a parsed def"
+  [pdef]
+  (doseq [expr (filter vector? (:sql pdef))]
+    (def-expr expr)))
+
+(defn ^:no-doc run-expr
+  "Run expression and return result.
+   Example assuming cols is [\"id\"]:
+
+   [[\"(if (seq cols)\" :cont]
+     {:type :i* :name :cols}
+     [:cont] \"*\" [\")\" :end]]
+   to:
+   {:type :i* :name :cols}"
+  [expr params options]
+  (let [expr-fn #(ns-resolve 'hugsql.expr-run (symbol (expr-name expr)))]
+    (when (nil? (expr-fn)) (def-expr expr))
     (let [result ((expr-fn) params options)]
       (if (string? result)
         (:sql (first (parser/parse result {:no-header true})))
@@ -113,7 +126,7 @@
         s (if (Character/isWhitespace (last s)) s (str s " "))]
     s))
 
-(defn ^:no-doc template-code-pass
+(defn ^:no-doc expr-pass
   "Takes an sql template (from hugsql parser) and evaluates the
   Clojure expressions resulting in returning an sql template
   containing only sql strings and hashmap parameters"
@@ -150,7 +163,7 @@
   keywords.  For value parameter types, we replace use the jdbc
   prepared statement syntax of a '?' to placehold for the value."
   ([sql-template param-data options]
-   (let [sql-template (template-code-pass sql-template param-data options)
+   (let [sql-template (expr-pass sql-template param-data options)
          _ (validate-parameters! sql-template param-data)
          applied (mapv
                   #(if (string? %)
@@ -291,7 +304,8 @@
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
-     (intern-sqlvec-fn ~'pdef ~options))))
+      (compile-exprs ~'pdef)
+      (intern-sqlvec-fn ~'pdef ~options))))
 
 (defmacro def-sqlvec-fns-from-string
   "Given a HugSQL SQL string, define the <name>-sqlvec functions in the
@@ -325,6 +339,7 @@
   ([s] (def-sqlvec-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
+      (compile-exprs ~'pdef)
       (intern-sqlvec-fn ~'pdef ~options))))
 
 (defn db-fn*
@@ -418,6 +433,7 @@
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
+      (compile-exprs ~'pdef)
       (intern-db-fn ~'pdef ~options))))
 
 (defmacro def-db-fns-from-string
@@ -457,6 +473,7 @@
   ([s] (def-db-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
+      (compile-exprs ~'pdef)
       (intern-db-fn ~'pdef ~options))))
 
 (defn db-run
