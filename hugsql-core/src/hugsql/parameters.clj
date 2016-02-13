@@ -38,7 +38,8 @@
   "Protocol to convert a Clojure value to raw SQL"
   (sql-param [param data options]))
 
-(defn- identifier-param-quote
+(defn identifier-param-quote
+  "Quote the identifier value based on options."
   [value {:keys [quoting] :as options}]
   (let [parts (string/split value #"\.")
         qtfn  (condp = quoting

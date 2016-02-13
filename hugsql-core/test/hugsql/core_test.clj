@@ -227,6 +227,7 @@
         (is (= 0 (create-test-table db)))
         (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
         (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+        (is (= 1 (insert-into-test-table db {:id 3 :name "C"})))
 
         (is (= {:name "A"} (clj-expr-single db {:cols ["name"]})))
         (is (= {:id 1 :name "A"} (clj-expr-single db)))
@@ -237,4 +238,7 @@
         (is (= {:id 1 :name "A"} (clj-expr-multi-when db)))
         (is (= {:id 2 :name "B"} (clj-expr-multi-when db {:id 2})))
 
+        (is (= 1 (clj-expr-generic-update db {:table "test"
+                                              :updates {:name "X"}
+                                              :id 3})))
         (is (= 0 (drop-test-table db)))))))

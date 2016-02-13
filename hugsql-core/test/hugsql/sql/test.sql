@@ -162,3 +162,15 @@ select * from test
 where id = :id
 /*~ ) ~*/
 order by id
+
+-- :name clj-expr-generic-update :! :n
+/* :require [clojure.string :as string]
+            [hugsql.parameters :refer [identifier-param-quote]] */
+update :i:table set
+/*~
+(string/join ","
+  (for [[field _] (:updates params)]
+    (str (identifier-param-quote (name field) options)
+      " = :v:updates." (name field))))
+~*/
+where id = :id
