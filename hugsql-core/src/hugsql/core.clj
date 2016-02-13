@@ -92,7 +92,7 @@
         clj (str
              "(ns hugsql.expr-run)\n"
              "(defn " nam
-             " [{:keys [" (string/join " " arg) "] :as params} options]"
+             " [{:keys [" (string/join " " arg) "] :as _params} _options]"
              (string/join
               " "
               (filter
@@ -105,7 +105,10 @@
         expr-fn #(ns-resolve 'hugsql.expr-run (symbol nam))]
     (when (nil? (expr-fn))
       (load-string clj))
-    ((expr-fn) params options)))
+    (let [result ((expr-fn) params options)]
+      (if (string? result)
+        (:sql (first (parser/parse result {:no-header true})))
+        result))))
 
 (defn ^:no-doc spacer
   "Check for string s with no leading or

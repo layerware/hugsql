@@ -228,8 +228,8 @@
         (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
         (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
 
-        (is (= {:name "A"} (clj-expr-single db {:cols :not-all})))
-        (is (= {:id 1 :name "A"} (clj-expr-single db {:cols :all})))
+        (is (= {:name "A"} (clj-expr-single db {:cols ["name"]})))
+        (is (= {:id 1 :name "A"} (clj-expr-single db)))
 
         (is (= {:name "A"} (clj-expr-multi db {:cols ["name"]})))
         (is (= {:id 1 :name "A"} (clj-expr-multi db)))

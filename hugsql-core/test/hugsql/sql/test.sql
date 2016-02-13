@@ -128,12 +128,13 @@ select * from test
 -- A single-line comment expects a full
 -- expression within the line
 -- The string returned from the expression
--- is NOT parsed with a second pass of the hugsql
--- parser: it is treated directly as sql.
--- Use multi-line comment clj expressions to
--- intersperse sql parameters within a clj expression
+-- is parsed with a second pass of the hugsql
+-- parser at run-time, picking up any hugsql parameters
+-- Note the use of _params: since no reference to cols
+-- is used during the first parsing pass, we must
+-- attempt to access :cols from the built-in _params
 select
---~ (if (= :all cols) "*"  "name")
+--~ (if (seq (:cols _params)) ":i*:cols" "*")
 from test
 order by id
 
