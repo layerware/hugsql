@@ -134,7 +134,7 @@ select * from test
 -- is used during the first parsing pass, we must
 -- attempt to access :cols from the built-in _params
 select
---~ (if (seq (:cols _params)) ":i*:cols" "*")
+--~ (if (seq (:cols params)) ":i*:cols" "*")
 from test
 order by id
 
@@ -148,7 +148,7 @@ order by id
 -- if expression below,then an empty
 -- separator /*~*/ is needed:
 select
-/*~ (if (seq cols) */
+/*~ (if (seq (:cols params)) */
 :i*:cols
 /*~*/
 *
@@ -158,7 +158,7 @@ order by id
 
 -- :name clj-expr-multi-when :? :1
 select * from test
-/*~ (when id */
+/*~ (when (:id params) */
 where id = :id
 /*~ ) ~*/
 order by id

@@ -72,11 +72,7 @@
    to:
    {:type :i* :name :cols}"
   [expr params options]
-  (let [arg (vec (distinct
-                         (concat
-                          (mapv name (keys params))
-                          (mapv (comp name :name) (filter map? expr)))))
-        hsh (hash (pr-str [expr arg]))
+  (let [hsh (hash (pr-str expr))
         nam (str "expr-" hsh)
         ;; tag expressions vs others
         ;; and collect interspersed items together into a vector
@@ -91,8 +87,7 @@
              expr)
         clj (str
              "(ns hugsql.expr-run)\n"
-             "(defn " nam
-             " [{:keys [" (string/join " " arg) "] :as _params} _options]"
+             "(defn " nam " [params options] "
              (string/join
               " "
               (filter
