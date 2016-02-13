@@ -105,7 +105,7 @@
   "Run expression and return result.
    Example assuming cols is [\"id\"]:
 
-   [[\"(if (seq cols)\" :cont]
+   [[\"(if (seq (:cols params))\" :cont]
      {:type :i* :name :cols}
      [:cont] \"*\" [\")\" :end]]
    to:
