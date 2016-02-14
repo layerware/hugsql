@@ -42,6 +42,10 @@
   "Protocol to splice in an sqlvec (or snippet)"
   (sqlvec-param [param data options]))
 
+(defprotocol SQLVecParamList
+  "Protocol to splice in a collection of sqlvecs (or snippets)"
+  (sqlvec-param-list [param data options]))
+
 
 (defn identifier-param-quote
   "Quote the identifier value based on options."
@@ -113,7 +117,15 @@
 
   SQLVecParam
   (sqlvec-param [param data options]
-    (get-in data (deep-get-vec (:name param)))))
+    (get-in data (deep-get-vec (:name param))))
+
+  SQLVecParamList
+  (sqlvec-param-list [param data options]
+    (reduce
+      #(apply vector
+         (string/join " " [(first %1) (first %2)])
+         (concat (rest %1) (rest %2)))
+      (get-in data (deep-get-vec (:name param))))))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter
@@ -149,4 +161,6 @@
 (defmethod apply-hugsql-param :identifier* [param data options] (identifier-param-list param data options))
 (defmethod apply-hugsql-param :sql [param data options] (sql-param param data options))
 (defmethod apply-hugsql-param :sqlvec [param data options] (sqlvec-param param data options))
+(defmethod apply-hugsql-param :sqlvec* [param data options] (sqlvec-param-list param data options))
 (defmethod apply-hugsql-param :snip [param data options] (sqlvec-param param data options))
+(defmethod apply-hugsql-param :snip* [param data options] (sqlvec-param-list param data options))

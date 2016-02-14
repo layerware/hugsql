@@ -106,6 +106,14 @@
     (doseq [expr (filter vector? (:sql pdef))]
       (def-expr expr require-str))))
 
+(defn ^:no-doc spacer
+  "Check for string s with no leading or
+   trailing space and add one if needed."
+  [s]
+  (let [s (if (Character/isWhitespace (first s)) s (str " " s))
+        s (if (Character/isWhitespace (last s)) s (str s " "))]
+    s))
+
 (defn ^:no-doc run-expr
   "Run expression and return result.
    Example assuming cols is [\"id\"]:
@@ -120,16 +128,8 @@
     (when (nil? (expr-fn)) (def-expr expr))
     (let [result ((expr-fn) params options)]
       (if (string? result)
-        (:sql (first (parser/parse result {:no-header true})))
+        (:sql (first (parser/parse (spacer result) {:no-header true})))
         result))))
-
-(defn ^:no-doc spacer
-  "Check for string s with no leading or
-   trailing space and add one if needed."
-  [s]
-  (let [s (if (Character/isWhitespace (first s)) s (str " " s))
-        s (if (Character/isWhitespace (last s)) s (str s " "))]
-    s))
 
 (defn ^:no-doc expr-pass
   "Takes an sql template (from hugsql parser) and evaluates the

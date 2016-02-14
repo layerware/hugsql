@@ -181,6 +181,23 @@ select :i*:cols
 -- :snip from-snip
 from :i*:tables
 
--- :name snip-select-from :? :*
+-- :snip where-snip
+where :snip*:cond
+
+-- :snip cond-snip
+-- We could come up with something
+-- quite elaborate here with some custom
+-- parameter types that convert := to =, etc.,
+-- but for the purposes of testing snippets,
+-- we are passing through sql params
+-- Examples:
+-- {:conj "and" :cond ["id" "=" 1]}
+-- OR
+-- {:conj "or" :cond ["id" "=" 1]}
+-- note that :conj can be "", too
+:sql:conj :i:cond.0 :sql:cond.1 :v:cond.2
+
+-- :name snip-query :? :*
 :snip:select
 :snip:from
+--~ (when (:where params) ":snip:where")
