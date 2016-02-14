@@ -7,7 +7,7 @@
 
   adapter/HugsqlAdapter
   (execute [this db sqlvec options]
-    (if (some #(= % (:command options)) [:insert! :i!])
+    (if (some #(= % (:command options)) [:insert :i!])
       (let [[sql & params] sqlvec]
         (jdbc/db-do-prepared-return-keys db sql params))
       (apply jdbc/execute! db sqlvec (:command-options options))))

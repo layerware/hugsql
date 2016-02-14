@@ -190,7 +190,8 @@
                      (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
 
               :mysql
-              (is (= {:generated_key 9} (insert-into-test-table-return-keys db {:id 9 :name "I"})))
+              (is (= {:generated_key 9}
+                     (insert-into-test-table-return-keys db {:id 9 :name "I"})))
 
               :sqlite
               (is (= {(keyword "last_insert_rowid()") 10}
