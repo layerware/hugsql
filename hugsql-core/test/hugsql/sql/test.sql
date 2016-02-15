@@ -130,9 +130,6 @@ select * from test
 -- The string returned from the expression
 -- is parsed with a second pass of the hugsql
 -- parser at run-time, picking up any hugsql parameters
--- Note the use of _params: since no reference to cols
--- is used during the first parsing pass, we must
--- attempt to access :cols from the built-in _params
 select
 --~ (if (seq (:cols params)) ":i*:cols" "*")
 from test
