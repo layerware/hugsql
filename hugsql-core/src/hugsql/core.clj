@@ -252,12 +252,16 @@
    (let [psql (:sql (first (parser/parse sql {:no-header true})))]
      (sqlvec-fn* psql options))))
 
+(def snip-fn "Alias for sqlvec-fn" sqlvec-fn)
+
 (defn sqlvec
   "Given an sql string, optional options, and param data, return an sqlvec"
   ([sql param-data] (sqlvec sql {} param-data))
   ([sql options param-data]
    (let [f (sqlvec-fn sql options)]
      (f param-data))))
+
+(def snip "Alias for sqlvec" sqlvec)
 
 (defn intern-sqlvec-fn
   "Intern the sqlvec fn from a parsed def"
