@@ -3,6 +3,8 @@
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
+  :scm {:name "HugSQL"
+        :url "https://github.com/layerware/hugsql"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [com.layerware/hugsql-core "0.4.0-SNAPSHOT"]
                  [com.layerware/hugsql-adapter-clojure-java-jdbc "0.4.0-SNAPSHOT"]]

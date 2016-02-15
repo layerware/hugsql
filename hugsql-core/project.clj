@@ -3,6 +3,7 @@
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
+  :scm {:dir ".."}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.reader "0.10.0"]
                  [com.layerware/hugsql-adapter "0.4.0-SNAPSHOT"]]
