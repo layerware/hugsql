@@ -15,6 +15,6 @@ Full documentation is at [hugsql.org] (http://www.hugsql.org).
 
 ## License
 
-Copyright © 2015 [Layerware, Inc.] (http://www.layerware.com)
+Copyright © 2016 [Layerware, Inc.] (http://www.layerware.com)
 
 Distributed under the [Apache License, Version 2.0] (http://www.apache.org/licenses/LICENSE-2.0.html)
