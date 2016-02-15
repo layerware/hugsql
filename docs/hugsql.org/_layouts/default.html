@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}</title>
 
-    <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/syntax.css">
@@ -19,16 +19,14 @@
   </head>
   <body data-spy="scroll" data-target=".scrollspy">
 
-    <div class="container">
-
     {% include header.html %}
 
-    <div class="content">
+    <div class="container">
+      <div class="content">
         {{ content }}
-    </div>
+      </div>
 
-    {% include footer.html %}
-
+      {% include footer.html %}
     </div>
 
   </body>

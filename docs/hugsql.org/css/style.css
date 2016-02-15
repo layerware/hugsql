@@ -5,23 +5,32 @@ body {
 }
 
 code, kbd, pre, samp {
-    font-family: Inconsolata;
+    font-family: "Source Code Pro";
     background-color: #111111;
     color: #eeeeee;
 }
 
 code {
-    font-size: 1em;
+    font-size: 0.9em !important;
     color: #9103A9;
     background-color: #f0f0f0;
 }
 
-h3, h4, h5 {
+h3, h4, h5, h6 {
     margin-top: 2em;
 }
 
 .xtra-top {
     margin-top: 2em;
+}
+
+.main-nav {
+    background-color: #444444;
+    margin-bottom: 10px;
+}
+
+.main-nav .nav>li>a {
+
 }
 
 .navbar {
@@ -34,11 +43,11 @@ h3, h4, h5 {
 }
 
 .doc-nav {
-    font-size: 0.86em;
+    font-size: 0.7em;
 }
 
 .doc-nav.affix {
-    top: 40px;
+    top: 80px;
 }
 .doc-nav.affix-bottom {
     position: absolute;
