@@ -25,7 +25,7 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
    [Other Useful Functions](http://www.hugsql.org/#using-other-fns))
  - Specify a function as private and other metadata (issue [#17](https://github.com/layerware/hugsql/issues/17))
  - Better support for Returning Execute and Insert w/ Return Keys (See
-   Insert Usage) (issues
+   [Insert Usage](http://www.hugsql.org/#using-insert)) (issues
    [#8](https://github.com/layerware/hugsql/issues/8) and
    [#15](https://github.com/layerware/hugsql/issues/15))
  - [Clojure Expressions](http://www.hugsql.org/#using-expressions)
