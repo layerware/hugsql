@@ -489,7 +489,9 @@
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (compile-exprs ~'pdef)
-      (intern-db-fn ~'pdef ~options))))
+      (if (or (:snip- (:hdr ~'pdef)) (:snip (:hdr ~'pdef)))
+        (intern-sqlvec-fn ~'pdef ~options)
+        (intern-db-fn ~'pdef ~options)))))
 
 (defn db-run
   "Given a database spec/connection, sql string,
