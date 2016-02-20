@@ -75,7 +75,7 @@
   (testing "sql file does not exist/can't be read"
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
                           (eval '(hugsql.core/def-db-fns "non/existent/file.sql")))))
-  
+
   (testing "fn definition"
     (is (fn? no-params-select))
     (is (fn? no-params-select-sqlvec))
@@ -153,12 +153,14 @@
       (is (fn? (get-in db-fns [:one-value-param :fn])))
       (is (fn? (get-in db-fns [:select-snip :fn])))
       (is (= "One value param" (get-in db-fns [:one-value-param :meta :doc])))
+      (is (not (get-in db-fns [:one-value-param :meta :snip?])))
+      (is (get-in db-fns [:select-snip :meta :snip?]))
       (is (fn? (get-in sql-fns [:one-value-param-sqlvec :fn])))
       (is (fn? (get-in sql-fns [:select-snip :fn])))
       (is (= "One value param (sqlvec)" (get-in sql-fns [:one-value-param-sqlvec :meta :doc])))
       (is (fn? (get-in db-fns-str [:test3-select :fn])))
       (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
-  
+
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
 

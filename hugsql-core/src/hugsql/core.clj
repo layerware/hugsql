@@ -281,7 +281,10 @@
         doc (str (or (first (:doc hdr)) "") (when (or nm- nmn) " (sqlvec)"))
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
-        met (merge mta {:doc doc} (when (or sn- nm-) {:private true}))]
+        met (merge mta
+                   {:doc doc}
+                   (when (or sn- nm-) {:private true})
+                   (when (or sn- snn) {:snip? true}))]
     {(keyword nam) {:meta met
                     :fn (sqlvec-fn* sql options)}}))
 
