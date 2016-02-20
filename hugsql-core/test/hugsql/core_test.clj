@@ -55,7 +55,9 @@
   (hugsql/def-db-fns tmpfile))
 
 ;; Use a string
-(hugsql/def-db-fns-from-string "-- :name test3-select\n select * from test3")
+(hugsql/def-db-fns-from-string
+  (str "-- :name test3-select\n select * from test3"
+       "-- :snip snip1\n select *"))
 
 (deftest core
 
@@ -66,7 +68,8 @@
     (is (fn? test2-select)))
 
   (testing "defs from string worked"
-    (is (fn? test3-select)))
+    (is (fn? test3-select))
+    (is (fn? snip1)))
 
   (testing "sql file does not exist/can't be read"
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
