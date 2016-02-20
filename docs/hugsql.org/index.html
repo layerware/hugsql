@@ -47,7 +47,7 @@ page: docs
         dependency information:</p>
 
 {% highlight clj %}
-[com.layerware/hugsql "0.4.0"]
+[com.layerware/hugsql "0.4.1"]
 {% endhighlight %}
 
       <p>You will also need to specify your JDBC driver dependency
@@ -387,6 +387,14 @@ Macro
             <code>def-db-fns-from-string</code> ➚</a></li>
         <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-def-sqlvec-fns-from-string">
             <code>def-sqlvec-fns-from-string</code> ➚</a></li>
+        <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-map-of-db-fns">
+            <code>map-of-db-fns</code> ➚</a></li>
+        <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-map-of-sqlvec-fns">
+            <code>map-of-sqlvec-fns</code> ➚</a></li>
+        <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-map-of-db-fns-from-string">
+            <code>map-of-db-fns-from-string</code> ➚</a></li>
+        <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-map-of-sqlvec-fns-from-string">
+            <code>map-of-sqlvec-fns-from-string</code> ➚</a></li>
         <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-sqlvec">
             <code>sqlvec</code> and alias <code>snip</code> ➚</a></li>
         <li><a href="http://layerware.github.io/hugsql/hugsql.core.html#var-sqlvec-fn">
@@ -1486,8 +1494,8 @@ hugsql.parameters/apply-hugsql-param
           clojar and specify <code>hugsql-core</code> and the adapter clojar you desire:
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.4.0"]
-[com.layerware/hugsql-adapter-clojure-jdbc "0.4.0"]
+[com.layerware/hugsql-core "0.4.1"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.4.1"]
 {% endhighlight %}
 
           <p>Within your Clojure code, you will need to explicitly set the adapter.
