@@ -55,9 +55,10 @@
   (hugsql/def-db-fns tmpfile))
 
 ;; Use a string
-(hugsql/def-db-fns-from-string
+(def hugsql-string-defs
   (str "-- :name test3-select\n select * from test3"
        "-- :snip snip1\n select *"))
+(hugsql/def-db-fns-from-string hugsql-string-defs)
 
 (deftest core
 
@@ -143,6 +144,20 @@
     (is (:private (meta #'another-private-fn)))
     (is (= 1 (:one (meta #'user-meta))))
     (is (= 2 (:two (meta #'user-meta)))))
+
+  (testing "map of fns"
+    (let [db-fns (hugsql/map-of-db-fns "hugsql/sql/test.sql")
+          sql-fns (hugsql/map-of-sqlvec-fns "hugsql/sql/test.sql")
+          db-fns-str (hugsql/map-of-db-fns-from-string hugsql-string-defs)
+          sql-fns-str (hugsql/map-of-sqlvec-fns-from-string hugsql-string-defs)]
+      (is (fn? (get-in db-fns [:one-value-param :fn])))
+      (is (fn? (get-in db-fns [:select-snip :fn])))
+      (is (= "One value param" (get-in db-fns [:one-value-param :meta :doc])))
+      (is (fn? (get-in sql-fns [:one-value-param-sqlvec :fn])))
+      (is (fn? (get-in sql-fns [:select-snip :fn])))
+      (is (= "One value param (sqlvec)" (get-in sql-fns [:one-value-param-sqlvec :meta :doc])))
+      (is (fn? (get-in db-fns-str [:test3-select :fn])))
+      (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
   
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]

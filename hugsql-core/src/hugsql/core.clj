@@ -16,7 +16,7 @@
 
 (defn ^:no-doc get-adapter
   "Get an adapter.  Sets default
-   hugsql.adapter.clojure-java-jdbc 
+   hugsql.adapter.clojure-java-jdbc
    adapter if no adapter is set."
   []
   ;; DEV NOTE: I don't really like dynamically eval'ing
@@ -263,8 +263,11 @@
 
 (def snip "Alias for sqlvec" sqlvec)
 
-(defn intern-sqlvec-fn
-  "Intern the sqlvec fn from a parsed def"
+(defn sqlvec-fn-map
+  "Hashmap of sqlvec/snip fn from a parsed def
+   with the form:
+   {:fn-name {:meta {:doc \"doc string\"}
+              :fn <anon-db-fn>}"
   [pdef options]
   (let [sql (:sql pdef)
         hdr (:hdr pdef)
@@ -279,9 +282,17 @@
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
         met (merge mta {:doc doc} (when (or sn- nm-) {:private true}))]
+    {(keyword nam) {:meta met
+                    :fn (sqlvec-fn* sql options)}}))
+
+(defn intern-sqlvec-fn
+  "Intern the sqlvec fn from a parsed def"
+  [pdef options]
+  (let [fm (sqlvec-fn-map pdef options)
+        fk (ffirst fm)]
     (intern *ns*
-            (with-meta nam met)
-            (sqlvec-fn* sql options))))
+            (with-meta (symbol (name fk)) (-> fm fk :meta))
+            (-> fm fk :fn))))
 
 (defmacro def-sqlvec-fns
   "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
@@ -300,17 +311,7 @@
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :fn-suffix \"-sqlvec\" (default)
 
-   :quoting options for identifiers are:
-     :ansi double-quotes: \"identifier\"
-     :mysql backticks: `identifier`
-     :mssql square brackets: [identifier]
-     :off no quoting (default)
-
-   Identifiers containing a period/dot . are split, quoted separately,
-   and then rejoined. This supports myschema.mytable conventions.
-
-   :quoting can be overridden as an option in the calls to functions
-   created by def-db-fns.
+   See hugsql.core/def-db-fns for :quoting option details.
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
@@ -335,17 +336,7 @@
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :fn-suffix \"-sqlvec\" (default)
 
-   :quoting options for identifiers are:
-     :ansi double-quotes: \"identifier\"
-     :mysql backticks: `identifier`
-     :mssql square brackets: [identifier]
-     :off no quoting (default)
-
-   Identifiers containing a period/dot . are split, quoted separately,
-   and then rejoined. This supports myschema.mytable conventions.
-
-   :quoting can be overridden as an option in the calls to functions
-   created by def-db-fns.
+   See hugsql.core/def-db-fns for :quoting option details.
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
@@ -354,6 +345,72 @@
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (compile-exprs ~'pdef)
       (intern-sqlvec-fn ~'pdef ~options))))
+
+(defmacro map-of-sqlvec-fns
+  "Given a HugSQL SQL file, return a hashmap of database
+   functions of the form:
+
+   {:fn1-name {:meta {:doc \"doc string\"}
+               :fn <fn1>}
+    :fn2-name {:meta {:doc \"doc string\"
+                      :private true}
+               :fn <fn2>}}
+
+  Usage:
+
+   (map-sqlvec-fns file options?)
+
+   where:
+    - file is a string file path in your classpath,
+      a resource object (java.net.URL),
+      or a file object (java.io.File)
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :fn-suffix \"-sqlvec\" (default)
+
+   See hugsql.core/def-db-fns for :quoting option details.
+
+   :fn-suffix is appended to the defined function names to
+   differentiate them from the functions defined by def-db-fns."
+  ([file] (map-of-sqlvec-fns &form &env file {}))
+  ([file options]
+   `(let [~'pdefs (parsed-defs-from-file ~file)]
+      (doseq [~'pdef ~'pdefs]
+        (compile-exprs ~'pdef))
+      (apply merge
+             (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
+
+(defmacro map-of-sqlvec-fns-from-string
+  "Given a HugSQL SQL string, return a hashmap of sqlvec
+   functions of the form:
+
+   {:fn1-name {:meta {:doc \"doc string\"}
+               :fn <fn1>}
+    :fn2-name {:meta {:doc \"doc string\"
+                      :private true}
+               :fn <fn2>}}
+
+  Usage:
+
+   (map-sqlvec-fns-from-string s options?)
+
+   where:
+    - s is a HugSQL-flavored sql string
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :fn-suffix \"-sqlvec\" (default)
+
+   See hugsql.core/def-db-fns for :quoting option details.
+
+   :fn-suffix is appended to the defined function names to
+   differentiate them from the functions defined by def-db-fns."
+  ([s] (map-of-sqlvec-fns-from-string &form &env s {}))
+  ([s options]
+   `(let [~'pdefs (parsed-defs-from-string ~s)]
+      (doseq [~'pdef ~'pdefs]
+        (compile-exprs ~'pdef))
+      (apply merge
+             (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
 
 (defn db-fn*
   "Given parsed sql and optionally a command, result, and options,
@@ -391,21 +448,36 @@
    (let [psql (:sql (first (parser/parse sql {:no-header true})))]
      (db-fn* psql command result options))))
 
+(defn db-fn-map
+  "Hashmap of db fn from a parsed def
+   with the form:
+   {:fn-name {:meta {:doc \"doc string\"}
+              :fn <anon-db-fn>}"
+  [pdef options]
+  (let [sql (:sql pdef)
+        pnm (:name- (:hdr pdef))
+        nam (symbol (first (or (:name (:hdr pdef)) pnm)))
+        doc (or (first (:doc (:hdr pdef))) "")
+        cmd (command-sym (:hdr pdef))
+        res (result-sym (:hdr pdef))
+        mta (if-let [m (:meta (:hdr pdef))]
+              (edn/read-string (string/join " " m)) {})
+        met (merge mta {:doc doc} (when pnm {:private true}))]
+    {(keyword nam) {:meta met
+                    :fn (db-fn* sql cmd res options)}}))
+
 (defn intern-db-fn
   "Intern the db fn from a parsed def"
   [pdef options]
-  (let [sql (:sql pdef)
-            pnm (:name- (:hdr pdef))
-            nam (symbol (first (or (:name (:hdr pdef)) pnm)))
-            doc (or (first (:doc (:hdr pdef))) "")
-            cmd (command-sym (:hdr pdef))
-            res (result-sym (:hdr pdef))
-            mta (if-let [m (:meta (:hdr pdef))]
-                    (edn/read-string (string/join " " m)) {})
-            met (merge mta {:doc doc} (when pnm {:private true}))]
-        (intern *ns*
-                (with-meta nam met)
-                (db-fn* sql cmd res options))))
+  (let [fm (db-fn-map pdef options)
+        fk (ffirst fm)]
+    (intern *ns*
+            (with-meta (symbol (name fk)) (-> fm fk :meta))
+            (-> fm fk :fn))))
+
+(defn ^:no-doc snippet-pdef?
+  [pdef]
+  (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
 
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
@@ -447,7 +519,7 @@
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (compile-exprs ~'pdef)
-      (if (or (:snip- (:hdr ~'pdef)) (:snip (:hdr ~'pdef)))
+      (if (snippet-pdef? ~'pdef)
         (intern-sqlvec-fn ~'pdef ~options)
         (intern-db-fn ~'pdef ~options)))))
 
@@ -460,38 +532,87 @@
    (def-db-fns-from-string s options?)
 
    where:
-    - string is HugSQL-flavored sql statements
+    - s is a string of HugSQL-flavored sql statements
     - options (optional) hashmap:
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :adapter adapter }
 
-   :quoting options for identifiers are:
-     :ansi double-quotes: \"identifier\"
-     :mysql backticks: `identifier`
-     :mssql square brackets: [identifier]
-     :off no quoting (default)
-
-   Identifiers containing a period/dot . are split, quoted separately,
-   and then rejoined. This supports myschema.mytable conventions.
-
-   :quoting can be overridden as an option in the calls to functions
-   created by def-db-fns.
-
-   :adapter specifies the HugSQL adapter to use for all defined
-   functions. The default adapter used is
-   (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
-   when :adapter is not given.
-
-   See also hugsql.core/set-adapter! to set adapter for all def-db-fns
-   calls.  Also, :adapter can be specified for individual function
-   calls (overriding set-adapter! and the :adapter option here)."
+   See hugsql.core/def-db-fns for :quoting and :adapter details."
   ([s] (def-db-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (compile-exprs ~'pdef)
-      (if (or (:snip- (:hdr ~'pdef)) (:snip (:hdr ~'pdef)))
+      (if (snippet-pdef? ~'pdef)
         (intern-sqlvec-fn ~'pdef ~options)
         (intern-db-fn ~'pdef ~options)))))
+
+(defmacro map-of-db-fns
+  "Given a HugSQL SQL file, return a hashmap of database
+   functions of the form:
+
+   {:fn1-name {:meta {:doc \"doc string\"}
+               :fn <fn1>}
+    :fn2-name {:meta {:doc \"doc string\"
+                      :private true}
+               :fn <fn2>}}
+
+   Usage:
+
+   (map-of-db-fns file options?)
+
+   where:
+    - file is a string file path in your classpath,
+      a resource object (java.net.URL),
+      or a file object (java.io.File)
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :adapter adapter }
+
+   See hugsql.core/def-db-fns for :quoting and :adapter details."
+  ([file] (map-of-db-fns &form &env file {}))
+  ([file options]
+   `(let [~'pdefs (parsed-defs-from-file ~file)]
+      (doseq [~'pdef ~'pdefs]
+        (compile-exprs ~'pdef))
+      (apply merge
+             (map
+              #(if (snippet-pdef? %)
+                 (sqlvec-fn-map % ~options)
+                 (db-fn-map % ~options))
+              ~'pdefs)))))
+
+(defmacro map-of-db-fns-from-string
+  "Given a HugSQL SQL string, return a hashmap of database
+   functions of the form:
+
+   {:fn1-name {:meta {:doc \"doc string\"}
+               :fn <fn1>}
+    :fn2-name {:meta {:doc \"doc string\"
+                      :private true}
+               :fn <fn2>}}
+
+   Usage:
+
+   (map-of-db-fns-from-string s options?)
+
+   where:
+    - s is a string of HugSQL-flavored sql statements
+    - options (optional) hashmap:
+      {:quoting :off(default) | :ansi | :mysql | :mssql
+       :adapter adapter }
+
+   See hugsql.core/def-db-fns for :quoting and :adapter details."
+  ([s] (map-of-db-fns-from-string &form &env s {}))
+  ([s options]
+   `(let [~'pdefs (parsed-defs-from-string ~s)]
+      (doseq [~'pdef ~'pdefs]
+        (compile-exprs ~'pdef))
+      (apply merge
+             (map
+              #(if (snippet-pdef? %)
+                 (sqlvec-fn-map % ~options)
+                 (db-fn-map % ~options))
+              ~'pdefs)))))
 
 (defn db-run
   "Given a database spec/connection, sql string,
@@ -504,4 +625,3 @@
   ([db sql param-data command result options & command-options]
    (let [f (db-fn sql command result options)]
      (f db param-data command-options))))
-
