@@ -14,6 +14,16 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
+## 0.4.1
+
+ - map-of-db-fns, map-of-sqlvec-fns & -from-string variants for easier
+   custom use of hugsql-created functions (issue
+   [#19](https://github.com/layerware/hugsql/issues/19)) (See
+   [Other Useful Functions](http://www.hugsql.org/#using-other-fns))
+ - link to postgresql async adapter fixed (pull
+   [#20](https://github.com/layerware/hugsql/pull/20))
+ - minor test & doc updates
+
 ### 0.4.0
 
  - Escape colon in SQL (issue

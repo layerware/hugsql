@@ -458,12 +458,13 @@
               :fn <anon-db-fn>}"
   [pdef options]
   (let [sql (:sql pdef)
-        pnm (:name- (:hdr pdef))
-        nam (symbol (first (or (:name (:hdr pdef)) pnm)))
-        doc (or (first (:doc (:hdr pdef))) "")
-        cmd (command-sym (:hdr pdef))
-        res (result-sym (:hdr pdef))
-        mta (if-let [m (:meta (:hdr pdef))]
+        hdr (:hdr pdef)
+        pnm (:name- hdr)
+        nam (symbol (first (or (:name hdr) pnm)))
+        doc (or (first (:doc hdr)) "")
+        cmd (command-sym hdr)
+        res (result-sym hdr)
+        mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
         met (merge mta {:doc doc} (when pnm {:private true}))]
     {(keyword nam) {:meta met
