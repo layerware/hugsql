@@ -1616,8 +1616,15 @@ hugsql.parameters/apply-hugsql-param
         <li>Yesql (as of 0.5.x) supports setting a default database
         connection at the time of function definition, and optionally
         overriding this connection at function call time.  HugSQL
-        requires a database spec, connection, or transaction object as
-          the first argument to your function call.</li>
+        expects a database spec, connection, or transaction object as
+        the first argument to your function call.  However, as of
+        version 0.4.1, HugSQL
+          provides <a href="http://layerware.github.io/hugsql/hugsql.core.html#var-map-of-db-fns">
+            <code>map-of-db-fns</code></a> allowing other libraries to
+        wrap HugSQL-created functions and set a default database
+        connection. This is precisely what the Luminus web
+        framework's <a href="https://github.com/luminus-framework/conman">conman</a>
+        library does.</li>
         <li>As of HugSQL 0.4.0, HugSQL
         supports <a href="#using-expressions">Clojure expressions</a>
         and <a href="#using-snippets">Snippets</a> for composing SQL
@@ -1625,7 +1632,7 @@ hugsql.parameters/apply-hugsql-param
       </ul>        
 
       <p><em>--Curtis Summers (Feb 2016)</em></p>
-      <p>P.S. I'd like to keep the above comparison up-to-date as both
+      <p>P.S. I'd like to keep the above comparison accurate as both
       libraries grow.  See something that's not
       right?  <a href="https://github.com/layerware/hugsql/issues">Add
           an issue!</a></p>
