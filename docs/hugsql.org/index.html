@@ -1147,7 +1147,7 @@ select * from my_table limit 1
 
 {% highlight sql %}
 -- first-employee :? :1
-select * from :value:employees.0.id
+select * from employees where id = :value:employees.0.id
 {% endhighlight %}
 
 
