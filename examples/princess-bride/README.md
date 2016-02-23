@@ -4,7 +4,7 @@ This is an example application showing typical usages of the HugSQL
 library.
 
 Code in this application is used for the code samples on the
-[http://hugsql.org](HugSQL Documentation Site).
+[HugSQL Documentation Site](http://hugsql.org).
 
 ## Running the application
 
