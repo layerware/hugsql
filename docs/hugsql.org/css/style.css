@@ -4,6 +4,11 @@ body {
     color: #444444;
 }
 
+pre code {
+    white-space: pre;
+    overflow: auto;
+}
+
 code, kbd, pre, samp {
     font-family: "Source Code Pro";
     background-color: #111111;
