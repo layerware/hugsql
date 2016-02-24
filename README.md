@@ -14,7 +14,17 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
-## 0.4.1
+### 0.4.2
+
+ - fix parameter mismatch validation for false/nil (issue
+   [#23](https://github.com/layerware/hugsql/issues/23))
+ - fix sqlvec-fn* not propagating all options
+ - add doc clarification on tuple list multi-record insert vs large
+   batch insert (issue
+   [#22](https://github.com/layerware/hugsql/issues/22))
+ - small doc fixes
+
+### 0.4.1
 
  - map-of-db-fns, map-of-sqlvec-fns & -from-string variants for easier
    custom use of hugsql-created functions (issue
