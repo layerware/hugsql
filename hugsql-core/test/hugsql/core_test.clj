@@ -173,7 +173,10 @@
                               (one-value-param-sqlvec {:x 1})))
         (is (thrown-with-msg? ExceptionInfo
                               #"Parameter Mismatch: :id parameter data not found."
-                              (one-value-param db {:x 1}))))
+                              (one-value-param db {:x 1})))
+        ;; does not throw on false
+        (is (= ["select * from test where id = ?" false]
+               (one-value-param-sqlvec {:id false}))))
 
       (testing "database commands/queries"
         (condp = db-name
