@@ -242,7 +242,7 @@
      ([] (y {} {}))
      ([param-data] (y param-data {}))
      ([param-data opts]
-      (prepare-sql psql param-data (merge default-sqlvec-options opts))))))
+      (prepare-sql psql param-data (merge default-sqlvec-options options opts))))))
 
 (defn sqlvec-fn
   "Given an sql string and optional options, return an
