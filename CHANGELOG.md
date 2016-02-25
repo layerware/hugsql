@@ -1,5 +1,16 @@
 # HugSQL CHANGELOG
 
+
+## 0.4.3
+
+ - report better error message for missing HugSQL header (issue
+   [#24](https://github.com/layerware/hugsql/issues/24))
+ - fix parser handling of Windows newlines (issue
+   [#26](https://github.com/layerware/hugsql/issues/26))
+ - missing parameter validation now checks
+   [deep-get param names](http://www.hugsql.org/#deep-get-param-name)
+ - add type hints for reflection warnings
+
 ## 0.4.2
 
  - fix parameter mismatch validation for false/nil (issue
