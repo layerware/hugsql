@@ -161,6 +161,12 @@
       (is (fn? (get-in db-fns-str [:test3-select :fn])))
       (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
 
+  (testing "missing header :name, :name-, :snip, or :snip-"
+    (is (thrown-with-msg? ExceptionInfo
+                          #"Missing HugSQL Header of "
+                          (hugsql/def-db-fns-from-string
+                            "-- :name: almost-a-yesql-name-hdr\nselect * from test"))))
+
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
 

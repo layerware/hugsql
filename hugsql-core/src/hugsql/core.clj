@@ -52,6 +52,17 @@
         f
         (throw (ex-info (str "Can not read file: " file) {})))))))
 
+(defn ^:no-doc validate-parsed-def!
+  "Ensure SQL required headers are provided
+   and throw an exception if not."
+  [pdef]
+  (let [hdr (:hdr pdef)]
+    (when-not (or (:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr))
+      (throw (ex-info
+              (str "Missing HugSQL Header of :name, :name-, :snip, or :snip-\n"
+                   "Found headers include: " (pr-str (vec (keys hdr))) "\n"
+                   "SQL: " (pr-str (:sql pdef))) {})))))
+
 (defn ^:no-doc validate-parameters!
   "Ensure SQL template parameters match provided param-data,
    and throw an exception if mismatch."
@@ -321,6 +332,7 @@
   ([file] (def-sqlvec-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
+      (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
       (intern-sqlvec-fn ~'pdef ~options))))
 
@@ -346,6 +358,7 @@
   ([s] (def-sqlvec-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
+      (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
       (intern-sqlvec-fn ~'pdef ~options))))
 
@@ -379,6 +392,7 @@
   ([file options]
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
+        (validate-parsed-def! ~'pdef)
         (compile-exprs ~'pdef))
       (apply merge
              (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
@@ -411,6 +425,7 @@
   ([s options]
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
+        (validate-parsed-def! ~'pdef)
         (compile-exprs ~'pdef))
       (apply merge
              (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
@@ -522,6 +537,7 @@
   ([file] (def-db-fns &form &env file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
+      (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
       (if (snippet-pdef? ~'pdef)
         (intern-sqlvec-fn ~'pdef ~options)
@@ -545,6 +561,7 @@
   ([s] (def-db-fns-from-string &form &env s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
+      (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
       (if (snippet-pdef? ~'pdef)
         (intern-sqlvec-fn ~'pdef ~options)
@@ -577,6 +594,7 @@
   ([file options]
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
+        (validate-parsed-def! ~'pdef)
         (compile-exprs ~'pdef))
       (apply merge
              (map
@@ -610,6 +628,7 @@
   ([s options]
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
+        (validate-parsed-def! ~'pdef)
         (compile-exprs ~'pdef))
       (apply merge
              (map
