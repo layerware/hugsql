@@ -222,7 +222,8 @@
   ([sql {:keys [no-header]}]
    (if (string/blank? sql)
      (throw (ex-info "SQL is empty" {}))
-     (let [rdr (r/source-logging-push-back-reader sql)
+     (let [sql (string/replace sql "\r\n" "\n")
+           rdr (r/source-logging-push-back-reader sql)
            nsb #(StringBuilder.)]
        (loop [hdr {}
               sql []

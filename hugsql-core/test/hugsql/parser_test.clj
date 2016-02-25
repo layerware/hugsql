@@ -8,6 +8,10 @@
   (testing "empty string"
     (is (thrown? ExceptionInfo (parse ""))))
 
+  (testing "windows newlines"
+    (is (= 2 (count
+               (parse "-- :snip one\r\nselect *\r\n-- :snip two\r\nfrom test")))))
+
   (testing "SQL comments"
     (is (= [] (parse "-- an sql comment")))
     (is (= [] (parse "/* a\nmulti-line\ncomment */"))))
