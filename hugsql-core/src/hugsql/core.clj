@@ -129,8 +129,8 @@
   "Check for string s with no leading or
    trailing space and add one if needed."
   [s]
-  (let [s (if (Character/isWhitespace (first s)) s (str " " s))
-        s (if (Character/isWhitespace (last s)) s (str s " "))]
+  (let [s (if (Character/isWhitespace ^Character (first s)) s (str " " s))
+        s (if (Character/isWhitespace ^Character (last s)) s (str s " "))]
     s))
 
 (defn ^:no-doc run-expr

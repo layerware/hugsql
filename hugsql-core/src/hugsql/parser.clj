@@ -249,7 +249,7 @@
                ;; hdr was read from comment
                (if (map? x)
                  ;; if sql is active, then new hdr section
-                 (if (or (> (.length sb) 0) (empty? hdr))
+                 (if (or (> (.length ^StringBuilder sb) 0) (empty? hdr))
                    (recur x [] (nsb)
                           (conj all
                                 {:hdr hdr
@@ -287,7 +287,7 @@
 
              ;; all else is SQL
              :else
-             (if (and (> (.length sb) 0) (empty? hdr) (not no-header))
+             (if (and (> (.length ^StringBuilder sb) 0) (empty? hdr) (not no-header))
                (parse-error rdr (str "Encountered SQL with no hugsql header"))
                (recur hdr sql (sb-append sb c) all)))))))))
 

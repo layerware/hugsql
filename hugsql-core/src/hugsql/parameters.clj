@@ -70,7 +70,7 @@
    in param data."
   [nam]
   (mapv
-   (fn [x] (if (re-find #"^\d+$" x) (Long. x) (keyword x)))
+   (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
    (string/split (name nam) #"\.")))
 
 ;; Default Object implementations
