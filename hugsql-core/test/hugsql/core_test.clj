@@ -182,7 +182,13 @@
                               (one-value-param db {:x 1})))
         ;; does not throw on false
         (is (= ["select * from test where id = ?" false]
-               (one-value-param-sqlvec {:id false}))))
+               (one-value-param-sqlvec {:id false})))
+
+        ;; deep-get check
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Parameter Mismatch: :emps.0.id parameter data not found."
+                              (hugsql/sqlvec "select * from emp where id = :emps.0.id"
+                                             {:emps [{:not-id 1}]}))))
 
       (testing "database commands/queries"
         (condp = db-name
