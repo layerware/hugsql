@@ -19,7 +19,7 @@
   (testing "leading SQL comment followed by hugsql comment"
     (is (= [{:hdr {:name ["query"]}
              :sql ["select * from emp"]}]
-          (parse "-- sql comment\n\n-- :name query\nselect * from emp"))))
+          (parse "-- sql comment\n\n\n\n\n-- :name query\nselect * from emp"))))
 
   (testing "hugsql header comments"
     (is (= [{:hdr {:name ["test"]}
