@@ -49,14 +49,15 @@ h3, h4, h5, h6 {
 
 .doc-nav {
     font-size: 0.7em;
+    line-height: 1.4em;
 }
 
 .doc-nav.affix {
-    top: 80px;
+    top: 20px;
 }
 .doc-nav.affix-bottom {
     position: absolute;
-    bottom: 100px;
+    bottom: 120px;
 }
 
 .doc-nav .nav>li>a {

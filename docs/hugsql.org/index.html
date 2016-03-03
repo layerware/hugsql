@@ -131,7 +131,7 @@ page: docs
 --  auto_increment and current_timestamp are
 --  H2 Database specific (adjust to your DB)
 create table characters (
-  id         integer auto_increment primary key, 
+  id         integer auto_increment primary key,
   name       varchar(40),
   specialty  varchar(40),
   created_at timestamp not null default current_timestamp
@@ -221,7 +221,7 @@ where id in (:v*:ids)
       <p>You've only scratched the surface of HugSQL's functionality.  Keep
         reading for full usage examples.</p>
 
-      
+
 
       <h3 class="page-header" id="using-hugsql">Using HugSQL</h3>
 
@@ -304,7 +304,7 @@ Macro
         options to be passed down into the underlying adapter and
           database library functions.  See <a href="#using-advanced">Advanced Usage</a> for more detail.</li>
         </ul>
-      
+
       <h4 id="using-def-sqlvec-fns">def-sqlvec-fns</h4>
 
       <p>HugSQL generates a format internally known
@@ -418,7 +418,7 @@ Macro
 --  auto_increment and current_timestamp are
 --  H2 Database specific (adjust to your DB)
 create table characters (
-  id         integer auto_increment primary key, 
+  id         integer auto_increment primary key,
   name       varchar(40),
   specialty  varchar(40),
   created_at timestamp not null default current_timestamp
@@ -438,11 +438,11 @@ drop table if exists characters
 {% endhighlight %}
 
       <p>Clojure:</p>
-      
+
 {% highlight clj %}
 (characters/create-characters-table-sqlvec)  ;;=>
 ["create table characters (
-    id         integer auto_increment primary key, 
+    id         integer auto_increment primary key,
     name       varchar(40),
     specialty  varchar(40),
     created_at timestamp not null default current_timestamp
@@ -456,7 +456,7 @@ drop table if exists characters
 
 (characters/drop-characters-table db)  ;;=>
 [0]
-      
+
 {% endhighlight %}
 
 
@@ -603,7 +603,7 @@ where id = :id
 {% endhighlight %}
 
       <p>Clojure:</p>
-      
+
 {% highlight clj %}
 
 (let [vizzini (characters/character-by-name db {:name "vizzini"})]
@@ -619,7 +619,7 @@ where id = :id
  (characters/update-character-specialty db
   {:id (:id vizzini), :specialty "boasting"}))  ;;=>
 1
-      
+
 {% endhighlight %}
 
       <h4 id="using-delete">Delete</h4>
@@ -632,7 +632,7 @@ delete from characters where id = :id
 {% endhighlight %}
 
       <p>Clojure:</p>
-      
+
 {% highlight clj %}
 (let [vizzini (characters/character-by-name db {:name "vizzini"})]
   (characters/delete-character-by-id-sqlvec {:id (:id vizzini)}))  ;;=>
@@ -640,8 +640,8 @@ delete from characters where id = :id
 
 (let [vizzini (characters/character-by-name db {:name "vizzini"})]
   (characters/delete-character-by-id db {:id (:id vizzini)}))  ;;=>
-1      
-{% endhighlight %}      
+1
+{% endhighlight %}
 
       <h4 id="using-select">Select</h4>
 
@@ -684,7 +684,7 @@ where id in (:v*:ids)
 {% endhighlight %}
 
       <p>Clojure:</p>
-      
+
 {% highlight clj %}
 (characters/all-characters-sqlvec)  ;;=>
 ["select * from characters
@@ -777,7 +777,7 @@ where id in (:v*:ids)
   (characters/insert-character tx
    {:name "Miracle Max", :specialty "miracles"})
   (characters/insert-character tx
-   {:name "Valerie", :specialty "speech interpreter"}))      
+   {:name "Valerie", :specialty "speech interpreter"}))
 {% endhighlight %}
 
       <h4 id="using-expressions">Clojure Expressions</h4>
@@ -998,7 +998,7 @@ where :snip*:cond
         comments in the following forms:</p>
 
 {% highlight sql %}
-      
+
  -- :key value1 value2 value3
  OR
  /* :key
@@ -1050,7 +1050,7 @@ select * from my_table limit 1
           to attach to function</li>
         <li><code>:require</code> = namespace require and aliases for Clojure expression support</li>
       </ul>
-      
+
       <h4 id="command">Command</h4>
 
       <p>The <code>:command</code> specifies the underlying database command to run for
@@ -1084,7 +1084,7 @@ select * from my_table limit 1
 
       <p>You can create command functions of your own by implementing a
         <code>hugsql.core/hugsql-command-fn</code> multimethod.</p>
-      
+
       <h4 id="result">Result</h4>
 
       <p>The <code>:result</code> specifies the expected result type for the given SQL.
@@ -1107,13 +1107,13 @@ select * from my_table limit 1
 -- :name all-characters :? :*
 {% endhighlight %}
 
-      
+
       <p>You can create result functions of your own by implementing a
         <code>hugsql.core/hugsql-result-fn</code> multimethod.</p>
 
 
 
-      
+
       <h4 id="param-types">Parameter Types</h4>
 
       <p>Within an SQL statement itself, HugSQL understands several types of
@@ -1212,7 +1212,7 @@ select * from characters where id = :v:id
 ;=> ["select * from characters where id = ?" 42]
 {% endhighlight %}
 
-          
+
       <h5 id="param-value-list">SQL Value Lists</h5>
 
       <p>Value List Parameters are similar to Value Parameters, but work on
@@ -1272,7 +1272,7 @@ where (id, name) = :tuple:id-name
       by all databases.  Postgresql, MySQL, and H2 support it.  Derby,
       HSQLDB, and SQLite do not support it.</em></p>
 
- 
+
       <h5 id="param-tuple-list">SQL Tuple Lists</h5>
 
       <p>Tuple List Parameters support lists of tuples.  This is specifically useful for multi-record insert.</p>
@@ -1310,7 +1310,7 @@ values :t*:people
       you should <code>map</code> or <code>doseq</code> over your
       HugSQL-generated insert function within
       a <a href="#using-transactions">transaction</a>.</em></p>
- 
+
       <h5 id="param-identifier">SQL Identifiers</h5>
 
       <p>Identifier Parameters are replaced at runtime with an
@@ -1330,9 +1330,14 @@ select * from :i:table-name
 ;=> ["select * from example"]
 {% endhighlight %}
 
-          <p>By default, identifiers are not quoted.  You can specify your desired
-          quoting as an option when defining your functions or as an option when
-          calling your function.</p>
+          <p>By default, identifiers are not quoted.  You can specify
+          your desired quoting as an option when defining your
+            functions or as an option when calling your function.</p>
+
+          <p><em class="text-danger">If you are taking identifiers
+          from user input, you should use the <code>:quoting</code>
+          option to properly quote and escape identifiers to prevent
+          SQL injection!</em></p>
 
           <p>Valid <code>:quoting</code> options are:</p>
 
@@ -1344,7 +1349,7 @@ select * from :i:table-name
           </ul>
 
       <p>Identifiers containing a period/dot <code>.</code> are split, quoted separately,
-          and then rejoined.  This supports <code>myschema.mytable</code> conventions.
+        and then rejoined.  This supports <code>myschema.mytable</code> conventions.</p>
 
 {% highlight clj %}
 (hugsql.core/def-db-fns "path/to/good.sql" {:quoting :ansi})
@@ -1362,7 +1367,7 @@ select * from :i:table-name
 {% endhighlight %}
 
 
-      
+
         <h5 id="param-identifier-list">SQL Identifier Lists</h5>
 
 
@@ -1408,9 +1413,10 @@ order by :i*:column-names
           on an <code>order by</code> column clause, or you can use
           this to compose many SQL statements into a single statement.</p>
 
-        <p><em>You should take special care to always properly validate any incoming
-          user input before using Raw SQL Parameters to prevent an SQL
-          injection security issue.</em></p>
+        <p><em class="text-danger">You should take special care to
+          always properly validate any incoming user input before
+          using Raw SQL Parameters to prevent an SQL injection
+          security issue.</em></p>
 
          <p>SQL Parameters' type is <code>:sql</code></p>
 
@@ -1465,7 +1471,7 @@ hugsql.parameters/apply-hugsql-param
    Implementations must return a vector containing any resulting SQL
    in the first position and any values in the remaining positions.
    (e.g., ["?" 42])
-{% endhighlight %}      
+{% endhighlight %}
 
       <h3 class="page-header" id="adapter">HugSQL Adapters</h3>
 
@@ -1483,7 +1489,7 @@ hugsql.parameters/apply-hugsql-param
       adapter protocol to allow your choice of underlying database
       library.</p>
 
- 
+
 
       <h4 id="adapter-other">Using Other Adapters</h4>
 
@@ -1535,7 +1541,7 @@ hugsql.parameters/apply-hugsql-param
 (hugsql/def-db-fns "path/to/db.sql"
   {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
 {% endhighlight %}
-      
+
 <p>OR</p>
 
 {% highlight clj %}
@@ -1572,7 +1578,7 @@ hugsql.parameters/apply-hugsql-param
       <p>Did you write an
       adapter?  <a href="https://github.com/layerware/hugsql/issues">Add
       an issue</a> and we'll add your adapter here.</p>
-      
+
 
       <h3 class="page-header" id="faq">FAQ</h3>
 
@@ -1640,7 +1646,7 @@ hugsql.parameters/apply-hugsql-param
         supports <a href="#using-expressions">Clojure expressions</a>
         and <a href="#using-snippets">Snippets</a> for composing SQL
         from smaller parts.</li>
-      </ul>        
+      </ul>
 
       <p><em>--Curtis Summers (Feb 2016)</em></p>
       <p>P.S. I'd like to keep the above comparison accurate as both
@@ -1674,8 +1680,70 @@ hugsql.parameters/apply-hugsql-param
       HugSQL Snippet Parameter Types <code>:snip</code>
       and <code>:snip*</code> can consume the sqlvec format output
       from HoneySQL's <code>format</code> function.  It's the best of
-      both worlds!</p>
-      
+        both worlds!</p>
+
+      <h4 id="faq-sql-injection">Preventing SQL Injection</h4>
+
+      <p>How does HugSQL help protect against SQL injection?</p>
+
+      <p>HugSQL attempts to provide a set of tools that help protect
+      against SQL injection where possible without taking away power
+      from the developer. Below are a few potential SQL injection
+      attack vectors and HugSQL's response to each:</p>
+
+      <p><b>Value Parameters</b><br>
+        <a href="#param-value">Value
+      Parameters</a>, <a href="#param-value-list">Value List
+      Parameters</a>, <a href="#param-tuple">Tuple Parameters</a>, and
+      <a href="#param-tuple-list">Tuple List Parameters</a> are all
+      variations on SQL value parameters that convert a Clojure data
+      type to SQL.  By default, all of these parameter types defer to
+      the underlying database library to
+      perform <a href="http://martinfowler.com/articles/web-security-basics.html#ParameterBindingToTheRescue">SQL
+        parameter binding</a> to prevent SQL injection issues.</p>
+
+      <p><b>Identifier Parameters</b><br>
+        <a href="#param-identifier">Identifier Parameters</a>
+        and <a href="#param-identifier-list">Identifier List
+        Parameters</a> support quoting and escaping of identifiers
+        with the <code>:quoting</code> option. By
+        default, <code>:quoting</code> is <code>:off</code>, since
+        HugSQL makes no assumptions about your given database. This
+        may be fine for your use case if you are not taking
+        identifiers from user input. <em class="text-danger">If you
+        are taking identifiers from user input, you should use
+        the <code>:quoting</code> option to prevent SQL injection!
+        See <a href="#param-identifier">Identifier Parameters</a> for
+          details.</em></p>
+
+      <p><b>Raw SQL (Keyword) Parameters</b><br>
+        <em class="text-danger"><a href="#param-sql">Raw SQL (Keyword)
+        Parameters</a> are exactly what they seem, and it is your
+        responsibility to sanitize any usage of this parameter type
+        when using user input.</em></p>
+
+      <p><b>Snippet Parameters</b><br>
+        <a href="#using-snippets">Snippets</a> generate sqlvecs and
+        Snippet Parameter Types consume sqlvecs. For snippets
+        containing any HugSQL parameter types, the same rules as above
+        apply. If you are consuming a snippet (or sqlvec) from your
+        own code or another library (say, HoneySQL), then other rules
+        might apply.</p>
+
+      <p><b>Custom Parameter Types</b><br>
+        <a href="#param-custom">Custom Parameter Types</a> allow you
+        to create your own parameter types.  It is your responsibility
+        to ensure your implementation protects against SQL injection
+        by properly escaping your data.</p>
+
+      <p><b>Clojure Expressions</b><br>
+        <a href="#using-expressions">Clojure Expressions</a> should
+        return either a string or nil, and strings returned from
+        expressions are parsed at runtime to support HugSQL
+        parameters. The same rules apply for the above parameter
+        types.</p>
+
+
       <h3 class="page-header" id="license">License</h3>
 
       <p>Copyright © 2016 <a href="http://www.layerware.com">Layerware, Inc.</a></p>
@@ -1685,15 +1753,15 @@ hugsql.parameters/apply-hugsql-param
           License, Version 2.0</a></p>
 
       <p class="xtra-top"></p>
-                 
+
     </div>
-    
-  <div class="col-md-1"></div>
+
+    <div class="col-md-1"></div>
 
 
-  <div class="col-md-3 xtra-top scrollspy">
+    <div class="col-md-3 xtra-top scrollspy">
       <nav id="doc-nav" class="doc-nav hidden-print hidden-sm hidden-xs"
-           data-spy="affix" data-offset-top="0" data-offset-bottom="100">
+           data-spy="affix" data-offset-top="20" data-offset-bottom="120">
         <ul class="nav">
           <li><a href="#introduction">Introduction</a></li>
           <li><a href="#install">Installation</a></li>
@@ -1751,12 +1819,13 @@ hugsql.parameters/apply-hugsql-param
               <li><a href="#faq-yesql">Comparison with Yesql</a></li>
               <li><a href="#faq-wacky-sql">Does it support my wacky SQL?</a></li>
               <li><a href="#faq-dsls">What about DSLs for SQL?</a></li>
+              <li><a href="#faq-sql-injection">Preventing SQL Injection</a></li>
             </ul>
           </li>
           <li><a href="#license">License</a></li>
         </ul>
       </nav>
-  </div>
+    </div>
 
   </div>
 
