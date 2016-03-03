@@ -1,5 +1,12 @@
 # HugSQL CHANGELOG
 
+## 0.4.4
+
+ - fix parser error regarding whitespace (issue
+   [#27](https://github.com/layerware/hugsql/issues/27))
+ - fix handling of vector value parameters (issue
+   [#28](https://github.com/layerware/hugsql/issues/28))
+ - docs: add faq on preventing sql injection
 
 ## 0.4.3
 
