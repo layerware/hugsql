@@ -189,13 +189,13 @@
   ([sql-template param-data options]
    (let [sql-template (expr-pass sql-template param-data options)
          _ (validate-parameters! sql-template param-data)
-         applied (mapv
+         applied (map
                   #(if (string? %)
                      [%]
                      (parameters/apply-hugsql-param % param-data options))
                   sql-template)
          sql    (string/join "" (map first applied))
-         params (flatten (remove empty? (map rest applied)))]
+         params (apply concat (filterv seq (map rest applied)))]
      (apply vector (string/trim sql) params))))
 
 (def default-sqlvec-options

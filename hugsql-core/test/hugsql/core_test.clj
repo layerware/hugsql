@@ -167,6 +167,19 @@
                           (hugsql/def-db-fns-from-string
                             "-- :name: almost-a-yesql-name-hdr\nselect * from test"))))
 
+  (testing "value parameters allow vectors for ISQLParameter/etc overrides"
+    (is (= ["insert into test (id, myarr) values ( ? , ? )" 1 [1 2 3]]
+           (hugsql/sqlvec
+            "insert into test (id, myarr) values (:id, :v:myarr)"
+            {:id 1
+             :myarr [1 2 3]})))
+    (is (= ["insert into test (id, myarr) values (?,?),(?,?)"
+            1 [1 2 3] 2 [4 5 6]]
+           (hugsql/sqlvec
+            "insert into test (id, myarr) values :t*:records"
+            {:records [[1 [1 2 3]]
+                       [2 [4 5 6]]]}))))
+
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
 

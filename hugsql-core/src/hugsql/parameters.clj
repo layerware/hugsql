@@ -93,13 +93,12 @@
 
   TupleParamList
   (tuple-param-list [param data options]
-    (reduce
-      #(apply vector
-         (string/join "," [(first %1) (first %2)])
-         (concat (rest %1) (rest %2))) 
-      (map (juxt first rest)
-        (map #(tuple-param {:name :x} {:x %} options)
-          (get-in data (deep-get-vec (:name param)))))))
+    (let [tuples (map (juxt first rest)
+                      (map #(tuple-param {:name :x} {:x %} options)
+                           (get-in data (deep-get-vec (:name param)))))
+          sql (string/join "," (map first tuples))
+          values (apply concat (apply concat (map rest tuples)))]
+      (apply vector sql values)))
 
   IdentifierParam
   (identifier-param [param data options]
