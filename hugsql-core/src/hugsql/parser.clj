@@ -83,12 +83,19 @@
 (defn- read-keyword
   [rdr]
   (loop [s  (StringBuilder.)
+         rc (r/read-char rdr)
          pc (r/peek-char rdr)]
-    (if-not (symbol-char? pc)
-      (if (> (count s) 0)
-        (keyword (str s))
-        (parse-error rdr (str "Incomplete keyword :" (str s))))
-      (recur (sb-append s (r/read-char rdr)) (r/peek-char rdr)))))
+    (let [pgcast? (and (= \: rc) (= \: pc))]
+      (if (or (nil? rc) (nil? pc) pgcast? (not (symbol-char? pc)))
+        (do
+          (when pgcast? (r/unread rdr rc))
+          (let [s (str (sb-append s rc))]
+            (if (> (count s) 0)
+              (keyword s)
+              (parse-error rdr (str "Incomplete keyword :" s)))))
+        (recur (sb-append s rc)
+               (r/read-char rdr)
+               (r/peek-char rdr))))))
 
 (defn- sing-line-comment-start?
   [c rdr]

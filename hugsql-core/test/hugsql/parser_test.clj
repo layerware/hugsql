@@ -63,7 +63,13 @@
       (is (= [{:hdr {:name ["test"]}
                :sql ["select id::text as id-str from emp where id = "
                      {:type :v :name :id}]}]
-            (parse "-- :name test\nselect id::text as id-str from emp where id = :id"))))
+             (parse "-- :name test\nselect id::text as id-str from emp where id = :id")))
+      (is (= [{:hdr {:name ["test"]}
+               :sql ["select * from emp where id = " {:type :v :name :id} "::bigint"]}]
+             (parse "-- :name test\nselect * from emp where id = :id::bigint")))
+      (is (= [{:hdr {:name ["test"]}
+               :sql ["select * from emp where id = " {:type :x :name :id} "::bigint"]}]
+             (parse "-- :name test\nselect * from emp where id = :x:id::bigint"))))
 
     (testing "Escaping colons"
       ;; note that this test must take into account Clojure's string escaping,
