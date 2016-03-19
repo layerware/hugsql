@@ -1,5 +1,11 @@
 # HugSQL CHANGELOG
 
+## 0.4.5
+
+ - support pg double-colon type cast when suffix of HugSQL param (issue
+   [#30](https://github.com/layerware/hugsql/issues/30))
+ - doc: update escaping colon section to mention double-colon usage
+
 ## 0.4.4
 
  - fix parser error regarding whitespace (issue
