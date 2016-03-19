@@ -1137,7 +1137,7 @@ select * from my_table limit 1
           repeated throughout an SQL statement, and all instances of a parameter
             will be replaced.</p>
 
-          <h6 id="deep-get-param-name">Param Name Deep Get</h6>
+          <h5 id="deep-get-param-name">Aside: Param Name Deep Get</h5>
 
           <p>The parameter name can optionally use a "deep get" syntax
           to drill down into a parameter data structure.  This syntax
@@ -1157,7 +1157,8 @@ select * from employees where id = :value:employees.0.id
 {% endhighlight %}
 
 
-          <h6 id="escaping-colon">Escaping Colon</h6>
+          <span id="escaping-colon"></span>
+          <h5 id="colon">Aside: The Colon</h5>
 
           <p>Since HugSQL has commandeered the
           colon <code>:</code> for use, you will need to escape a
@@ -1169,6 +1170,27 @@ select * from employees where id = :value:employees.0.id
 {% highlight sql %}
 select my_arr[1\:3] from ...
 {% endhighlight %}
+
+          <p>BUT, HugSQL does make one exception to the colon-escaping
+          necessity in regard to the Postgresql historical type-casting syntax
+          that uses a double-colon <code>::</code> to indicate a
+          Postgresql data type. So, HugSQL properly leaves alone a
+          double-colon:</p>
+
+{% highlight sql %}
+select id::text ...
+{% endhighlight %}
+
+{% highlight sql %}
+... where id = :id::bigint
+{% endhighlight %}
+
+{% highlight sql %}
+-- with the param type specified
+... where id = :v:id::bigint
+{% endhighlight %}
+
+          <h5>Now back to the Parameter Types...</h5>
 
           <p>HugSQL recognizes the need for different types of parameters in SQL
           statements.  Specifically, SQL treats data values differently from
@@ -1794,6 +1816,8 @@ hugsql.parameters/apply-hugsql-param
               <li><a href="#result">Result</a></li>
               <li><a href="#param-types">Parameter Types</a>
                 <ul class="nav">
+                  <li><a href="#deep-get-param-name">Deep Get Param Name</a></li>
+                  <li><a href="#colon">The Colon</a></li>
                   <li><a href="#param-value">SQL Values</a></li>
                   <li><a href="#param-value-list">SQL Value Lists</a></li>
                   <li><a href="#param-tuple">SQL Tuples</a></li>
