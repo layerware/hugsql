@@ -96,6 +96,12 @@ insert into test (id, name) values :tuple*:values
 -- :name update-test-table :! :n
 update test set name = :name where id = :id
 
+-- :name update-test-table-returning :<! :1
+update test set name = :name where id = :id returning id
+
+-- :name- update-test-table-returning-private :<! :1
+update test set name = :name where id = :id returning id
+
 -- :name select-one-test-by-id :? :1
 select * from test where id = :id
 
@@ -111,11 +117,11 @@ where id = :records.0.id
 -- :doc Drop test table
 drop table test
 
--- :name- a-private-fn :?
+-- :name- a-private-fn :? :*
 -- notice the dash suffix on :name- above
 select * from test
 
--- :name another-private-fn
+-- :name another-private-fn :? :*
 -- :meta {:private true}
 select * from test
 

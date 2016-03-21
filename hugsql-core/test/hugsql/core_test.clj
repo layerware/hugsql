@@ -145,6 +145,12 @@
     (is (= 1 (:one (meta #'user-meta))))
     (is (= 2 (:two (meta #'user-meta)))))
 
+  (testing "command & result as metadata"
+    (is (= :? (:command (meta #'select-one-test-by-id))))
+    (is (= :1 (:result (meta #'select-one-test-by-id))))
+    (is (= :? (:command (meta #'a-private-fn))))
+    (is (= :* (:result (meta #'a-private-fn)))))
+
   (testing "map of fns"
     (let [db-fns (hugsql/map-of-db-fns "hugsql/sql/test.sql")
           sql-fns (hugsql/map-of-sqlvec-fns "hugsql/sql/test.sql")
@@ -320,4 +326,13 @@
 
         (is (= 0 (drop-test-table db))))
 
-      )))
+      (when (and (= db-name :postgresql) (= adapter-name :clojure.java.jdbc))
+        (testing "command & result used in public and private fns"
+          (is (= 0 (create-test-table db)))
+          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+          (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+          (is (= {:id 1} (update-test-table-returning db {:id 1 :name "C"})))
+          (is (= {:id 2} (update-test-table-returning-private db {:id 2 :name "D"})))
+
+          (is (= 0 (drop-test-table db))))))))

@@ -210,26 +210,28 @@
 
 (defn ^:no-doc command-sym
   [hdr]
-  (or
-   ;;                ↓ short-hand command position
-   ;; -- :name my-fn :? :1
-   (when-let [c (second (:name hdr))] (str->key c))
-   ;; -- :command :?
-   (when-let [c (first (:command hdr))] (str->key c))
-   ;; default
-   :query))
+  (let [nam (or (:name hdr) (:name- hdr))]
+    (or
+     ;;                ↓ short-hand command position
+     ;; -- :name my-fn :? :1
+     (when-let [c (second nam)] (str->key c))
+     ;; -- :command :?
+     (when-let [c (first (:command hdr))] (str->key c))
+     ;; default
+     :query)))
 
 (defn ^:no-doc result-sym
   [hdr]
-  (keyword
-   (or
-    ;;                   ↓ short-hand result position
-    ;; -- :name my-fn :? :1
-    (when-let [r (second (next (:name hdr)))] (str->key r))
-    ;; -- :result :1
-    (when-let [r (first (:result hdr))] (str->key r))
-    ;; default
-    :raw)))
+  (let [nam (or (:name hdr) (:name- hdr))]
+    (keyword
+     (or
+      ;;                   ↓ short-hand result position
+      ;; -- :name my-fn :? :1
+      (when-let [r (second (next nam))] (str->key r))
+      ;; -- :result :1
+      (when-let [r (first (:result hdr))] (str->key r))
+      ;; default
+      :raw))))
 
 (defmulti hugsql-command-fn identity)
 (defmethod hugsql-command-fn :! [sym] 'hugsql.adapter/execute)
@@ -489,7 +491,11 @@
         res (result-sym hdr)
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
-        met (merge mta {:doc doc} (when pnm {:private true}))]
+        met (merge mta
+                   {:doc doc
+                    :command cmd
+                    :result res}
+                   (when pnm {:private true}))]
     {(keyword nam) {:meta met
                     :fn (db-fn* sql cmd res options)}}))
 
