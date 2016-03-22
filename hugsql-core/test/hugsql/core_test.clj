@@ -186,6 +186,13 @@
             {:records [[1 [1 2 3]]
                        [2 [4 5 6]]]}))))
 
+  (testing "labeled identifiers: col_name as label_name"
+    (is (= ["select  a as lbl_a, b as lbl_b, c from test"]
+           (select-labeled-identifiers-sqlvec
+            {:cols [["a" "lbl_a"]
+                    ["b" "lbl_b"]
+                    ["c"]]}))))
+
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
 
