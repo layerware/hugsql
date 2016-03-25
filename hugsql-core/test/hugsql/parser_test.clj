@@ -89,16 +89,16 @@
 
      (testing "Clojure expressions"
        (is (= [{:hdr {:name ["test"]}
-                :sql ["select" ["(if (= 1 1) \"Y\" \"N\")" :end] "from test"]}]
+                :sql ["select" ["(if (= 1 1) \"Y\" \"N\")" :end] "\nfrom test"]}]
               (parse "-- :name test\nselect\n--~ (if (= 1 1) \"Y\" \"N\")\nfrom test")))
        (is (= [{:hdr {:name ["test"]}
                 :sql ["select"
-                      ["(if (= 1 1)" :cont] "'Y'" [:cont] "'N'" [")" :end]
-                      "from test"]}]
+                      ["(if (= 1 1)" :cont] "\n'Y'" [:cont] "\n'N'" [")" :end]
+                      "\nfrom test"]}]
               (parse (str "-- :name test\nselect\n/*~ (if (= 1 1) */\n"
                           "'Y'\n/*~*/\n'N'\n/*~ ) ~*/\nfrom test"))))
        (is (= [{:hdr {:name ["test"]}
                 :sql ["select * from test where"
-                      ["(if id" :cont] "id = " {:type :v :name :id} [:cont] "1=1" [")" :end]]}]
+                      ["(if id" :cont] "\nid = " {:type :v :name :id} [:cont] "\n1=1" [")" :end]]}]
               (parse (str "-- :name test\nselect * from test where\n"
                           "/*~ (if id */\nid = :id\n/*~*/\n1=1\n/*~ ) ~*/")))))))

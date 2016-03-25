@@ -135,9 +135,13 @@
   (testing "Snippets"
     (is (= ["select id, name"] (select-snip {:cols ["id","name"]})))
     (is (= ["from test"] (from-snip {:tables ["test"]})))
-    (is (= ["select id, name\nfrom test"]
-           (snip-query-sqlvec {:select (select-snip {:cols ["id","name"]})
-                               :from (from-snip {:tables ["test"]})}))))
+    (is (= ["select id, name\nfrom test where id = ? or id = ?\norder by id" 1 2]
+           (snip-query-sqlvec
+             {:select (select-snip {:cols ["id","name"]})
+              :from (from-snip {:tables ["test"]})
+              :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
+                                         (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
+              :order (order-snip {:fields ["id"]})}))))
 
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
@@ -187,7 +191,7 @@
                        [2 [4 5 6]]]}))))
 
   (testing "labeled identifiers: col_name as label_name"
-    (is (= ["select  a as lbl_a, b as lbl_b, c from test"]
+    (is (= ["select  a as lbl_a, b as lbl_b, c\nfrom test"]
            (select-labeled-identifiers-sqlvec
             {:cols [["a" "lbl_a"]
                     ["b" "lbl_b"]
@@ -329,7 +333,9 @@
                 {:select (select-snip {:cols ["id","name"]})
                  :from (from-snip {:tables ["test"]})
                  :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
-                                            (cond-snip {:conj "or" :cond ["id" "=" 2]})]})})))
+                                            (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
+                 :order (order-snip {:fields ["id"]})})))
+
 
         (is (= 0 (drop-test-table db))))
 

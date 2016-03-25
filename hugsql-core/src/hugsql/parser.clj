@@ -158,7 +158,6 @@
   [rdr]
   (let [_    (r/read-char rdr) ; eat ~
         expr (string/trim (read-to-char rdr \newline))]
-    (skip-to-next-line rdr)
     [expr :end]))
 
 (defn- read-mult-line-expr
@@ -169,7 +168,6 @@
         end? (= \~ (last expr))
         expr (if end? (string/trim (string/join "" (butlast expr))) expr)
         sign (if end? :end :cont)]
-    (skip-to-next-line rdr)
     (if (string/blank? expr) [sign] [expr sign])))
 
 (defn- read-sing-line-comment

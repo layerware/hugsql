@@ -202,6 +202,9 @@ from :i*:tables
 -- :snip where-snip
 where :snip*:cond
 
+-- :snip order-snip
+order by :i*:fields
+
 -- :snip cond-snip
 -- We could come up with something
 -- quite elaborate here with some custom
@@ -219,3 +222,4 @@ where :snip*:cond
 :snip:select
 :snip:from
 --~ (when (:where params) ":snip:where")
+:snip:order
