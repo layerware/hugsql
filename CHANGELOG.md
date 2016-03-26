@@ -1,5 +1,14 @@
 # HugSQL CHANGELOG
 
+## 0.4.6
+
+ - extend identifier param types to support SQL aliases (issue
+   [#33](https://github.com/layerware/hugsql/issues/33))
+ - fix clj expr eating trailing newline in parser (issue
+   [#37](https://github.com/layerware/hugsql/issues/37))
+ - fix command & result being ignored in private fns (issue
+   [#32](https://github.com/layerware/hugsql/issues/32))
+
 ## 0.4.5
 
  - support pg double-colon type cast when suffix of HugSQL param (issue

@@ -1,4 +1,4 @@
-(defproject princess-bride "0.4.1"
+(defproject princess-bride "0.4.6"
   :description "The Princess Bride HugSQL Example App"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
