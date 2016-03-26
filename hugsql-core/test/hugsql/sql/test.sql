@@ -181,18 +181,6 @@ update :i:table set
 ~*/
 where id = :id
 
--- :name select-labeled-identifiers :? :*
-/* :require [clojure.string :as string]
-            [hugsql.parameters :refer [identifier-param-quote]] */
-select
-/*~
-(string/join ", "
-  (for [[field label] (:cols params)]
-    (str (identifier-param-quote field options)
-      (when label (str " as " label)))))
-~*/
-from test
-
 -- :snip select-snip
 select :i*:cols
 
