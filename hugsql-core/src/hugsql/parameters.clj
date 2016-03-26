@@ -49,8 +49,8 @@
 
 (defn identifier-param-quote
   "Quote the identifier value based on options."
-  [value {:keys [quoting] :as options}]
-  (let [parts (string/split value #"\.")
+  [value {:keys [quoting no-dot-split] :as options}]
+  (let [parts (if no-dot-split [value] (string/split value #"\."))
         qtfn  (condp = quoting
                 :ansi #(str \" (string/replace % "\"" "\"\"") \")
                 :mysql #(str \` (string/replace % "`" "``") \`)
@@ -102,13 +102,28 @@
 
   IdentifierParam
   (identifier-param [param data options]
-    [(identifier-param-quote (get-in data (deep-get-vec (:name param))) options)])
+    (let [i (get-in data (deep-get-vec (:name param)))
+          coll? (instance? clojure.lang.IPersistentCollection i)
+          i (if coll? (flatten (into [] i)) i)]
+      (if coll?
+        [(str (identifier-param-quote (first i) options)
+              " as "
+              (identifier-param-quote (second i)
+                                      (merge options {:no-dot-split true})))]
+        [(identifier-param-quote i options)])))
 
   IdentifierParamList
   (identifier-param-list [param data options]
-    (let [coll (get-in data (deep-get-vec (:name param)))]
-      [(string/join ", "
-         (map #(identifier-param-quote % options) coll))]))
+    [(string/join
+      ", "
+      (map
+       #(if (vector? %)
+          (str (identifier-param-quote (first %) options)
+               " as "
+               (identifier-param-quote (second %)
+                                       (merge options {:no-dot-split true})))
+          (identifier-param-quote % options))
+       (into [] (get-in data (deep-get-vec (:name param))))))])
 
   SQLParam
   (sql-param [param data options]

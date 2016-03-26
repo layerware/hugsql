@@ -99,6 +99,14 @@
            (identifier-param-sqlvec {:table-name "test"})))
     (is (= ["select id, name from test"]
            (identifier-param-list-sqlvec {:columns ["id", "name"]})))
+    (is (= ["select * from test as my_test"]
+           (identifier-param-sqlvec {:table-name ["test" "my_test"]})))
+    (is (= ["select id as my_id, name as my_name from test"]
+           (identifier-param-list-sqlvec {:columns [["id" "my_id"], ["name" "my_name"]]})))
+    (is (= ["select * from test as my_test"]
+           (identifier-param-sqlvec {:table-name {"test" "my_test"}})))
+    (is (= ["select id as my_id, name as my_name from test"]
+           (identifier-param-list-sqlvec {:columns {"id" "my_id" "name" "my_name"}})))
     (is (= ["select * from test order by id desc"]
            (sql-param-sqlvec {:id-order "desc"}))))
 
@@ -106,6 +114,10 @@
     (is (= ["select * from \"schema\".\"te\"\"st\""]
            (identifier-param-sqlvec
             {:table-name "schema.te\"st"}
+            {:quoting :ansi})))
+    (is (= ["select * from \"schema\".\"te\"\"st\" as \"my.test\""]
+           (identifier-param-sqlvec
+            {:table-name ["schema.te\"st" "my.test"]}
             {:quoting :ansi})))
     (is (= ["select * from `schema`.`te``st`"]
            (identifier-param-sqlvec
@@ -118,6 +130,10 @@
     (is (= ["select \"test\".\"id\", \"test\".\"name\" from test"]
            (identifier-param-list-sqlvec
             {:columns ["test.id", "test.name"]}
+            {:quoting :ansi})))
+    (is (= ["select \"test\".\"id\" as \"my.id\", \"test\".\"name\" as \"my.name\" from test"]
+           (identifier-param-list-sqlvec
+            {:columns [["test.id" "my.id"], ["test.name" "my.name"]]}
             {:quoting :ansi})))
     (is (= ["select `test`.`id`, `test`.`name` from test"]
            (identifier-param-list-sqlvec
@@ -189,13 +205,6 @@
             "insert into test (id, myarr) values :t*:records"
             {:records [[1 [1 2 3]]
                        [2 [4 5 6]]]}))))
-
-  (testing "labeled identifiers: col_name as label_name"
-    (is (= ["select  a as lbl_a, b as lbl_b, c\nfrom test"]
-           (select-labeled-identifiers-sqlvec
-            {:cols [["a" "lbl_a"]
-                    ["b" "lbl_b"]
-                    ["c"]]}))))
 
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
