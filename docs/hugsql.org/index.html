@@ -1352,6 +1352,13 @@ select * from :i:table-name
 ;=> ["select * from example"]
 {% endhighlight %}
 
+<p>As of HugSQL 0.4.6, Identifier Parameters support SQL aliases:</p>
+
+{% highlight clj %}
+(identifier-param-sqlvec {:table-name ["example" "my_example"]})
+;=> ["select * from example as my_example"]
+{% endhighlight %}
+
           <p>By default, identifiers are not quoted.  You can specify
           your desired quoting as an option when defining your
             functions or as an option when calling your function.</p>
@@ -1420,6 +1427,26 @@ order by :i*:column-names
 {% highlight clj %}
 (identifier-list-param-sqlvec {:column-names ["state" "city"]})
 ;=> ["select state, city, count(*) as population\n
+;     from example\n
+;     group by state, city\n
+;     order by state, city"]
+{% endhighlight %}
+
+      <p>As of HugSQL 0.4.6, Identifier List Parameters support SQL aliases:</p>
+
+{% highlight sql %}
+--:name identifier-list-param :? :*
+select :i*:column-names-aliased, count(*) as population
+from example
+group by :i*:column-names
+order by :i*:column-names
+{% endhighlight %}
+
+{% highlight clj %}
+(let [columns [["state" "my_state"] ["city" "my_city"]]]
+  (identifier-list-param-sqlvec {:column-names-aliased columns
+                                 :column-names (mapv first columns)}))
+;=> ["select state as my_state, city as my_city, count(*) as population\n
 ;     from example\n
 ;     group by state, city\n
 ;     order by state, city"]
