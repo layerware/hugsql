@@ -105,8 +105,9 @@
            (identifier-param-list-sqlvec {:columns [["id" "my_id"], ["name" "my_name"]]})))
     (is (= ["select * from test as my_test"]
            (identifier-param-sqlvec {:table-name {"test" "my_test"}})))
-    (is (= ["select id as my_id, name as my_name from test"]
-           (identifier-param-list-sqlvec {:columns {"id" "my_id" "name" "my_name"}})))
+    (is (let [r (identifier-param-list-sqlvec {:columns {"id" "my_id" "name" "my_name"}})]
+          (or (= r ["select id as my_id, name as my_name from test"])
+              (= r ["select name as my_name, id as my_id from test"]))))
     (is (= ["select * from test order by id desc"]
            (sql-param-sqlvec {:id-order "desc"}))))
 
