@@ -26,7 +26,7 @@
           ;; mysql> create database hugtest;
           ;; mysql> grant all on hugtest.* to hugtest identified by "hugtest";
           :mysql  {:subprotocol "mysql"
-                   :subname "//127.0.0.1:3306/hugtest"
+                   :subname "//127.0.0.1:3306/hugtest?useSSL=false"
                    :user "hugtest"
                    :password "hugtest"}
 
@@ -307,7 +307,7 @@
         (when (= adapter-name :clojure.java.jdbc)
           (is (= [[:name] ["A"] ["B"]]
                  (select-ordered db
-                                 {:cols ["name"] :sort-by ["name"]} {} :as-arrays? true))))
+                                 {:cols ["name"] :sort-by ["name"]} {} {:as-arrays? true}))))
 
         (is (= 0 (drop-test-table db))))
 

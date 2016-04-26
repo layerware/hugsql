@@ -47,7 +47,7 @@ page: docs
         dependency information:</p>
 
 {% highlight clj %}
-[com.layerware/hugsql "0.4.6"]
+[com.layerware/hugsql "0.4.7"]
 {% endhighlight %}
 
       <p>You will also need to specify your JDBC driver dependency
@@ -947,9 +947,18 @@ where :snip*:cond
 {% highlight clj %}
 (is (= [[:name] ["A"] ["B"]]
       (select-ordered db
-        {:cols ["name"] :sort-by ["name"]} {} :as-arrays? true)))
+        {:cols ["name"] :sort-by ["name"]} {} {:as-arrays? true})))
 {% endhighlight %}
 
+      <p><em>Please note that as
+      of <code>clojure.java.jdbc</code> <code>0.5.8</code> and HugSQL
+      0.4.7, the above additional options are now required to be a
+      hashmap instead of keyword arguments as in previous versions. In
+      clojure.java.jdbc 0.5.8 the deprecated usage will emit a
+      warning.  In clojure.java.jdbc 0.6.0 the usage is deprecated and
+      not allowed.  See
+      the <a href="https://github.com/clojure/java.jdbc/blob/master/CHANGES.md">clojure.java.jdbc
+      changelog</a> for details.</em></p>
 
       <h3 class="page-header" id="detail">HugSQL in Detail</h3>
 
@@ -1560,8 +1569,8 @@ hugsql.parameters/apply-hugsql-param
           clojar and specify <code>hugsql-core</code> and the adapter clojar you desire:
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.4.6"]
-[com.layerware/hugsql-adapter-clojure-jdbc "0.4.6"]
+[com.layerware/hugsql-core "0.4.7"]
+[com.layerware/hugsql-adapter-clojure-jdbc "0.4.7"]
 {% endhighlight %}
 
           <p>Within your Clojure code, you will need to explicitly set the adapter.

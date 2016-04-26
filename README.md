@@ -14,6 +14,11 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
+### 0.4.7
+
+ - fix deprecations for latest clojure.java.jdbc changes (issue
+   [#38](https://github.com/layerware/hugsql/issues/38))
+
 ### 0.4.6
 
  - extend identifier param types to support SQL aliases (issue
