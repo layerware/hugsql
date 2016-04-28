@@ -61,6 +61,10 @@
       (throw (ex-info
               (str "Missing HugSQL Header of :name, :name-, :snip, or :snip-\n"
                    "Found headers include: " (pr-str (vec (keys hdr))) "\n"
+                   "SQL: " (pr-str (:sql pdef))) {})))
+    (when (every? empty? [(:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr)])
+      (throw (ex-info
+              (str "HugSQL Header :name, :name-, :snip, or :snip- not given.\n"
                    "SQL: " (pr-str (:sql pdef))) {})))))
 
 (defn ^:no-doc validate-parameters!

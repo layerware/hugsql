@@ -194,6 +194,12 @@
                           (hugsql/def-db-fns-from-string
                             "-- :name: almost-a-yesql-name-hdr\nselect * from test"))))
 
+  (testing "nil header :name, :name-, :snip, or :snip-"
+    (is (thrown-with-msg? ExceptionInfo
+                          #"HugSQL Header .* not given."
+                          (hugsql/def-db-fns-from-string
+                            "-- :name \nselect * from test"))))
+
   (testing "value parameters allow vectors for ISQLParameter/etc overrides"
     (is (= ["insert into test (id, myarr) values ( ? , ? )" 1 [1 2 3]]
            (hugsql/sqlvec
