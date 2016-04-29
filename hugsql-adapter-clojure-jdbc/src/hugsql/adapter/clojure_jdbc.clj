@@ -6,13 +6,13 @@
 (deftype HugsqlAdapterClojureJdbc []
 
   adapter/HugsqlAdapter
-  (execute
-    [this db sqlvec options]
-    (apply jdbc/execute db sqlvec (:command-options options)))
+  (execute [this db sqlvec options]
+    (jdbc/execute db sqlvec
+                  (merge {:returning (some #(= % (:command options)) [:insert :i!])}
+                         (:command-options options))))
 
-  (query
-    [this db sqlvec options]
-    (apply jdbc/fetch db sqlvec (:command-options options)))
+  (query [this db sqlvec options]
+    (jdbc/fetch db sqlvec (:command-options options)))
 
   (result-one [this result options]
     (first result))

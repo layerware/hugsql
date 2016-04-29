@@ -263,7 +263,7 @@
 
         (testing "insert w/ return of .getGeneratedKeys"
           ;; return generated keys, which has varying support and return values
-          ;; clojure.jdbc adapter does not yet support .getGeneratedKeys for this
+          ;; clojure.java.jdbc returns a hashmap, clojure.jdbc returns a vector of hashmaps
           (when (= adapter-name :clojure.java.jdbc)
             (condp = db-name
               :postgresql
@@ -282,7 +282,29 @@
                      (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
 
               ;; hsql and derby don't seem to support .getGeneratedKeys
+              nil))
+
+          (when (= adapter-name :clojure.jdbc)
+            (condp = db-name
+              :postgresql
+              (is (= [{:id 8 :name "H"}]
+                     (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
+
+              :mysql
+              (is (= [{:generated_key 9}]
+                     (insert-into-test-table-return-keys db {:id 9 :name "I"})))
+
+              :sqlite
+              (is (= [{(keyword "last_insert_rowid()") 10}]
+                     (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
+              :h2
+              (is (= [{(keyword "scope_identity()") 11}]
+                     (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
+
+              ;; hsql and derby don't seem to support .getGeneratedKeys
               nil)))
+
+
 
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))

@@ -86,7 +86,7 @@ insert into test (id, name) values (:id, :name)
 -- only some db's support this
 insert into test (id, name) values (:id, :name) returning id
 
--- :name insert-into-test-table-return-keys :insert
+-- :name insert-into-test-table-return-keys :insert :raw
 -- behavior of this adapter-specific and db-specific
 insert into test (id, name) values (:id, :name)
 
