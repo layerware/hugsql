@@ -543,11 +543,7 @@ insert into test (id, name) values (:id, :name) returning id
         <p>HugSQL's <code>:insert</code>, or <code>:i!</code> command
         type indicates to the underlying adapter that the insert
         should be performed, and then <code>.getGeneratedKeys</code>
-        called in the jdbc driver.  This option is currently supported
-        with the <code>clojure.java.jdbc</code> adapter (the default
-        adapter), but not the <code>clojure.jdbc</code> adapter
-        because of <code>.getGeneratedKeys</code>support.
-        Additionally, the return value
+        called in the jdbc driver. The return value
         of <code>.getGeneratedKeys</code> varies greatly across
         different databases and jdbc drivers.  For example, see the
         following code from the HugSQL test suite:
@@ -556,7 +552,7 @@ insert into test (id, name) values (:id, :name) returning id
         <p>SQL</p>
 
 {% highlight sql %}
--- :name insert-into-test-table-return-keys :insert
+-- :name insert-into-test-table-return-keys :insert :raw
 insert into test (id, name) values (:id, :name)
 {% endhighlight %}
 
@@ -564,27 +560,46 @@ insert into test (id, name) values (:id, :name)
 
 {% highlight clj %}
 (testing "insert w/ return of .getGeneratedKeys"
+;; return generated keys, which has varying support and return values
+;; clojure.java.jdbc returns a hashmap, clojure.jdbc returns a vector of hashmaps
   (when (= adapter-name :clojure.java.jdbc)
     (condp = db-name
       :postgresql
-      (is (= {:id 9 :name "H"}
-             (insert-into-test-table-return-keys
-               db {:id 9 :name "H"})))
+      (is (= {:id 8 :name "H"}
+          (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
 
       :mysql
-      (is (= {:generated_key 10}
-             (insert-into-test-table-return-keys
-               db {:id 10 :name "I"})))
+      (is (= {:generated_key 9}
+             (insert-into-test-table-return-keys db {:id 9 :name "I"})))
 
       :sqlite
-      (is (= {(keyword "last_insert_rowid()") 11}
-             (insert-into-test-table-return-keys
-               db {:id 11 :name "J"})))
+      (is (= {(keyword "last_insert_rowid()") 10}
+             (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
 
       :h2
-      (is (= {(keyword "scope_identity()") 12}
-             (insert-into-test-table-return-keys
-               db {:id 12 :name "J"})))
+      (is (= {(keyword "scope_identity()") 11}
+             (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
+
+      ;; hsql and derby don't seem to support .getGeneratedKeys
+      nil))
+
+  (when (= adapter-name :clojure.jdbc)
+    (condp = db-name
+      :postgresql
+      (is (= [{:id 8 :name "H"}]
+             (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
+
+      :mysql
+      (is (= [{:generated_key 9}]
+             (insert-into-test-table-return-keys db {:id 9 :name "I"})))
+
+      :sqlite
+      (is (= [{(keyword "last_insert_rowid()") 10}]
+             (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
+
+      :h2
+      (is (= [{(keyword "scope_identity()") 11}]
+             (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
 
       ;; hsql and derby don't seem to support .getGeneratedKeys
       nil)))
