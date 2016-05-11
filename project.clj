@@ -10,7 +10,7 @@
                  [com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0-SNAPSHOT"]]
   :aliases {"install-all" ["do" ["sub" "install"] "install"]}
   :profiles {:dev
-             {:plugins [[lein-codox "0.9.4"]
+             {:plugins [[lein-codox "0.9.5"]
                         [lein-sub "0.3.0"]]
               :sub ["hugsql-adapter"
                     "hugsql-core"
