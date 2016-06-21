@@ -19,7 +19,21 @@
   (testing "leading SQL comment followed by hugsql comment"
     (is (= [{:hdr {:name ["query"]}
              :sql ["select * from emp"]}]
-          (parse "-- sql comment\n\n\n\n\n-- :name query\nselect * from emp"))))
+           (parse "-- sql comment\n\n\n\n\n-- :name query\nselect * from emp"))))
+
+  (testing "SQL comment in middle of SQL"
+    (is (= [{:hdr {:name ["query"]}
+             :sql ["select * \nfrom emp"]}]
+           (parse "-- :name query\nselect * \n-- a comment\nfrom emp")))
+    (is (= [{:hdr {:name ["query"]}
+             :sql ["select * \nfrom emp"]}]
+           (parse "-- :name query\nselect * \n--\nfrom emp")))
+    (is (= [{:hdr {:name ["query"]}
+             :sql ["select * \nfrom emp"]}]
+           (parse "-- :name query\nselect * \n/* a comment \n*/from emp")))
+    (is (= [{:hdr {:name ["query"]}
+             :sql ["select * \nfrom emp"]}]
+          (parse "-- :name query\nselect * \n/* \n*/from emp"))))
 
   (testing "hugsql header comments"
     (is (= [{:hdr {:name ["test"]}

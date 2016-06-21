@@ -29,10 +29,19 @@
   (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:]" (str c))))
 
 (defn- skip-ws
-  "Read from reader until a non-whitespace char is encountered"
+  "Read from reader until a non-whitespace char is encountered."
   [rdr]
   (loop [c (r/peek-char rdr)]
     (when (whitespace? c)
+      (do (r/read-char rdr)
+          (recur (r/peek-char rdr))))))
+
+(defn- skip-ws-to-next-line
+  "Read from reader until a non-whitespace or newline char is encountered."
+  [rdr]
+  (loop [c (r/peek-char rdr)]
+    (when (and (whitespace? c)
+               (not (= \newline c)))
       (do (r/read-char rdr)
           (recur (r/peek-char rdr))))))
 
@@ -173,7 +182,7 @@
 (defn- read-sing-line-comment
   [rdr c]
   (r/read-char rdr) ; eat second dash (-) of comment start
-  (skip-ws rdr)
+  (skip-ws-to-next-line rdr)
   (condp = (r/peek-char rdr)
     \: (read-sing-line-header rdr)
     \~ (read-sing-line-expr rdr)
@@ -182,7 +191,7 @@
 (defn- read-mult-line-comment
   [rdr c]
   (r/read-char rdr) ; eat second comment char (*)
-  (skip-ws rdr)
+  (skip-ws-to-next-line rdr)
   (condp = (r/peek-char rdr)
     \: (read-mult-line-header rdr)
     \~ (read-mult-line-expr rdr)
