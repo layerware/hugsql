@@ -5,7 +5,7 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :scm {:name "HugSQL"
         :url "https://github.com/layerware/hugsql"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.layerware/hugsql-core "0.5.0-SNAPSHOT"]
                  [com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0-SNAPSHOT"]]
   :aliases {"install-all" ["do" ["sub" "install"] "install"]}
