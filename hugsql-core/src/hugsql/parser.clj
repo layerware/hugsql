@@ -248,10 +248,15 @@
 
              ;; end of string, so return all, filtering out empty
              (nil? c)
-             (vec (filter #(or (seq (:hdr %)) (seq (:sql %)))
-                    (conj all
-                      {:hdr hdr
-                       :sql (vec (filter seq (conj sql (string/trimr (str sb)))))})))
+             (vec
+              (remove #(and (empty? (:hdr %))
+                            (or (empty? (:sql %))
+                                (and
+                                 (every? string? (:sql %))
+                                 (string/blank? (string/join (:sql %))))))
+                      (conj all
+                            {:hdr hdr
+                             :sql (filterv seq (conj sql (string/trimr sb)))})))
 
              ;; SQL comments and hugsql header comments
              (or
@@ -267,10 +272,10 @@
                    (recur x [] (nsb)
                           (conj all
                                 {:hdr hdr
-                                 :sql (vec (filter seq (conj sql (string/trimr (str sb)))))}))
+                                 :sql (filterv seq (conj sql (str sb)))}))
                    (recur (merge hdr x) sql sb all))
                  ;; clj expr was read from comment
-                 (recur hdr (conj sql (string/trimr (str sb)) x) (nsb) all))
+                 (recur hdr (conj sql (str sb) x) (nsb) all))
                (recur hdr sql sb all))
 
 
@@ -302,6 +307,5 @@
              ;; all else is SQL
              :else
              (if (and (not (string/blank? sb)) (empty? hdr) (not no-header))
-               (parse-error rdr (str "Encountered SQL with no hugsql header"))
+               (parse-error rdr "Encountered SQL with no hugsql header")
                (recur hdr sql (sb-append sb c) all)))))))))
-

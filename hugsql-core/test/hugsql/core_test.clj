@@ -89,7 +89,7 @@
            (one-value-param-sqlvec {:id 1})))
     (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
            (multi-value-params-sqlvec {:id 1 :name "Ed"})))
-    (is (= ["select * from test\nwhere id in ( ?,?,? )" 1 2 3]
+    (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
            (value-list-param-sqlvec {:ids [1,2,3]})))
     (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
            (tuple-param-sqlvec {:id-name [1 "A"]})))
@@ -152,7 +152,7 @@
   (testing "Snippets"
     (is (= ["select id, name"] (select-snip {:cols ["id","name"]})))
     (is (= ["from test"] (from-snip {:tables ["test"]})))
-    (is (= ["select id, name\nfrom test where id = ? or id = ?\norder by id" 1 2]
+    (is (= ["select id, name\nfrom test\nwhere id = ? or id = ?\norder by id" 1 2]
            (snip-query-sqlvec
              {:select (select-snip {:cols ["id","name"]})
               :from (from-snip {:tables ["test"]})
@@ -201,7 +201,7 @@
                             "-- :name \nselect * from test"))))
 
   (testing "value parameters allow vectors for ISQLParameter/etc overrides"
-    (is (= ["insert into test (id, myarr) values ( ? , ? )" 1 [1 2 3]]
+    (is (= ["insert into test (id, myarr) values (?, ?)" 1 [1 2 3]]
            (hugsql/sqlvec
             "insert into test (id, myarr) values (:id, :v:myarr)"
             {:id 1
@@ -212,6 +212,12 @@
             "insert into test (id, myarr) values :t*:records"
             {:records [[1 [1 2 3]]
                        [2 [4 5 6]]]}))))
+
+  (testing "spacing around Raw SQL parameters"
+    (is (= ["select col_1 from test"]
+           (hugsql/sqlvec
+            "select col_:sql:col_num from test"
+            {:col_num 1}))))
 
   (doseq [[db-name db] dbs]
     (doseq [[adapter-name adapter] adapters]
