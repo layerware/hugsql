@@ -109,7 +109,9 @@
           (or (= r ["select id as my_id, name as my_name from test"])
               (= r ["select name as my_name, id as my_id from test"]))))
     (is (= ["select * from test order by id desc"]
-           (sql-param-sqlvec {:id-order "desc"}))))
+           (sql-param-sqlvec {:id-order "desc"})))
+    (is (= ["select * from test\nwhere id = ?" 42]
+           (select-namespaced-keyword-sqlvec {:test/id 42}))))
 
   (testing "identifier quoting"
     (is (= ["select * from \"schema\".\"te\"\"st\""]
@@ -240,7 +242,13 @@
         (is (thrown-with-msg? ExceptionInfo
                               #"Parameter Mismatch: :emps.0.id parameter data not found."
                               (hugsql/sqlvec "select * from emp where id = :emps.0.id"
-                                             {:emps [{:not-id 1}]}))))
+                                             {:emps [{:not-id 1}]})))
+
+        ;; namespaced keywords
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Parameter Mismatch: :emp/id parameter data not found."
+                              (hugsql/sqlvec "select * from emp where id = :emp/id"
+                                             {:id 42}))))
 
       (testing "database commands/queries"
         (condp = db-name
@@ -315,6 +323,7 @@
         (is (= 1 (update-test-table db {:id 1 :name "C"})))
         (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
         (is (= {:id 1 :name "C"} (select-deep-get db {:records [{:id 1}]})))
+        (is (= {:id 1 :name "C"} (select-namespaced-keyword db {:test/id 1})))
         (is (= 0 (drop-test-table db))))
 
       (testing "db-fn"

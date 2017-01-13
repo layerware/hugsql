@@ -1180,6 +1180,15 @@ select * from employees where id = :value:employees.0.id
 ;=> {:id 1 :name "Al"}
 {% endhighlight %}
 
+          <h5 id="namespaced-keyword-param-name">Aside: Namespace-qualified Keywords</h5>
+
+          <p>There is limited support for namespaced keywords. HugSQL currently
+          only understands explicit namespaces, e.g.
+          <code>:myproject.core.employee/name</code>; double-colon shorthands
+          like <code>::employee/name</code> are not supported. Note also that
+          namespaced keywords don't work in conjunction with the deep get
+          functionality described previously.</p>
+
 
           <span id="escaping-colon"></span>
           <h5 id="colon">Aside: The Colon</h5>

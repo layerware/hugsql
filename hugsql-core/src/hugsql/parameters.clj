@@ -69,9 +69,11 @@
    Numbers must be vector indexes in vectors
    in param data."
   [nam]
-  (mapv
-   (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
-   (string/split (name nam) #"\.")))
+  (if (namespace nam)
+    [nam] ; deep get not supported for namespaced keywords
+    (mapv
+     (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
+     (string/split (name nam) #"\."))))
 
 ;; Default Object implementations
 (extend-type Object
