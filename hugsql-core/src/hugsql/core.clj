@@ -334,7 +334,7 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([file] (def-sqlvec-fns &form &env file {}))
+  ([file] `(def-sqlvec-fns ~file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
@@ -360,7 +360,7 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([s] (def-sqlvec-fns-from-string &form &env s {}))
+  ([s] `(def-sqlvec-fns-from-string ~s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
@@ -393,7 +393,7 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([file] (map-of-sqlvec-fns &form &env file {}))
+  ([file] `(map-of-sqlvec-fns ~file {}))
   ([file options]
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
@@ -426,7 +426,7 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([s] (map-of-sqlvec-fns-from-string &form &env s {}))
+  ([s] `(map-of-sqlvec-fns-from-string ~s {}))
   ([s options]
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
@@ -543,7 +543,7 @@
    See also hugsql.core/set-adapter! to set adapter for all def-db-fns
    calls.  Also, :adapter can be specified for individual function
    calls (overriding set-adapter! and the :adapter option here)."
-  ([file] (def-db-fns &form &env file {}))
+  ([file] `(def-db-fns ~file {}))
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
@@ -567,7 +567,7 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] (def-db-fns-from-string &form &env s {}))
+  ([s] `(def-db-fns-from-string ~s {}))
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
@@ -599,7 +599,7 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([file] (map-of-db-fns &form &env file {}))
+  ([file] `(map-of-db-fns ~file {}))
   ([file options]
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
@@ -633,7 +633,7 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] (map-of-db-fns-from-string &form &env s {}))
+  ([s] `(map-of-db-fns-from-string ~s {}))
   ([s options]
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
