@@ -14,6 +14,21 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
+### 0.4.8
+
+ - add validation exception for no value for :name (issue
+   [#39](https://github.com/layerware/hugsql/issues/39))
+ - add clojure.jdbc support for .getGeneratedKeys
+ - stricter parsing for whitespace; (issue
+   [#41](https://github.com/layerware/hugsql/issues/41))
+ - fix truncated SQL when blank comment encountered (issue
+   [#44](https://github.com/layerware/hugsql/issues/44))
+ - add test profiles for clojure versions
+ - fix multiarity macros definitions (Thanks to Joel Kaasinen)
+   (pull request [#66](https://github.com/layerware/hugsql/pull/66))
+ - doc fixes
+ - bump version dependencies
+
 ### 0.4.7
 
  - fix deprecations for latest clojure.java.jdbc changes (issue
