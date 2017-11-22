@@ -229,11 +229,13 @@
           :command [\":?\"]
           :result [\":1\"]}
     :sql [\"select * from emp where id = \"
-          {:type :v :name :id}]}
+          {:type :v :name :id}]
+    :line 12
+    :file \"sql/emp_queries.sql\"}
 
    Throws clojure.lang.ExceptionInfo on error."
   ([sql] (parse sql {}))
-  ([sql {:keys [no-header]}]
+  ([sql {:keys [no-header file]}]
    (if (string/blank? sql)
      (throw (ex-info "SQL is empty" {}))
      (let [sql (string/replace sql "\r\n" "\n")
@@ -241,6 +243,7 @@
            nsb #(StringBuilder.)]
        (loop [hdr {}
               sql []
+              line (r/get-line-number rdr)
               sb  (nsb)
               all []]
          (let [c (r/read-char rdr)]
@@ -256,6 +259,7 @@
                                  (string/blank? (string/join (:sql %))))))
                       (conj all
                             {:hdr hdr
+                             :line line :file file
                              :sql (filterv seq (conj sql (string/trimr sb)))})))
 
              ;; SQL comments and hugsql header comments
@@ -269,20 +273,23 @@
                (if (map? x)
                  ;; if sql is active, then new hdr section
                  (if (or (> (.length ^StringBuilder sb) 0) (empty? hdr))
-                   (recur x [] (nsb)
+                   (recur x [] (r/get-line-number rdr) (nsb)
                           (conj all
                                 {:hdr hdr
+                                 :line line :file file
                                  :sql (filterv seq (conj sql (str sb)))}))
-                   (recur (merge hdr x) sql sb all))
+                   (recur (merge hdr x) sql (r/get-line-number rdr) sb all))
                  ;; clj expr was read from comment
-                 (recur hdr (conj sql (str sb) x) (nsb) all))
-               (recur hdr sql sb all))
+                 (recur hdr (conj sql (str sb) x) (r/get-line-number rdr)
+                        (nsb) all))
+               (recur hdr sql (r/get-line-number rdr) sb all))
 
 
              ;; quoted SQL (which cannot contain hugsql params,
              ;; so we consider them separately here before
              (sql-quoted-start? c)
-             (recur hdr sql (sb-append sb (read-sql-quoted rdr c)) all)
+             (recur hdr sql (r/get-line-number rdr)
+                    (sb-append sb (read-sql-quoted rdr c)) all)
 
              ;; missing an SQL quote
              (sql-unmatched-quoted? c)
@@ -290,22 +297,24 @@
 
              ;; postgresql :: type cast is not hugsql param, so skip double-colon
              (pg-type-cast-start? rdr c)
-             (recur hdr sql (sb-append (sb-append sb c) (r/read-char rdr)) all)
+             (recur hdr sql (r/get-line-number rdr)
+                    (sb-append (sb-append sb c) (r/read-char rdr)) all)
 
              ;; escaped colon
              (escape-start? rdr c)
-             (recur hdr sql (sb-append sb (r/read-char rdr)) all)
+             (recur hdr sql (r/get-line-number rdr)
+                    (sb-append sb (r/read-char rdr)) all)
 
              ;; hugsql params
              (hugsql-param-start? c)
              (recur hdr
-               (vec (filter seq
-                      (conj sql (str sb) (read-hugsql-param rdr c))))
-               (nsb)
-               all)
+                    (vec (filter seq
+                                 (conj sql (str sb) (read-hugsql-param rdr c))))
+                    (r/get-line-number rdr) (nsb) all)
 
              ;; all else is SQL
              :else
              (if (and (not (string/blank? sb)) (empty? hdr) (not no-header))
                (parse-error rdr "Encountered SQL with no hugsql header")
-               (recur hdr sql (sb-append sb c) all)))))))))
+               (recur hdr sql (r/get-line-number rdr)
+                      (sb-append sb c) all)))))))))
