@@ -285,7 +285,7 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [{:keys [sql hdr file line]} options]
+  [{:keys [sql hdr]} options]
   (let [sn- (:snip- hdr) ;; private snippet
         snn (:snip hdr)  ;; public snippet
         nm- (:name- hdr) ;; private name
@@ -297,7 +297,7 @@
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
         met (merge mta
-                   {:doc doc :file file :line line}
+                   {:doc doc :file (:file hdr) :line (:line hdr)}
                    (when (or sn- nm-) {:private true})
                    (when (or sn- snn) {:snip? true}))]
     {(keyword nam) {:meta met
@@ -487,8 +487,8 @@
                    {:doc doc
                     :command cmd
                     :result res
-                    :file file
-                    :line line}
+                    :file (:file hdr)
+                    :line (:line hdr)}
                    (when pnm {:private true}))]
     {(keyword nam) {:meta met
                     :fn (db-fn* sql cmd res options)}}))
