@@ -63,7 +63,7 @@
 (deftest core
 
   (testing "adapter was not set during fn def"
-    (is (= nil hugsql/adapter)))
+    (is (= nil @hugsql/adapter)))
 
   (testing "File outside of classpath with java.io.File worked"
     (is (fn? test2-select)))

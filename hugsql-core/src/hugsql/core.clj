@@ -7,12 +7,12 @@
             [clojure.string :as string]
             [clojure.tools.reader.edn :as edn]))
 
-(def ^:no-doc adapter nil)
+(def ^:dynamic ^:no-doc adapter (atom nil))
 
 (defn set-adapter!
   "Set a global adapter."
   [the-adapter]
-  (alter-var-root #'adapter (constantly the-adapter)))
+  (reset! adapter the-adapter))
 
 (defn ^:no-doc get-adapter
   "Get an adapter.  Sets default
@@ -26,11 +26,11 @@
   ;;    if someone wants to use another adapter
   ;; 3) *no* requirement for an adapter at all unless
   ;;    def-db-fns is used and calls this function
-  (when (nil? adapter)
+  (when (nil? @adapter)
     (eval
      '(do (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
           (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc)))))
-  adapter)
+  @adapter)
 
 (defn ^:no-doc parsed-defs-from-string
   "Given a hugsql SQL string,
