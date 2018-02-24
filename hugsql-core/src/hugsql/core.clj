@@ -50,7 +50,8 @@
       ;; assume resource path (on classpath)
       (if-let [f (io/resource file)]
         f
-        (throw (ex-info (str "Can not read file: " file) {})))))))
+        (throw (ex-info (str "Can not read file: " file) {})))))
+   {:file file}))
 
 (defn ^:no-doc validate-parsed-def!
   "Ensure SQL required headers are provided
@@ -284,10 +285,8 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [pdef options]
-  (let [sql (:sql pdef)
-        hdr (:hdr pdef)
-        sn- (:snip- hdr) ;; private snippet
+  [{:keys [sql hdr]} options]
+  (let [sn- (:snip- hdr) ;; private snippet
         snn (:snip hdr)  ;; public snippet
         nm- (:name- hdr) ;; private name
         nmn (:name hdr)  ;; public name
@@ -298,7 +297,7 @@
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
         met (merge mta
-                   {:doc doc}
+                   {:doc doc :file (:file hdr) :line (:line hdr)}
                    (when (or sn- nm-) {:private true})
                    (when (or sn- snn) {:snip? true}))]
     {(keyword nam) {:meta met
@@ -476,10 +475,8 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [pdef options]
-  (let [sql (:sql pdef)
-        hdr (:hdr pdef)
-        pnm (:name- hdr)
+  [{:keys [sql hdr file line]} options]
+  (let [pnm (:name- hdr)
         nam (symbol (first (or (:name hdr) pnm)))
         doc (or (first (:doc hdr)) "")
         cmd (command-sym hdr)
@@ -489,7 +486,9 @@
         met (merge mta
                    {:doc doc
                     :command cmd
-                    :result res}
+                    :result res
+                    :file (:file hdr)
+                    :line (:line hdr)}
                    (when pnm {:private true}))]
     {(keyword nam) {:meta met
                     :fn (db-fn* sql cmd res options)}}))

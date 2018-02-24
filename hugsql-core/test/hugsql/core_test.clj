@@ -80,7 +80,9 @@
     (is (fn? no-params-select))
     (is (fn? no-params-select-sqlvec))
     (is (= "No params" (:doc (meta #'no-params-select))))
-    (is (= "No params (sqlvec)" (:doc (meta #'no-params-select-sqlvec)))))
+    (is (= "No params (sqlvec)" (:doc (meta #'no-params-select-sqlvec))))
+    (is (= "hugsql/sql/test.sql" (:file (meta #'no-params-select))))
+    (is (= 6 (:line (meta #'no-params-select)))))
 
   (testing "sql fns"
     (is (= ["select * from test"] (no-params-select-sqlvec)))
