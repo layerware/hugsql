@@ -93,35 +93,34 @@
 (defn ^:no-doc def-expr
   ([expr] (def-expr expr nil))
   ([expr require-str]
-   (let [nam (expr-name expr)
+   (let [nam (keyword (expr-name expr))
          ;; tag expressions vs others
          ;; and collect interspersed items together into a vector
          tag (reduce
-              (fn [r c]
-                (if (vector? c)
-                  (conj r {:expr c})
-                  (if-let [o (:other (last r))]
-                    (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
-                    (conj r {:other [c]}))))
-              []
-              expr)
-         clj  (str
-              "(ns hugsql.expr-run\n"
-              (when-not (string/blank? require-str)
-                (str "(:require " require-str ")"))
-              ")\n"
-              "(defn " nam " [params options] "
-              (string/join
-               " "
-               (filter
-                #(not (= % :cont))
-                (map (fn [x]
-                       (if (:expr x)
-                         (first (:expr x))
-                         (pr-str (:other x)))) tag)))
-              ")")
-         expr-fn #(ns-resolve 'hugsql.expr-run (symbol nam))]
-     (when (nil? (expr-fn)) (load-string clj)))))
+               (fn [r c]
+                 (if (vector? c)
+                   (conj r {:expr c})
+                   (if-let [o (:other (last r))]
+                     (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
+                     (conj r {:other [c]}))))
+               []
+               expr)
+         clj (str
+               "(ns hugsql.expr-run\n"
+               (when-not (string/blank? require-str)
+                 (str "(:require " require-str ")"))
+               ")\n"
+               "(swap! exprs assoc " nam "(fn [params options] "
+               (string/join
+                 " "
+                 (filter
+                   #(not (= % :cont))
+                   (map (fn [x]
+                          (if (:expr x)
+                            (first (:expr x))
+                            (pr-str (:other x)))) tag)))
+               "))")]
+     (load-string clj))))
 
 (defn ^:no-doc compile-exprs
   "Compile (def) all expressions in a parsed def"
@@ -140,8 +139,9 @@
    to:
    {:type :i* :name :cols}"
   [expr params options]
-  (let [expr-fn #(ns-resolve 'hugsql.expr-run (symbol (expr-name expr)))]
+  (let [expr-fn #(get @hugsql.expr-run/exprs (keyword (expr-name expr)))]
     (when (nil? (expr-fn)) (def-expr expr))
+    (while (nil? (expr-fn)) (Thread/sleep 1))
     (let [result ((expr-fn) params options)]
       (if (string? result)
         (:sql (first (parser/parse result {:no-header true})))
