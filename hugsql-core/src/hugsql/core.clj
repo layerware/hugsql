@@ -301,7 +301,7 @@
                    (when (or sn- nm-) {:private true})
                    (when (or sn- snn) {:snip? true}))]
     {(keyword nam) {:meta met
-                    :fn (sqlvec-fn* sql options)}}))
+                    :fn (sqlvec-fn* sql (assoc options :fn-name nam))}}))
 
 (defn intern-sqlvec-fn
   "Intern the sqlvec fn from a parsed def"
@@ -491,7 +491,7 @@
                     :line (:line hdr)}
                    (when pnm {:private true}))]
     {(keyword nam) {:meta met
-                    :fn (db-fn* sql cmd res options)}}))
+                    :fn (db-fn* sql cmd res (assoc options :fn-name nam))}}))
 
 (defn intern-db-fn
   "Intern the db fn from a parsed def"
