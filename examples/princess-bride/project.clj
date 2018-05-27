@@ -6,5 +6,5 @@
   :main princess-bride.core
   :aliases {"as-you-wish" ["run"]}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.layerware/hugsql "0.4.8"]
+                 [com.layerware/hugsql "0.4.9"]
                  [com.h2database/h2 "1.4.196"]])
