@@ -14,6 +14,19 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
+### 0.4.9
+
+ - preserve file/line metadata from parsed SQL and attach to vars
+   (issue [#77](https://github.com/layerware/hugsql/issues/77))
+   (Thanks Phil Hagelberg!
+   [@technomancy](https://github.com/technomancy))
+ - fix unbound fn error w/ Clojure expression definitions (issue
+   [#59](https://github.com/layerware/hugsql/issues/59))
+ - pass the generated function names to the adapter (pull request
+   [#83](https://github.com/layerware/hugsql/issues/83)) (Thanks Conor
+   McDermottroe! [@conormcd](https://github.com/conormcd))
+ - bump version dependencies
+
 ### 0.4.8
 
  - add validation exception for no value for :name (issue
