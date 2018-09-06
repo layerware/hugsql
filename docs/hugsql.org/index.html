@@ -1597,10 +1597,10 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-app
   (:require [hugsql.core :as hugsql]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+            [hugsql.adapter.clojure-java-jdbc :as cj-adapter]))
 
 (defn app-init []
-  (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-jdbc)))
+  (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-java-jdbc)))
 {% endhighlight %}
 
           <p>OR</p>
@@ -1608,10 +1608,10 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-db-stuff
   (:require [hugsql.core :as hugsql]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+            [hugsql.adapter.clojure-java-jdbc :as cj-adapter]))
 
 (hugsql/def-db-fns "path/to/db.sql"
-  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+  {:adapter (cj-adapter/hugsql-adapter-clojure-java-jdbc)})
 {% endhighlight %}
 
 <p>OR</p>
@@ -1619,14 +1619,14 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-db-stuff
 (:require [hugsql.core :as hugsql]
-          [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+          [hugsql.adapter.clojure-java-jdbc :as cj-adapter]))
 
 (def db ;;a db-spec here)
 
 (hugsql/def-db-fns "path/to/db.sql")
 
 (my-query db {:id 1}
-  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+  {:adapter (cj-adapter/hugsql-adapter-clojure-java-jdbc)})
 {% endhighlight %}
 
       <h4 id="adapter-creation">Create an Adapter</h4>
