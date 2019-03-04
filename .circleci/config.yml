@@ -8,7 +8,7 @@ jobs:
           POSTGRES_DB: hugtest
           POSTGRES_USER: hugtest
           POSTGRES_PASSWORD: hugtest
-      - image: circleci/mysql:latest-ram
+      - image: circleci/mysql:5.7
         environment:
           MYSQL_DATABASE: hugtest
           MYSQL_USER: hugtest
