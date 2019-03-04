@@ -39,4 +39,4 @@ jobs:
           key: dependencies-{{ checksum "hugsql-core/project.clj" }}
 
       # run tests!
-      - run: cd hugsql-core && lein test
+      - run: cd hugsql-core && lein test-all
