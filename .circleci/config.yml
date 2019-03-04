@@ -14,7 +14,7 @@ jobs:
           MYSQL_USER: hugtest
           MYSQL_PASSWORD: hugtest
 
-    working_directory: ~/repo/
+    working_directory: ~/hugsql/hugsql-core/
 
     environment:
       LEIN_ROOT: "true"
@@ -22,21 +22,21 @@ jobs:
 
     steps:
       - checkout:
-          path: ~/repo/hugsql-core/
+          path: ~/hugsql/
 
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - dependencies-{{ checksum "hugsql-core/project.clj" }}
+            - dependencies-{{ checksum "project.clj" }}
             # fallback to using the latest cache if no exact match is found
             - dependencies-
 
-      - run: cd hugsql-core && lein deps
+      - run: lein deps
 
       - save_cache:
           paths:
             - ~/.m2
-          key: dependencies-{{ checksum "hugsql-core/project.clj" }}
+          key: dependencies-{{ checksum "project.clj" }}
 
       # run tests!
-      - run: cd hugsql-core && lein test-all
+      - run: lein test-all
