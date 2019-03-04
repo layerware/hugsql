@@ -31,7 +31,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - dependencies-
 
-      - run: lein deps
+      - run: cd hugsql-core && lein deps
 
       - save_cache:
           paths:
@@ -39,4 +39,4 @@ jobs:
           key: dependencies-{{ checksum "hugsql-core/project.clj" }}
 
       # run tests!
-      - run: lein test
+      - run: cd hugsql-core && lein test
