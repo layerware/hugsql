@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
+      - image: circleci/postgres:11.2-alpine-ram
+        environment:
+          POSTGRES_DB: hugtest
+          POSTGRES_USER: hugtest
+          POSTGRES_PASSWORD: hugtest
+      - image: circleci/mysql:latest-ram
+          MYSQL_DATABASE: hugtest
+          MYSQL_USER: hugtest
+          MYSQL_PASSWORD: hugtest
+
+    working_directory: ~/repo/
+
+    environment:
+      LEIN_ROOT: "true"
+      JVM_OPTS: -Xmx256m
+
+    steps:
+      - checkout
+        path: ~/repo/hugsql-core/
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: lein deps
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+      # run tests!
+      - run: lein test
