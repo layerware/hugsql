@@ -9,6 +9,7 @@ jobs:
           POSTGRES_USER: hugtest
           POSTGRES_PASSWORD: hugtest
       - image: circleci/mysql:latest-ram
+        environment:
           MYSQL_DATABASE: hugtest
           MYSQL_USER: hugtest
           MYSQL_PASSWORD: hugtest
@@ -20,8 +21,8 @@ jobs:
       JVM_OPTS: -Xmx256m
 
     steps:
-      - checkout
-        path: ~/repo/hugsql-core/
+      - checkout:
+          path: ~/repo/hugsql-core/
 
       # Download and cache dependencies
       - restore_cache:
