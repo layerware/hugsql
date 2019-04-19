@@ -138,6 +138,13 @@
                :sql ["select * from emp where \"col1\" = 'my :param is safe'"]}]
              (parse "-- :name test\nselect * from emp where \"col1\" = 'my :param is safe'"))))
 
+    (testing "SQL optimizer hints"
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["/*+ foo */ select * from emp"]}]
+             (parse "-- :name test\n/*+ foo */ select * from emp"))))
+
     (testing "Clojure expressions"
       (is (= [{:hdr {:name ["test"]
                      :file nil
