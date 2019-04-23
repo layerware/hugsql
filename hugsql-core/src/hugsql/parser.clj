@@ -179,6 +179,13 @@
         sign (if end? :end :cont)]
     (if (string/blank? expr) [sign] [expr sign])))
 
+(defn- read-mult-line-hint
+  [rdr]
+  (let [_ (r/read-char rdr) ; eat +
+        hint (read-to-chars rdr \* \/)
+        _    (skip-to-chars rdr \* \/)]
+    (str "/*+" hint "*/")))
+
 (defn- read-sing-line-comment
   [rdr c]
   (r/read-char rdr) ; eat second dash (-) of comment start
@@ -195,6 +202,7 @@
   (condp = (r/peek-char rdr)
     \: (read-mult-line-header rdr)
     \~ (read-mult-line-expr rdr)
+    \+ (read-mult-line-hint rdr)
     (skip-to-chars rdr \* \/)))
 
 (defn- read-sql-quoted
@@ -268,7 +276,8 @@
                           (read-sing-line-comment rdr c)
                           (read-mult-line-comment rdr c))]
                ;; hdr was read from comment
-               (if (map? x)
+               (cond
+                 (map? x)
                  ;; if sql is active, then new hdr section
                  (if (or (> (.length ^StringBuilder sb) 0) (empty? hdr))
                    (recur (merge x {:file file :line (max 1 (dec (r/get-line-number rdr)))})
@@ -278,6 +287,10 @@
                                 {:hdr hdr
                                  :sql (filterv seq (conj sql (str sb)))}))
                    (recur (merge hdr x) sql sb all))
+                 ;; hint
+                 (string? x)
+                 (recur hdr sql (sb-append sb x) all)
+                 :else
                  ;; clj expr was read from comment
                  (recur hdr (conj sql (str sb) x) (nsb) all))
                (recur hdr sql sb all))
