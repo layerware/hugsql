@@ -250,6 +250,24 @@
 (defmethod hugsql-result-fn :raw [sym] 'hugsql.adapter/result-raw)
 (defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
 
+(defn hugsql-transform-fn
+  "Applies specified `transform` function to the result `x`"
+  [x {:keys [transform result] :or {transform []} :as options}]
+  (println options)
+  (let [t (first transform)]
+    (cond
+      (string/blank? t)
+        x
+
+      (or (= result :one) (= result :1))
+        ((resolve (symbol t)) x)
+
+      (or (= result :many) (= result :*))
+        (map (resolve (symbol t)) x)
+
+      :else
+        x)))
+
 (defn sqlvec-fn*
   "Given parsed sql and optional options, return an
    anonymous function that returns hugsql sqlvec format"
@@ -455,7 +473,8 @@
           (as-> psql x
             (prepare-sql x param-data o)
             ((resolve (hugsql-command-fn command)) a db x o)
-            ((resolve (hugsql-result-fn result)) a x o))
+            ((resolve (hugsql-result-fn result)) a x o)
+            (hugsql-transform-fn x o))
           (catch Exception e
             (adapter/on-exception a e))))))))
 
@@ -489,9 +508,10 @@
                     :result res
                     :file (:file hdr)
                     :line (:line hdr)}
-                   (when pnm {:private true}))]
+                   (when pnm {:private true}))
+        xfm (:transform hdr)]
     {(keyword nam) {:meta met
-                    :fn (db-fn* sql cmd res (assoc options :fn-name nam))}}))
+                    :fn (db-fn* sql cmd res (assoc options :fn-name nam :transform xfm))}}))
 
 (defn intern-db-fn
   "Intern the db fn from a parsed def"

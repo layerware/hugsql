@@ -72,7 +72,13 @@
                      :file nil
                      :line 1}
                :sql ["select * from emp"]}]
-             (parse "-- :name test\nselect * from emp"))))
+             (parse "-- :name test\nselect * from emp")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1
+                     :transform ["hugsql.transform/test"]}
+               :sql ["select * from emp"]}]
+             (parse "-- :name test\n-- :transform hugsql.transform/test\nselect * from emp"))))
 
     (testing ":param-name (default value parameter type)"
       (is (= [{:hdr {:name ["test"]
