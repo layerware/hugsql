@@ -5,5 +5,5 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :scm {:dir ".."}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/java.jdbc "0.7.6"]
+                 [org.clojure/java.jdbc "0.7.10"]
                  [com.layerware/hugsql-adapter "0.5.0-SNAPSHOT"]])

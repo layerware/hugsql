@@ -34,13 +34,14 @@
           ;; mysql> create database hugtest;
           ;; mysql> grant all on hugtest.* to hugtest identified by "hugtest";
           :mysql  {:next.jdbc {:dbtype "mysql"
-                               :dbname "hugtest?useSSL=false"
+                               :dbname "hugtest?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC"
                                :host "127.0.0.1"
                                :port "3306"
                                :user "hugtest"
                                :password "hugtest"}
                    :default {:subprotocol "mysql"
-                             :subname "//127.0.0.1:3306/hugtest?useSSL=false"
+                             :classname "com.mysql.cj.jdbc.Driver"
+                             :subname "//127.0.0.1:3306/hugtest?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC"
                              :user "hugtest"
                              :password "hugtest"}}
           :sqlite {:next.jdbc {:dbtype "sqlite"
