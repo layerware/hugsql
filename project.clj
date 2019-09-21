@@ -15,13 +15,15 @@
               :sub ["hugsql-adapter"
                     "hugsql-core"
                     "hugsql-adapter-clojure-java-jdbc"
-                    "hugsql-adapter-clojure-jdbc"]
+                    "hugsql-adapter-clojure-jdbc"
+                    "hugsql-adapter-next-jdbc"]
               :dependencies [[com.layerware/hugsql-adapter-clojure-jdbc "0.5.0-SNAPSHOT"]]
               :codox {:source-uri "http://github.com/layerware/hugsql/blob/0.5.0-SNAPSHOT/{filepath}#L{line}"
                       :output-path "../gh-pages"
                       :source-paths ["hugsql-core/src"
                                      "hugsql-adapter/src"
                                      "hugsql-adapter-clojure-java-jdbc/src"
-                                     "hugsql-adapter-clojure-jdbc/src"]}
+                                     "hugsql-adapter-clojure-jdbc/src"
+                                     "hugsql-adapter-next-jdbc/src"]}
               :global-vars {*warn-on-reflection* false
                             *assert* false}}})

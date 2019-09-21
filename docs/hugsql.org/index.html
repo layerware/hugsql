@@ -35,7 +35,8 @@ page: docs
         <li>HugSQL has <a href="#adapter">protocol-based adapters</a>
           supporting multiple database libraries and ships with
           adapters for
-          <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a> (default)
+          <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a> (default),
+          <a href="https://github.com/seancorfield/next-jdbc">next.jdbc</a>,
           and <a href="http://funcool.github.io/clojure.jdbc/latest/">clojure.jdbc</a></li>
       </ul>
 
@@ -46,7 +47,7 @@ page: docs
         dependency information:</p>
 
 {% highlight clj %}
-[com.layerware/hugsql "0.4.9"]
+[com.layerware/hugsql "0.5.0"]
 {% endhighlight %}
 
       <p>You will also need to specify your JDBC driver dependency
@@ -1562,14 +1563,15 @@ hugsql.parameters/apply-hugsql-param
       library.</p>
 
 
+      <span id="adapter-other"></span>
+      <h4 id="adapter-default">Default Adapter</h4>
 
-      <h4 id="adapter-other">Using Other Adapters</h4>
-
-      <p>HugSQL will default to using the adapter for the
+      <p>HugSQL defaults to using the adapter for the
           <code>clojure.java.jdbc</code> library.  If you would prefer
-          to use the adapter for <code>clojure.jdbc</code> or another
-          adapter, you will need to configure your dependencies and
-          set the adapter.</p>
+          to use the adapter
+          for <code>next.jdbc</code>, <code>clojure.jdbc</code>, or
+          another adapter, you will need to configure your
+          dependencies and set the adapter.</p>
 
           <p>Leiningen dependency information:</p>
 
@@ -1579,13 +1581,46 @@ hugsql.parameters/apply-hugsql-param
           <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a>
           to run database queries.</p>
 
-          <p>If you wish to use a different adapter, you should bypass the <code>hugsql</code>
-          clojar and specify <code>hugsql-core</code> and the adapter clojar you desire:
+          <p>If you wish to use a different adapter, you should bypass
+            the <code>hugsql</code> clojar and
+            specify <code>hugsql-core</code> and the adapter clojar
+            you desire:
+
+            <h5 id="adapter-clojure-java-jdbc">clojure.java.jdbc Adapter</h5>
+
+            <p>Adapter for <a href="https://github.com/clojure/java.jdbc">clojure.java.jdbc</a></p>
+            <p><i>Included here for reference, but this is unnecessary if you are using the <code>hugsql</code> meta clojar.</i></p>
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.4.9"]
-[com.layerware/hugsql-adapter-clojure-jdbc "0.4.9"]
+[com.layerware/hugsql-core "0.5.0"]
+[com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0"]
 {% endhighlight %}
+
+      <h5 id="adapter-next-jdbc">next.jdbc Adapter</h5>
+
+          <p>Adapter for <a href="https://github.com/seancorfield/next-jdbc">next.jdbc</a>. (as of HugSQL <code>0.5.0</code>).</a></p>
+          <p>In order to maintain the closest behavior to
+            <code>clojure.java.jdbc</code>, the adapter currently defaults to
+            setting the result set <code>:builder-fn</code> option to
+            <code>next.jdbc.result-set/as-unqualified-lower-maps</code>.
+            This behavior can be overridden when setting the adapter.</p>
+
+
+{% highlight clj %}
+[com.layerware/hugsql-core "0.5.0"]
+[com.layerware/hugsql-adapter-next-jdbc "0.5.0"]
+{% endhighlight %}
+
+          <h5 id="adapter-clojure-jdbc">clojure.jdbc Adapter</h5>
+
+          <p>Adapter for <a href="https://github.com/funcool/clojure.jdbc">clojure.jdbc</a></p>
+
+{% highlight clj %}
+[com.layerware/hugsql-core "0.5.0"]
+[com.layerware/hugsql-clojure-jdbc "0.5.0"]
+{% endhighlight %}
+
+          <h5 id="adapter-setting">Setting an adapter</h5>
 
           <p>Within your Clojure code, you will need to explicitly set the adapter.
           You can do this globally (i.e., at app startup) with
@@ -1597,10 +1632,15 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-app
   (:require [hugsql.core :as hugsql]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+            [hugsql.adapter.next-jdbc :as next-adapter
+            [next.jdbc.result-set :as rs]]]))
 
 (defn app-init []
-  (hugsql/set-adapter! (cj-adapter/hugsql-adapter-clojure-jdbc)))
+  (hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc)))
+
+;; OR override the :builder-fn behavior
+(defn app-init []
+  (hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc {:builder-fn result-set/as-unqualified-maps})))
 {% endhighlight %}
 
           <p>OR</p>
@@ -1608,10 +1648,10 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-db-stuff
   (:require [hugsql.core :as hugsql]
-            [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+            [hugsql.adapter.next-jdbc :as next-adapter]))
 
 (hugsql/def-db-fns "path/to/db.sql"
-  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+  {:adapter (cj-adapter/hugsql-adapter-next-jdbc)})
 {% endhighlight %}
 
 <p>OR</p>
@@ -1619,14 +1659,14 @@ hugsql.parameters/apply-hugsql-param
 {% highlight clj %}
 (ns my-db-stuff
 (:require [hugsql.core :as hugsql]
-          [hugsql.adapter.clojure-jdbc :as cj-adapter]))
+          [hugsql.adapter.next-jdbc :as next-adapter]))
 
 (def db ;;a db-spec here)
 
 (hugsql/def-db-fns "path/to/db.sql")
 
 (my-query db {:id 1}
-  {:adapter (cj-adapter/hugsql-adapter-clojure-jdbc)})
+  {:adapter (cj-adapter/hugsql-adapter-next-jdbc)})
 {% endhighlight %}
 
       <h4 id="adapter-creation">Create an Adapter</h4>
@@ -1634,7 +1674,8 @@ hugsql.parameters/apply-hugsql-param
       <p>Creating a HugSQL Adapter is as simple as implementing
       the <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter/src/hugsql/adapter.clj">hugsql.adapter/HugsqlAdapter
       protocol</a>.  For examples, see the implementations
-      for <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-clojure-java-jdbc/src/hugsql/adapter/clojure_java_jdbc.clj">clojure.java.jdbc</a>
+        for <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-clojure-java-jdbc/src/hugsql/adapter/clojure_java_jdbc.clj">clojure.java.jdbc</a>,
+        <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-next-jdbc/src/hugsql/adapter/next_jdbc.clj">next.jdbc</a>,
       and <a href="https://github.com/layerware/hugsql/blob/master/hugsql-adapter-clojure-jdbc/src/hugsql/adapter/clojure_jdbc.clj">clojure.jdbc</a>.</p>
 
       <h4 id="adapter-community">Adapters from the Community</h4>
@@ -1884,7 +1925,11 @@ hugsql.parameters/apply-hugsql-param
           </li>
           <li><a href="#adapter">HugSQL Adapters</a>
             <ul class="nav">
-              <li><a href="#adapter-other">Using Other Adapters</a></li>
+              <li><a href="#adapter-default">Default Adapter</a></li>
+              <li><a href="#adapter-clojure-java-jdbc">clojure.java.jdbc Adapter</a></li>
+              <li><a href="#adapter-next-jdbc">next.jdbc Adapter</a></li>
+              <li><a href="#adapter-clojure-jdbc">clojure.jdbc Adapter</a></li>
+              <li><a href="#adapter-setting">Setting an Adapter</a></li>
               <li><a href="#adapter-creation">Create an Adapter</a></li>
               <li><a href="#adapter-community">Adapters from the Community</a></li>
             </ul>

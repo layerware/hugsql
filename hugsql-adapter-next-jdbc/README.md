@@ -1,8 +1,13 @@
 # HugSQL Adapter for next.jdbc
 
+Special thanks to:
+
+- [@nikolap](https://github.com/nikolap) for the original implementation
+- [@seancorfield](https://github.com/seancorfield) for [next.jdbc](https://cljdoc.org/d/seancorfield/next.jdbc/)
+
 ## Usage
 
-Below is an example, you can find other ways to do this in the [HugSQL documentation](https://www.hugsql.org/#adapter-other). 
+Below is an example, you can find other ways to do this in the [HugSQL documentation](https://www.hugsql.org/#adapter-other).
 
 ```clojure
 (ns my-app

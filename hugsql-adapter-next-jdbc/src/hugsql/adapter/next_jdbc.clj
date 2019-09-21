@@ -2,7 +2,8 @@
   "next.jdbc adapter for HugSQL."
   (:gen-class)
   (:require [hugsql.adapter :as adapter]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc]
+            [next.jdbc.result-set :as rs]))
 
 (deftype HugsqlAdapterNextJdbc [default-command-options]
 
@@ -37,4 +38,4 @@
   ([]
    (hugsql-adapter-next-jdbc {}))
   ([default-command-options]
-   (->HugsqlAdapterNextJdbc default-command-options)))
+   (->HugsqlAdapterNextJdbc (merge {:builder-fn rs/as-unqualified-lower-maps} default-command-options))))

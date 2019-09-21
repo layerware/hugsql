@@ -11,6 +11,7 @@
              {:plugins [[lein-auto "0.1.2"]]
               :dependencies [[com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0-SNAPSHOT"]
                              [com.layerware/hugsql-adapter-clojure-jdbc "0.5.0-SNAPSHOT"]
+                             [com.layerware/hugsql-adapter-next-jdbc "0.5.0-SNAPSHOT"]
                              [org.postgresql/postgresql "42.2.2"]
                              [mysql/mysql-connector-java "5.1.46"]
                              [org.xerial/sqlite-jdbc "3.23.1"]
