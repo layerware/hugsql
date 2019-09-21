@@ -297,7 +297,10 @@
         mta (if-let [m (:meta hdr)]
               (edn/read-string (string/join " " m)) {})
         met (merge mta
-                   {:doc doc :file (:file hdr) :line (:line hdr)}
+                   {:doc doc
+                    :file (:file hdr)
+                    :line (:line hdr)
+                    :arglists '([] [params] [params options])}
                    (when (or sn- nm-) {:private true})
                    (when (or sn- snn) {:snip? true}))]
     {(keyword nam) {:meta met
@@ -488,7 +491,10 @@
                     :command cmd
                     :result res
                     :file (:file hdr)
-                    :line (:line hdr)}
+                    :line (:line hdr)
+                    :arglists '([db]
+                                [db params]
+                                [db params options & command-options])}
                    (when pnm {:private true}))]
     {(keyword nam) {:meta met
                     :fn (db-fn* sql cmd res (assoc options :fn-name nam))}}))
