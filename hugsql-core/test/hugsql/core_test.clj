@@ -45,9 +45,9 @@
                              :user "hugtest"
                              :password "hugtest"}}
           :sqlite {:next.jdbc {:dbtype "sqlite"
-                               :dbname (str tmpdir "/hugtest.sqlite")}
+                               :dbname (str tmpdir "/hugtest.next.sqlite")}
                    :default {:subprotocol "sqlite"
-                             :subname (str tmpdir "/hugtest.sqlite")}}
+                             :subname (str tmpdir "/hugtest.default.sqlite")}}
 
           :h2 {:next.jdbc {:dbtype "h2"
                            :dbname (str tmpdir "/hugtest.h2")}
@@ -55,15 +55,15 @@
                          :subname (str tmpdir "/hugtest.h2")}}
 
           :hsqldb {:next.jdbc {:dbtype "hsqldb"
-                               :dbname (str tmpdir "/hugtest.hsqldb")}
+                               :dbname (str tmpdir "/hugtest.next.hsqldb")}
                    :default {:subprotocol "hsqldb"
-                             :subname (str tmpdir "/hugtest.hsqldb")}}
+                             :subname (str tmpdir "/hugtest.default.hsqldb")}}
 
           :derby {:next.jdbc {:dbtype "derby"
-                              :dbname (str tmpdir "/hugtest.derby")
+                              :dbname (str tmpdir "/hugtest.next.derby")
                               :create true}
                   :default {:subprotocol "derby"
-                            :subname (str tmpdir "/hugtest.derby")
+                            :subname (str tmpdir "/hugtest.default.derby")
                             :create true}}
           })
 
