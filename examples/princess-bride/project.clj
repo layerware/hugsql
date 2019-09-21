@@ -1,4 +1,4 @@
-(defproject princess-bride "0.4.8"
+(defproject princess-bride "0.5.0-SNAPSHOT"
   :description "The Princess Bride HugSQL Example App"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
@@ -6,5 +6,5 @@
   :main princess-bride.core
   :aliases {"as-you-wish" ["run"]}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.layerware/hugsql "0.4.9"]
+                 [com.layerware/hugsql "0.5.0-SNAPSHOT"]
                  [com.h2database/h2 "1.4.196"]])
