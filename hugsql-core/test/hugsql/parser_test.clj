@@ -166,7 +166,12 @@
                      :file nil
                      :line 1}
                :sql ["select * from emp where \"col1\" = 'my :param is safe'"]}]
-             (parse "-- :name test\nselect * from emp where \"col1\" = 'my :param is safe'"))))
+             (parse "-- :name test\nselect * from emp where \"col1\" = 'my :param is safe'")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select 'it''s cool' from emp"]}]
+             (parse "-- :name test\nselect 'it''s cool' from emp"))))
 
     (testing "SQL optimizer hints"
       (is (= [{:hdr {:name ["test"]

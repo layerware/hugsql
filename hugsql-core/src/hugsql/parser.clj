@@ -233,7 +233,7 @@
       (condp = c
         nil    (parse-error rdr "SQL String terminated unexpectedly with EOF")
         quot  (let [pc (r/peek-char rdr)]
-                (if (and pc (= pc quot))
+                (if (and pc (= pc quot) (not (= c pc)))
                   (recur (sb-append s c) (r/read-char rdr))
                   (str (sb-append s c))))
         ;; else
