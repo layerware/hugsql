@@ -84,9 +84,6 @@
 
 (deftest core
 
-  (testing "adapter was not set during fn def"
-    (is (= nil @hugsql/adapter)))
-
   (testing "File outside of classpath with java.io.File worked"
     (is (fn? test2-select)))
 
@@ -254,6 +251,12 @@
   (doseq [[db-name db-spec] dbs]
     (doseq [[adapter-name adapter] adapters]
       (let [db (or (adapter-name db-spec) (:default db-spec))]
+
+        (testing "throw if adapter not set"
+          (hugsql/set-adapter! nil)
+          (is (thrown-with-msg? ExceptionInfo
+                                #"No adapter set: use set-adapter!"
+                                (one-value-param db {:x 1}))))
 
         (testing "adapter set"
           (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))

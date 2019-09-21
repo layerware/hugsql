@@ -14,22 +14,20 @@
   [the-adapter]
   (reset! adapter the-adapter))
 
+; Use the clojure.java.jdbc adapter by default
+; if it exists (e.g., loaded by hugsql meta jar)
+(try
+  (eval
+   '(do
+      (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
+      (hugsql.core/set-adapter! adp/hugsql-adapter-clojure-java-jdbc)))
+  (catch Exception e))
+
 (defn ^:no-doc get-adapter
-  "Get an adapter.  Sets default
-   hugsql.adapter.clojure-java-jdbc
-   adapter if no adapter is set."
+  "Get an adapter.  Throws exception if no adapter is set."
   []
-  ;; DEV NOTE: I don't really like dynamically eval'ing
-  ;; and require'ing here, but I do prefer to have:
-  ;; 1) an easy-path/just-works default adapter
-  ;; 2) *no* hard-coded default dependency
-  ;;    if someone wants to use another adapter
-  ;; 3) *no* requirement for an adapter at all unless
-  ;;    def-db-fns is used and calls this function
   (when (nil? @adapter)
-    (eval
-     '(do (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
-          (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc)))))
+    (throw (ex-info "No adapter set: use set-adapter!" {})))
   @adapter)
 
 (defn ^:no-doc parsed-defs-from-string
