@@ -31,6 +31,10 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - dependencies-
 
+      - run:
+          command: lein install-all
+          working_directory: ~/hugsql/
+
       - run: lein deps
 
       - save_cache:
