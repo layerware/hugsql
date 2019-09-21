@@ -80,7 +80,19 @@
                      :line 1}
                :sql ["select * from emp where id = "
                      {:type :v :name :id}]}]
-             (parse "-- :name test\nselect * from emp where id = :id"))))
+             (parse "-- :name test\nselect * from emp where id = :id")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp where id = "
+                     {:type :v :name :employee/id}]}]
+             (parse "-- :name test\nselect * from emp where id = :employee/id")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp where id = "
+                     {:type :v :name :my.employee/id}]}]
+             (parse "-- :name test\nselect * from emp where id = :my.employee/id"))))
 
     (testing ":param-type:param-name (explicit parameter type)"
       (is (= [{:hdr {:name ["test"]
@@ -88,7 +100,19 @@
                      :line 1}
                :sql ["select * from emp where id = "
                      {:type :value :name :id}]}]
-             (parse "-- :name test\nselect * from emp where id = :value:id"))))
+             (parse "-- :name test\nselect * from emp where id = :value:id")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp where id = "
+                     {:type :value :name :employee/id}]}]
+             (parse "-- :name test\nselect * from emp where id = :value:employee/id")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp where id = "
+                     {:type :value :name :my.employee/id}]}]
+             (parse "-- :name test\nselect * from emp where id = :value:my.employee/id"))))
 
     (testing "Deep get (get-in) parameter name"
       (is (= [{:hdr {:name ["test"]
@@ -96,7 +120,13 @@
                      :line 1}
                :sql ["select * from emp where id = "
                      {:type :value :name :employees.123.id}]}]
-             (parse "-- :name test\nselect * from emp where id = :value:employees.123.id"))))
+             (parse "-- :name test\nselect * from emp where id = :value:employees.123.id")))
+      (is (= [{:hdr {:name ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp where id = "
+                     {:type :value :name :my.company/employees.123.id}]}]
+             (parse "-- :name test\nselect * from emp where id = :value:my.company/employees.123.id"))))
 
     (testing "::sometype is a Postgresql cast and not a hugsql param"
       (is (= [{:hdr {:name ["test"]

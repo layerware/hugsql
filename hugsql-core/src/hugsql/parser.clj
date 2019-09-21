@@ -26,7 +26,7 @@
 
 (defn- symbol-char?
   [c]
-  (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:]" (str c))))
+  (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/]" (str c))))
 
 (defn- skip-ws
   "Read from reader until a non-whitespace char is encountered."
@@ -91,18 +91,38 @@
 
 (defn- read-keyword
   [rdr]
-  (loop [s  (StringBuilder.)
+  (loop [result {}
+         s  (StringBuilder.)
          rc (r/read-char rdr)
          pc (r/peek-char rdr)]
     (let [pgcast? (and (= \: rc) (= \: pc))]
-      (if (or (nil? rc) (nil? pc) pgcast? (not (symbol-char? pc)))
+      (cond
+        (or (nil? rc) (nil? pc) pgcast? (not (symbol-char? pc)))
+        ;; We're done.
         (do
           (when pgcast? (r/unread rdr rc))
-          (let [s (str (sb-append s rc))]
+          (let [s (str (if pgcast? s (sb-append s rc)))]
             (if (> (count s) 0)
-              (keyword s)
+              (assoc result :name s)
               (parse-error rdr (str "Incomplete keyword :" s)))))
-        (recur (sb-append s rc)
+
+        (= \: rc)
+        ;; This is the end of the type specification.
+        (recur (assoc result :type (str s))
+               (StringBuilder.)
+               (r/read-char rdr)
+               (r/peek-char rdr))
+
+        (= \/ rc)
+        ;; This is the end of the namespace.
+        (recur (assoc result :namespace (str s))
+               (StringBuilder.)
+               (r/read-char rdr)
+               (r/peek-char rdr))
+
+        :else
+        (recur result
+               (sb-append s rc)
                (r/read-char rdr)
                (r/peek-char rdr))))))
 
@@ -143,7 +163,7 @@
 (defn- read-sing-line-header
   [rdr]
   (let [_   (r/read-char rdr) ; eat colon (:)
-        key (read-keyword rdr)
+        key (-> rdr read-keyword :name keyword)
         line (read-to-char rdr \newline)
         values (if (= key :doc)
                  [(string/trim line)]
@@ -154,7 +174,7 @@
 (defn- read-mult-line-header
   [rdr]
   (let [_   (r/read-char rdr) ; eat colon (:)
-        key (read-keyword rdr)
+        key (-> rdr read-keyword :name keyword)
         lines (read-to-chars rdr \* \/)
         _     (skip-to-chars rdr \* \/)
         values (if (= key :doc)
@@ -221,12 +241,11 @@
 
 (defn- read-hugsql-param
   [rdr c]
-  (let [full  (read-keyword rdr)
-        parts (string/split (name full) #":")
-        ptype? (= 2 (count parts))
-        ptype  (keyword (if ptype? (first parts) "v"))
-        pname  (keyword (if ptype? (second parts) (first parts)))]
-    {:type ptype :name pname}))
+  (let [{:keys [name namespace type]} (read-keyword rdr)]
+    {:type (keyword (or type "v"))
+     :name (if namespace
+             (keyword namespace name)
+             (keyword name))}))
 
 (defn parse
   "Parse hugsql SQL string and return

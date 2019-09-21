@@ -69,9 +69,14 @@
    Numbers must be vector indexes in vectors
    in param data."
   [nam]
-  (mapv
-   (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
-   (string/split (name nam) #"\.")))
+  (let [kwfn (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
+        nmsp (namespace nam)
+        nams (string/split (name nam) #"\.")]
+    (if nmsp
+      (apply vector
+             (keyword nmsp (name (kwfn (first nams))))
+             (mapv kwfn (rest nams)))
+      (mapv kwfn nams))))
 
 ;; Default Object implementations
 (extend-type Object

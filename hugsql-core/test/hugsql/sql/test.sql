@@ -113,6 +113,14 @@ order by :i*:sort-by
 select * from test
 where id = :records.0.id
 
+-- :name select-namespaced-keyword :? :1
+select * from test
+where id = :test/id
+
+-- :name select-namespaced-keyword-deep-get :? :1
+select * from test
+where id = :test.x/records.0.id
+
 -- :name drop-test-table :! :n
 -- :doc Drop test table
 drop table test
