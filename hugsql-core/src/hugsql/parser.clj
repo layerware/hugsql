@@ -8,12 +8,12 @@
   ([rdr msg data]
    (if (r/indexing-reader? rdr)
      (throw
-       (ex-info
-         (str msg " line: " (r/get-line-number rdr)
-              ", column: " (r/get-column-number rdr))
-         (merge data
-                {:line   (r/get-line-number rdr)
-                 :column (r/get-column-number rdr)})))
+      (ex-info
+       (str msg " line: " (r/get-line-number rdr)
+            ", column: " (r/get-column-number rdr))
+       (merge data
+              {:line   (r/get-line-number rdr)
+               :column (r/get-column-number rdr)})))
      (throw (ex-info msg (merge data {:error :parse-error}))))))
 
 (defn- sb-append
@@ -278,19 +278,19 @@
              ;; end of string, so return all, filtering out empty
              (nil? c)
              (vec
-               (remove #(and (empty? (:hdr %))
-                             (or (empty? (:sql %))
-                                 (and
-                                   (every? string? (:sql %))
-                                   (string/blank? (string/join (:sql %))))))
-                       (conj all
-                             {:hdr hdr
-                              :sql (filterv seq (conj sql (string/trimr sb)))})))
+              (remove #(and (empty? (:hdr %))
+                            (or (empty? (:sql %))
+                                (and
+                                 (every? string? (:sql %))
+                                 (string/blank? (string/join (:sql %))))))
+                      (conj all
+                            {:hdr hdr
+                             :sql (filterv seq (conj sql (string/trimr sb)))})))
 
              ;; SQL comments and hugsql header comments
              (or
-               (sing-line-comment-start? c rdr)
-               (mult-line-comment-start? c rdr))
+              (sing-line-comment-start? c rdr)
+              (mult-line-comment-start? c rdr))
              (if-let [x (if (sing-line-comment-start? c rdr)
                           (read-sing-line-comment rdr c)
                           (read-mult-line-comment rdr c))]
@@ -317,6 +317,8 @@
 
              ;; quoted SQL (which cannot contain hugsql params,
              ;; so we consider them separately here before
+
+
              (sql-quoted-start? c)
              (recur hdr sql (sb-append sb (read-sql-quoted rdr c)) all)
 

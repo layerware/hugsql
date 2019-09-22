@@ -22,19 +22,19 @@
   "Pretty print an sqlvec"
   [sv]
   (println
-    (string/join ""
-      ["[\""
-       (-> (first sv)
-         (string/replace #"\"" "\\\\\"")
-         (string/replace #"\n" "\n  "))
-       "\""
-       (when (seq (rest sv)) "\n,")
-       (string/replace
-         (string/join ","
-           (map #(with-out-str (pp %)) (rest sv)))
-         #"\n$"
-         "")
-       "]\n"])))
+   (string/join ""
+                ["[\""
+                 (-> (first sv)
+                     (string/replace #"\"" "\\\\\"")
+                     (string/replace #"\n" "\n  "))
+                 "\""
+                 (when (seq (rest sv)) "\n,")
+                 (string/replace
+                  (string/join ","
+                               (map #(with-out-str (pp %)) (rest sv)))
+                  #"\n$"
+                  "")
+                 "]\n"])))
 
 (defmacro ex
   "Example macro: Pretty print code, 
@@ -53,7 +53,7 @@
      (ppsv ~@code)))
 
 (defn create-tables []
-  
+
   (exsv (characters/create-characters-table-sqlvec))
   (ex (characters/create-characters-table db))
   (exsv (quotes/create-quotes-table-sqlvec))
@@ -76,6 +76,8 @@
 
 
   ;; multiple records
+
+
   (exsv (characters/insert-characters-sqlvec {:characters [["Vizzini" "intelligence"]
                                                            ["Fezzik" "strength"]
                                                            ["Inigo Montoya" "swordmanship"]]}))
@@ -86,34 +88,29 @@
 
   ;; transactions
   (ex (clojure.java.jdbc/with-db-transaction [tx db]
-    (characters/insert-character tx {:name "Miracle Max" :specialty "miracles"})
-    (characters/insert-character tx {:name "Valerie" :specialty "speech interpreter"})))
-
-  )
+        (characters/insert-character tx {:name "Miracle Max" :specialty "miracles"})
+        (characters/insert-character tx {:name "Valerie" :specialty "speech interpreter"}))))
 
 (defn updates []
 
   (exsv
-    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
-      (characters/update-character-specialty-sqlvec {:id (:id vizzini)
-                                                     :specialty "boasting"})))
+   (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+     (characters/update-character-specialty-sqlvec {:id (:id vizzini)
+                                                    :specialty "boasting"})))
   (ex
-    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
-      (characters/update-character-specialty db {:id (:id vizzini)
-                                                 :specialty "boasting"})))
-
-  )
+   (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+     (characters/update-character-specialty db {:id (:id vizzini)
+                                                :specialty "boasting"}))))
 
 (defn deletes []
 
   ;; spoiler alert; Vizzini dies, so let's delete him
   (exsv
-    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
-      (characters/delete-character-by-id-sqlvec {:id (:id vizzini)})))
+   (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+     (characters/delete-character-by-id-sqlvec {:id (:id vizzini)})))
   (ex
-    (let [vizzini (characters/character-by-name db {:name "vizzini"})]
-      (characters/delete-character-by-id db {:id (:id vizzini)})))
-  )
+   (let [vizzini (characters/character-by-name db {:name "vizzini"})]
+     (characters/delete-character-by-id db {:id (:id vizzini)}))))
 
 (defn selects []
 
@@ -130,24 +127,21 @@
   (ex (characters/characters-by-name-like db {:name-like "%zz%"}))
 
   (exsv (characters/characters-by-ids-specify-cols-sqlvec
-          {:ids [1 2]
-           :cols ["name" "specialty"]}))
+         {:ids [1 2]
+          :cols ["name" "specialty"]}))
   (ex (characters/characters-by-ids-specify-cols db
-        {:ids [1 2]
-         :cols ["name" "specialty"]}))
-
-  )
-
+                                                 {:ids [1 2]
+                                                  :cols ["name" "specialty"]})))
 
 (defn -main []
-  
+
   (println "\n\"The Princess Bride\" HugSQL Example App\n\n")
 
   (drop-tables) ;; if exists!
   (create-tables)
   (inserts)
   (updates)
-  (selects)  
+  (selects)
   (deletes)
   (drop-tables)
 

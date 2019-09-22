@@ -73,13 +73,13 @@
   (let [not-found (Object.)]
     (doseq [k (map :name (filter map? sql-template))]
       (when-not
-          (not-any?
-           #(= not-found %)
-           (map #(get-in param-data % not-found)
-                (rest (reductions
-                       (fn [r x] (conj r x))
-                       []
-                       (parameters/deep-get-vec k)))))
+       (not-any?
+        #(= not-found %)
+        (map #(get-in param-data % not-found)
+             (rest (reductions
+                    (fn [r x] (conj r x))
+                    []
+                    (parameters/deep-get-vec k)))))
         (throw (ex-info
                 (str "Parameter Mismatch: "
                      k " parameter data not found.") {}))))))
@@ -95,29 +95,29 @@
          ;; tag expressions vs others
          ;; and collect interspersed items together into a vector
          tag (reduce
-               (fn [r c]
-                 (if (vector? c)
-                   (conj r {:expr c})
-                   (if-let [o (:other (last r))]
-                     (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
-                     (conj r {:other [c]}))))
-               []
-               expr)
+              (fn [r c]
+                (if (vector? c)
+                  (conj r {:expr c})
+                  (if-let [o (:other (last r))]
+                    (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
+                    (conj r {:other [c]}))))
+              []
+              expr)
          clj (str
-               "(ns hugsql.expr-run\n"
-               (when-not (string/blank? require-str)
-                 (str "(:require " require-str ")"))
-               ")\n"
-               "(swap! exprs assoc " nam "(fn [params options] "
-               (string/join
-                 " "
-                 (filter
-                   #(not (= % :cont))
-                   (map (fn [x]
-                          (if (:expr x)
-                            (first (:expr x))
-                            (pr-str (:other x)))) tag)))
-               "))")]
+              "(ns hugsql.expr-run\n"
+              (when-not (string/blank? require-str)
+                (str "(:require " require-str ")"))
+              ")\n"
+              "(swap! exprs assoc " nam "(fn [params options] "
+              (string/join
+               " "
+               (filter
+                #(not (= % :cont))
+                (map (fn [x]
+                       (if (:expr x)
+                         (first (:expr x))
+                         (pr-str (:other x)))) tag)))
+              "))")]
      (load-string clj))))
 
 (defn ^:no-doc compile-exprs

@@ -12,5 +12,7 @@
 ;; For most HugSQL usage, you will not need the sqlvec functions.
 ;; However, sqlvec versions are useful during development and
 ;; for advanced usage with database functions.
+
+
 (hugsql/def-sqlvec-fns "princess_bride/db/sql/characters.sql")
 

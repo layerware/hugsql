@@ -10,7 +10,7 @@
 
   (testing "windows newlines"
     (is (= 2 (count
-               (parse "-- :snip one\r\nselect *\r\n-- :snip two\r\nfrom test")))))
+              (parse "-- :snip one\r\nselect *\r\n-- :snip two\r\nfrom test")))))
 
   (testing "SQL comments"
     (is (= [] (parse "-- an sql comment")))
@@ -154,7 +154,6 @@
                      :line 1}
                :sql ["select my_arr[1:3] from emp where contrived \\ backslash"]}]
              (parse "-- :name test\nselect my_arr[1\\:3] from emp where contrived \\ backslash"))))
-
 
     (testing "SQL quoted strings (ignored and do not replace params)"
       (is (= [{:hdr {:name ["test"]

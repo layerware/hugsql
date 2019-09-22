@@ -15,8 +15,7 @@
 
 (def tmpdir (System/getProperty "java.io.tmpdir"))
 
-(def dbs {
-          ;; sudo su - postgres ;; switch to postgres user
+(def dbs {;; sudo su - postgres ;; switch to postgres user
           ;; createuser -P hugtest ;; enter "hugtest" when prompted
           ;; createdb -O hugtest hugtest
           :postgresql  {:next.jdbc {:dbtype "postgresql"
@@ -64,11 +63,12 @@
                               :create true}
                   :default {:subprotocol "derby"
                             :subname (str tmpdir "/hugtest.default.derby")
-                            :create true}}
-          })
+                            :create true}}})
 
 ;; Call def-db-fns outside of deftest so that namespace is 'hugsql.core-test
 ;; Use a file path in the classpath
+
+
 (hugsql/def-db-fns "hugsql/sql/test.sql")
 (hugsql/def-sqlvec-fns "hugsql/sql/test.sql")
 
@@ -186,11 +186,11 @@
     (is (= ["from test"] (from-snip {:tables ["test"]})))
     (is (= ["select id, name\nfrom test\nwhere id = ? or id = ?\norder by id" 1 2]
            (snip-query-sqlvec
-             {:select (select-snip {:cols ["id","name"]})
-              :from (from-snip {:tables ["test"]})
-              :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
-                                         (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
-              :order (order-snip {:fields ["id"]})}))))
+            {:select (select-snip {:cols ["id","name"]})
+             :from (from-snip {:tables ["test"]})
+             :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
+                                        (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
+             :order (order-snip {:fields ["id"]})}))))
 
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
@@ -426,7 +426,6 @@
                    :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
                                               (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
                    :order (order-snip {:fields ["id"]})})))
-
 
           (is (= 0 (drop-test-table db))))
 

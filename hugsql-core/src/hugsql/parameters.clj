@@ -46,7 +46,6 @@
   "Protocol to splice in a collection of sqlvecs (or snippets)"
   (sqlvec-param-list [param data options]))
 
-
 (defn identifier-param-quote
   "Quote the identifier value based on options."
   [value {:keys [quoting no-dot-split] :as options}]
@@ -88,8 +87,8 @@
   (value-param-list [param data options]
     (let [coll (get-in data (deep-get-vec (:name param)))]
       (apply vector
-        (string/join "," (repeat (count coll) "?"))
-        coll)))
+             (string/join "," (repeat (count coll) "?"))
+             coll)))
 
   TupleParam
   (tuple-param [param data options]
@@ -141,10 +140,10 @@
   SQLVecParamList
   (sqlvec-param-list [param data options]
     (reduce
-      #(apply vector
-         (string/join " " [(first %1) (first %2)])
-         (concat (rest %1) (rest %2)))
-      (get-in data (deep-get-vec (:name param))))))
+     #(apply vector
+             (string/join " " [(first %1) (first %2)])
+             (concat (rest %1) (rest %2)))
+     (get-in data (deep-get-vec (:name param))))))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter
