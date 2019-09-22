@@ -1,5 +1,19 @@
 # HugSQL CHANGELOG
 
+## 0.5.0
+
+ - namespaced keywords support [#56](https://github.com/layerware/hugsql/issues/56)
+   (Thanks Sebastian Poeplau! [@sebastionpoeplau](https://github.com/sebastianpoeplau))
+ - next.jdbc adapter [#96](https://github.com/layerware/hugsql/issues/96)
+   (Thanks Nicola Peric! [@nikolap](https://github.com/nikolap) and
+   Sean Corfield! [@seancorfield](https://github.com/seancorfield))
+ - add `:arglists` metadata to generated functions [#88](https://github.com/layerware/hugsql/issues/88)
+ - fix default adapter set race condition [#46](https://github.com/layerware/hugsql/issues/46)
+ - fix parsing of escaped single-quotes in SQL string [#89](https://github.com/layerware/hugsql/issues/89)
+ - add doc link to ClickHouse adapter [#91](https://github.com/layerware/hugsql/issues/91)
+
+
+
 ## 0.4.9
 
  - preserve file/line metadata from parsed SQL and attach to vars
@@ -107,8 +121,8 @@
  - [Parameter Name Deep-Get](http://www.hugsql.org/#deep-get-param-name)
    for drilling down into parameter data
  - Better docs & tests
- 
- 
+
+
 ## 0.3.1
 
  - Fix on-exception bug w/ async (issue [#9](https://github.com/layerware/hugsql/issues/9))
