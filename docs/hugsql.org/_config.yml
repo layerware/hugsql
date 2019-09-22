@@ -10,7 +10,7 @@ permalink: pretty
 
 host: 127.0.0.1
 port: 7501
-highlighter: pygments
+highlighter: rouge
 include: [./css ./img ./js]
 exclude: [publish]
 
