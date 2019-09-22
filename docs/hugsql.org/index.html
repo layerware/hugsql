@@ -1180,7 +1180,7 @@ select * from employees where id = :value:employees.0.id
 ;=> {:id 1 :name "Al"}
 {% endhighlight %}
 
-          <h5 id="namespaced-keyword-param-name">Aside: Namespace-qualified Keywords</h5>
+          <h5 id="namespaced-keyword-param-name">Aside: Namespaced Keywords</h5>
 
           <p>As of HugSQL 0.5.0, namespaced keywords are supported for explicit namespaces, e.g.
           <code>:myproject.core.employee/name</code> or <code>:employee/name</code>. However,
@@ -1914,6 +1914,7 @@ hugsql.parameters/apply-hugsql-param
               <li><a href="#param-types">Parameter Types</a>
                 <ul class="nav">
                   <li><a href="#deep-get-param-name">Deep Get Param Name</a></li>
+                  <li><a href="#namespaced-keyword-param-name">Namespaced Keywords</a></li>
                   <li><a href="#colon">The Colon</a></li>
                   <li><a href="#param-value">SQL Values</a></li>
                   <li><a href="#param-value-list">SQL Value Lists</a></li>
