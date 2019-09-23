@@ -20,7 +20,7 @@
   (eval
    '(do
       (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
-      (hugsql.core/set-adapter! adp/hugsql-adapter-clojure-java-jdbc)))
+      (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc))))
   (catch Exception e))
 
 (defn ^:no-doc get-adapter
