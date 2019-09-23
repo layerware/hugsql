@@ -47,7 +47,7 @@ page: docs
         dependency information:</p>
 
 {% highlight clj %}
-[com.layerware/hugsql "0.5.0"]
+[com.layerware/hugsql "0.5.1"]
 {% endhighlight %}
 
       <p>You will also need to specify your JDBC driver dependency
@@ -1182,7 +1182,7 @@ select * from employees where id = :value:employees.0.id
 
           <h5 id="namespaced-keyword-param-name">Aside: Namespaced Keywords</h5>
 
-          <p>As of HugSQL 0.5.0, namespaced keywords are supported for explicit namespaces, e.g.
+          <p>As of HugSQL 0.5.1, namespaced keywords are supported for explicit namespaces, e.g.
           <code>:myproject.core.employee/name</code> or <code>:employee/name</code>. However,
           double-colon shorthands like <code>::employee/name</code> are not supported.</p>
 
@@ -1597,13 +1597,13 @@ hugsql.parameters/apply-hugsql-param
             <p><i>Included here for reference, but this is unnecessary if you are using the <code>hugsql</code> meta clojar.</i></p>
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.5.0"]
-[com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0"]
+[com.layerware/hugsql-core "0.5.1"]
+[com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.1"]
 {% endhighlight %}
 
       <h5 id="adapter-next-jdbc">next.jdbc Adapter</h5>
 
-          <p>Adapter for <a href="https://github.com/seancorfield/next-jdbc">next.jdbc</a>. (as of HugSQL <code>0.5.0</code>).</a></p>
+          <p>Adapter for <a href="https://github.com/seancorfield/next-jdbc">next.jdbc</a>. (as of HugSQL <code>0.5.1</code>).</a></p>
           <p>In order to maintain the closest behavior to
             <code>clojure.java.jdbc</code>, the adapter currently defaults to
             setting the result set <code>:builder-fn</code> option to
@@ -1612,8 +1612,8 @@ hugsql.parameters/apply-hugsql-param
 
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.5.0"]
-[com.layerware/hugsql-adapter-next-jdbc "0.5.0"]
+[com.layerware/hugsql-core "0.5.1"]
+[com.layerware/hugsql-adapter-next-jdbc "0.5.1"]
 {% endhighlight %}
 
           <h5 id="adapter-clojure-jdbc">clojure.jdbc Adapter</h5>
@@ -1621,8 +1621,8 @@ hugsql.parameters/apply-hugsql-param
           <p>Adapter for <a href="https://github.com/funcool/clojure.jdbc">clojure.jdbc</a></p>
 
 {% highlight clj %}
-[com.layerware/hugsql-core "0.5.0"]
-[com.layerware/hugsql-clojure-jdbc "0.5.0"]
+[com.layerware/hugsql-core "0.5.1"]
+[com.layerware/hugsql-clojure-jdbc "0.5.1"]
 {% endhighlight %}
 
           <h5 id="adapter-setting">Setting an adapter</h5>

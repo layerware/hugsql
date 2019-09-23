@@ -18,6 +18,11 @@ Full documentation is at [hugsql.org](http://www.hugsql.org)
 
 ## Recent Changes
 
+### 0.5.1
+
+ - fix for regression from [#46](https://github.com/layerware/hugsql/issues/46): [#105](https://github.com/layerware/hugsql/issues/105)
+
+
 ### 0.5.0
 
  - namespaced keywords support [#56](https://github.com/layerware/hugsql/issues/56)

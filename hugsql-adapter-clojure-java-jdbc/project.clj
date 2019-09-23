@@ -1,4 +1,4 @@
-(defproject com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.0"
+(defproject com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.1"
   :description "clojure.java.jdbc hugsql adapter"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
@@ -6,4 +6,4 @@
   :scm {:dir ".."}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/java.jdbc "0.7.10"]
-                 [com.layerware/hugsql-adapter "0.5.0"]])
+                 [com.layerware/hugsql-adapter "0.5.1"]])
