@@ -9,7 +9,7 @@
  - namespaced keywords support [#56](https://github.com/layerware/hugsql/issues/56)
    (Thanks Sebastian Poeplau! [@sebastionpoeplau](https://github.com/sebastianpoeplau))
  - next.jdbc adapter [#96](https://github.com/layerware/hugsql/issues/96)
-   (Thanks Nicola Peric! [@nikolap](https://github.com/nikolap) and
+   (Thanks Nikola Peric! [@nikolap](https://github.com/nikolap) and
    Sean Corfield! [@seancorfield](https://github.com/seancorfield))
  - add `:arglists` metadata to generated functions [#88](https://github.com/layerware/hugsql/issues/88)
  - fix default adapter set race condition [#46](https://github.com/layerware/hugsql/issues/46)
