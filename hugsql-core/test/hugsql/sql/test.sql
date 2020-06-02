@@ -13,6 +13,10 @@ select * from test
 -- :doc One value param
 select * from test where id = :id
 
+-- :name one-typed-value-param
+-- :doc One typed value param
+select * from test where id = :id::int
+
 -- :name multi-value-params
 -- :doc Multi value params
 select * from test
@@ -23,6 +27,11 @@ and name = :name
 -- :doc Value List Param
 select * from test
 where id in (:v*:ids)
+
+-- :name typed-value-list-param
+-- :doc Value List of Typed Param
+select * from test
+where id in (:v*:ids::int)
 
 -- :name tuple-param
 -- :doc Tuple Param

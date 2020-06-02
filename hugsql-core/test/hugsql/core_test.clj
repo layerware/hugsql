@@ -117,10 +117,14 @@
     (is (= ["select * from test"] (no-params-select-sqlvec {})))
     (is (= ["select * from test where id = ?" 1]
            (one-value-param-sqlvec {:id 1})))
+    (is (= ["select * from test where id = ?::int" "1"]
+           (one-typed-value-param-sqlvec {:id "1"})))
     (is (= ["select * from test\nwhere id = ?\nand name = ?" 1 "Ed"]
            (multi-value-params-sqlvec {:id 1 :name "Ed"})))
     (is (= ["select * from test\nwhere id in (?,?,?)" 1 2 3]
            (value-list-param-sqlvec {:ids [1,2,3]})))
+    (is (= ["select * from test\nwhere id in (?,?,?::int)" "1" "2" "3"] ;; Notice only the last entry receives the pg-type
+           (typed-value-list-param-sqlvec {:ids ["1","2","3"]})))
     (is (= ["select * from test\nwhere (id, name) = (?,?)" 1 "A"]
            (tuple-param-sqlvec {:id-name [1 "A"]})))
     (is (= ["insert into test (id, name)\nvalues (?,?),(?,?),(?,?)" 1 "Ed" 2 "Al" 3 "Bo"]
