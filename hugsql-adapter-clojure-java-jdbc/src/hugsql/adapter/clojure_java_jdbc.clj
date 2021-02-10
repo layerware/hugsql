@@ -12,7 +12,7 @@
       (apply jdbc/execute! db sqlvec (:command-options options))))
 
   (query [this db sqlvec options]
-    (apply jdbc/query db sqlvec (:command-options options)))
+    (jdbc/query db sqlvec (:command-options options)))
 
   (result-one [this result options]
     (first result))
