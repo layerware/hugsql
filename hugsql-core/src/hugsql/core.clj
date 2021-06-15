@@ -128,9 +128,11 @@
   "Compile (def) all expressions in a parsed def. All fragments are expanded
    and `pdef` is registered if it itself a fragment."
   [pdef]
-  (let [exp-sql (frags/expand-fragments (:sql pdef))
-        pdef'   (assoc pdef :sql exp-sql)
-        _       (frags/register-fragment! pdef')
+  (let [
+        pdef' pdef
+        ;; exp-sql (frags/expand-fragments (:sql pdef))
+        ;; pdef'   (assoc pdef :sql exp-sql)
+        ;; _       (frags/register-fragment! pdef')
         require-str (string/join " " (:require (:hdr pdef')))]
     (doseq [expr (filter vector? (:sql pdef'))]
       (def-expr expr require-str))))
@@ -484,9 +486,12 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [{:keys [sql hdr file line]} options]
+  [{:keys [sql hdr file line] :as pdef} options]
   (let [pnm (:name- hdr)
-        nam (symbol (first (or (:name hdr) pnm)))
+        nam (try (symbol (first (or (:name hdr) pnm)))
+                 (catch IllegalArgumentException e
+                   (println (pr-str pdef))
+                   (throw e)))
         doc (or (first (:doc hdr)) "")
         cmd (command-sym hdr)
         res (result-sym hdr)
@@ -517,6 +522,10 @@
 (defn ^:no-doc snippet-pdef?
   [pdef]
   (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
+
+(defn ^:no-doc fragment-pdef?
+  [pdef]
+  (:frag (:hdr pdef)))
 
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
@@ -559,9 +568,10 @@
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
-      (if (snippet-pdef? ~'pdef)
-        (intern-sqlvec-fn ~'pdef ~options)
-        (intern-db-fn ~'pdef ~options)))))
+      (when-not (fragment-pdef? ~'pdef)
+        (if (snippet-pdef? ~'pdef)
+          (intern-sqlvec-fn ~'pdef ~options)
+          (intern-db-fn ~'pdef ~options))))))
 
 (defmacro def-db-fns-from-string
   "Given a HugSQL SQL string, define the database
@@ -583,9 +593,10 @@
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
       (compile-exprs ~'pdef)
-      (if (snippet-pdef? ~'pdef)
-        (intern-sqlvec-fn ~'pdef ~options)
-        (intern-db-fn ~'pdef ~options)))))
+      (when-not (fragment-pdef? ~'pdef)
+        (if (snippet-pdef? ~'pdef)
+          (intern-sqlvec-fn ~'pdef ~options)
+          (intern-db-fn ~'pdef ~options))))))
 
 (defmacro map-of-db-fns
   "Given a HugSQL SQL file, return a hashmap of database
@@ -618,9 +629,10 @@
         (compile-exprs ~'pdef))
       (apply merge
              (map
-              #(if (snippet-pdef? %)
-                 (sqlvec-fn-map % ~options)
-                 (db-fn-map % ~options))
+              #(when-not (fragment-pdef? %)
+                 (if (snippet-pdef? %)
+                   (sqlvec-fn-map % ~options)
+                   (db-fn-map % ~options)))
               ~'pdefs)))))
 
 (defmacro map-of-db-fns-from-string
@@ -652,9 +664,10 @@
         (compile-exprs ~'pdef))
       (apply merge
              (map
-              #(if (snippet-pdef? %)
-                 (sqlvec-fn-map % ~options)
-                 (db-fn-map % ~options))
+              #(when-not (fragment-pdef? %)
+                 (if (snippet-pdef? %)
+                   (sqlvec-fn-map % ~options)
+                   (db-fn-map % ~options)))
               ~'pdefs)))))
 
 (defn db-run
