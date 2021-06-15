@@ -19,26 +19,32 @@
    Ancestor fragments in templates should already have been expanded."
   (atom {}))
 
-(defn- all-frag-ancestors
+(defn frag-ancestors
   "Return the ancestors of a fragment beyond that fragment's immediate
    ancestors. Throws an exception upon detecting a cycle."
-  [frag-name frag-ans]
-  (if (contains? frag-ans frag-name)
-    ;; No self loops
-    (throw (ex-info (str "Fragment " frag-name " contains itself!\n"
-                         "Immediate ancestors: " (pr-str frag-ans))
-                    {}))
-    (let [deep-ans (->> frag-ans
-                        (map @frag-ans-atom)
-                        (apply cset/union))
-          all-ans  (cset/union frag-ans deep-ans)]
-      ;; No cycles
-      (if (contains? all-ans frag-name)
-        (throw (ex-info (str "Fragment " frag-name " has cyclic dependency!\n"
-                             "All ancestors: " (pr-str all-ans))
-                        {}))
-        ;; We're good
-        all-ans))))
+  [pdef]
+  (let [{:keys [hdr sql]} pdef
+        frag-name (->> hdr :frag first)
+        frag-ans  (->> sql
+                       (filter #(and (map? %) (= :frag (:type %))))
+                       (map #(-> % :name keyword))
+                       set)]
+    (if (contains? frag-ans frag-name)
+      ;; No self loops
+      (throw (ex-info (str "Fragment " frag-name " contains itself!\n"
+                           "Immediate ancestors: " (pr-str frag-ans))
+                      {}))
+      (let [deep-ans (->> frag-ans
+                          (map @frag-ans-atom)
+                          (apply cset/union))
+            all-ans  (cset/union frag-ans deep-ans)]
+        ;; No cycles
+        (if (contains? all-ans frag-name)
+          (throw (ex-info (str "Fragment " frag-name " has cyclic dependency!\n"
+                               "All ancestors: " (pr-str all-ans))
+                          {}))
+          ;; We're good
+          all-ans)))))
 
 ;; Called during runtime SQL statement prep, i.e. when evaluating Clojure exprs.
 (defn expand-fragments*
@@ -74,18 +80,12 @@
   (update pdef :sql expand-fragments*))
 
 (defn register-fragment
-  "Given a parsed def `pdef`, validate and store in the fragment registry.
-   Expands any ancestor fragments before storing. Throws an exception if
-   a cyclic dependency is encountered"
-  [pdef]
-  (let [{:keys [hdr sql]} pdef]
+  "Given a parsed def `exp-pdef` with all ancestor frags already expanded,
+   store it in the fragment registry."
+  [exp-pdef ans]
+  (let [{:keys [hdr sql]} exp-pdef]
     (when-some [frag (:frag hdr)]
-      (let [frag-name (->> frag first keyword)
-            frag-ans  (->> sql
-                           (filter #(and (map? %) (= :frag (:type %))))
-                           (map #(-> % :name keyword))
-                           set)
-            all-ans   (all-frag-ancestors frag-name frag-ans)]
-        (swap! frag-ans-atom assoc frag-name all-ans)
+      (let [frag-name (->> frag first keyword)]
+        (swap! frag-ans-atom assoc frag-name ans)
         (swap! frag-sql-atom assoc frag-name sql)
         nil))))

@@ -31,6 +31,14 @@
     (throw (ex-info "No adapter set: use set-adapter!" {})))
   @adapter)
 
+(defn ^:no-doc snippet-pdef?
+  [pdef]
+  (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
+
+(defn ^:no-doc fragment-pdef?
+  [pdef]
+  (:frag (:hdr pdef)))
+
 (defn ^:no-doc parsed-defs-from-string
   "Given a hugsql SQL string,
    parse it, and return the defs."
@@ -87,6 +95,17 @@
         (throw (ex-info
                 (str "Parameter Mismatch: "
                      k " parameter data not found.") {}))))))
+
+(defn ^:no-doc expand-compile-frags
+  "Expand all fragments in the sql template of `pdef`. If `pdef` happens
+   to be a fragment def, store it in the fragment registry as well."
+  [pdef]
+  (if (fragment-pdef? pdef)
+    (let [frag-ans (frags/frag-ancestors pdef) ; assert no cycles
+          exp-pdef (frags/expand-fragments pdef)]
+      (frags/register-fragment exp-pdef frag-ans)
+      exp-pdef)
+    (frags/expand-fragments pdef)))
 
 (defn ^:no-doc expr-name
   [expr]
@@ -363,9 +382,7 @@
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
-        (frags/register-fragment ~'exp-pdef)
-        (compile-exprs ~'exp-pdef)
+      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (intern-sqlvec-fn ~'exp-pdef ~options)))))
 
 (defmacro def-sqlvec-fns-from-string
@@ -391,8 +408,7 @@
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
-        (frags/register-fragment ~'exp-pdef)
+      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
         (intern-sqlvec-fn ~'exp-pdef ~options)))))
 
@@ -427,10 +443,9 @@
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
         (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
+      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef)
-          (frags/register-fragment ~'exp-pdef))
+          (compile-exprs ~'exp-pdef))
         (apply merge
                (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
 
@@ -463,10 +478,9 @@
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
         (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
+      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef)
-          (frags/register-fragment ~'exp-pdef))
+          (compile-exprs ~'exp-pdef))
         (apply merge
                (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
 
@@ -544,14 +558,6 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
-(defn ^:no-doc snippet-pdef?
-  [pdef]
-  (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
-
-(defn ^:no-doc fragment-pdef?
-  [pdef]
-  (:frag (:hdr pdef)))
-
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
    functions in the current namespace.
@@ -592,9 +598,8 @@
   ([file options]
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
+      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (frags/register-fragment ~'exp-pdef)
         (when-not (fragment-pdef? ~'exp-pdef)
           (if (snippet-pdef? ~'exp-pdef)
             (intern-sqlvec-fn ~'exp-pdef ~options)
@@ -619,9 +624,8 @@
   ([s options]
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
+      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (frags/register-fragment ~'exp-pdef)
         (when-not (fragment-pdef? ~'exp-pdef)
           (if (snippet-pdef? ~'exp-pdef)
             (intern-sqlvec-fn ~'exp-pdef ~options)
@@ -655,10 +659,9 @@
    `(let [~'pdefs (parsed-defs-from-file ~file)]
       (doseq [~'pdef ~'pdefs]
         (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
+      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef)
-          (frags/register-fragment ~'exp-pdef))
+          (compile-exprs ~'exp-pdef))
         (apply merge
                (map
                 #(when-not (fragment-pdef? %)
@@ -693,10 +696,9 @@
    `(let [~'pdefs (parsed-defs-from-string ~s)]
       (doseq [~'pdef ~'pdefs]
         (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
+      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef)
-          (frags/register-fragment ~'exp-pdef))
+          (compile-exprs ~'exp-pdef))
         (apply merge
                (map
                 #(when-not (fragment-pdef? %)
