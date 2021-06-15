@@ -128,11 +128,9 @@
   "Compile (def) all expressions in a parsed def. All fragments are expanded
    and `pdef` is registered if it itself a fragment."
   [pdef]
-  (let [
-        pdef' pdef
-        ;; exp-sql (frags/expand-fragments (:sql pdef))
-        ;; pdef'   (assoc pdef :sql exp-sql)
-        ;; _       (frags/register-fragment! pdef')
+  (let [exp-sql (frags/expand-fragments (:sql pdef))
+        pdef'   (assoc pdef :sql exp-sql)
+        _       (frags/register-fragment! pdef')
         require-str (string/join " " (:require (:hdr pdef')))]
     (doseq [expr (filter vector? (:sql pdef'))]
       (def-expr expr require-str))))
