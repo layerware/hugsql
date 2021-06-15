@@ -1,15 +1,20 @@
 (ns hugsql.fragments
-  "Fragment-specific code."
+  "Fragment-specific code. For the average user, fragments are similar to
+   snippets in that they allow one to build SQL queries, except without
+   having to pass in the fragment as a param. Under the hood however,
+   fragments work very differently from other params; in particular, they
+   are expanded before all other params are applied and have their own
+   separate, hidden registry."
   (:require [clojure.set :as cset]))
 
 ;; Make atoms private so that they are only accessible via functions
 
-(def ^{:dynamic :private} frag-ans-atom
-  "Atom storing a map between fragment names and sets of ancestors.
-   Needed to check for cyclic dependencies."
+(def ^{:dynamic true :private true} frag-ans-atom
+  "Atom storing a map between fragment names and sets of ancestors (c.f.
+   adjacency list). Used to quickly check for cyclic dependencies."
   (atom {}))
 
-(def ^{:dynamic :private} frag-sql-atom
+(def ^{:dynamic true :private true} frag-sql-atom
   "Atom storing a map between fragment names and their SQL templates.
    Ancestor fragments in templates should already have been expanded."
   (atom {}))
@@ -35,6 +40,7 @@
         ;; We're good
         all-ans))))
 
+;; Called during runtime SQL statement prep, i.e. when evaluating Clojure exprs.
 (defn expand-fragments*
   "Given a vector of sql strings and param maps, expand out any fragments,
    represented as hashmap parameters with a `:frag` key. Throws an exception
@@ -59,8 +65,11 @@
                (concat sql-temp' [sql-elem]))) ; force conj at end of list
       sql-temp')))
 
+;; Called during initial HugSql function definition.
+;; (Analogous to "compile-time" expansion, e.g. Clojure macros.)
 (defn expand-fragments
-  "Given a parsed def, "
+  "Given a parsed def, update the `:sql` value such that all fragments are
+   expanded. Throws an exception if an unknown fragment is encountered."
   [pdef]
   (update pdef :sql expand-fragments*))
 
