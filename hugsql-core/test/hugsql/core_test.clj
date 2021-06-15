@@ -181,7 +181,7 @@
     (is (= ["select * from test where id = ?" 1]
            (hugsql/sqlvec "select * from test where id = :id" {:id 1}))))
 
-  (testing "Snippets"
+  (testing "snippets"
     (is (= ["select id, name"] (select-snip {:cols ["id","name"]})))
     (is (= ["from test"] (from-snip {:tables ["test"]})))
     (is (= ["select id, name\nfrom test\nwhere id = ? or id = ?\norder by id" 1 2]
@@ -192,6 +192,24 @@
                                         (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
              :order (order-snip {:fields ["id"]})}))))
 
+  
+  (testing "fragments"
+    (testing "fragments should not be interned as exprs"
+      (is (not (resolve `where-frag)))
+      (is (resolve `frag-query-sqlvec)))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-sqlvec
+            {:id 1 :name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-cond-sqlvec
+            {:id 1 :name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?" 1]
+           (frag-query-cond-sqlvec
+            {:id 1})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
+           (frag-query-cond-sqlvec
+            {:name "Ed"}))))
+  
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
     (is (:private (meta #'another-private-fn)))
@@ -251,7 +269,7 @@
             "select col_:sql:col_num from test"
             {:col_num 1}))))
 
-  (doseq [[db-name db-spec] dbs]
+  #_(doseq [[db-name db-spec] dbs]
     (doseq [[adapter-name adapter] adapters]
       (let [db (or (adapter-name db-spec) (:default db-spec))]
 

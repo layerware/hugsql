@@ -35,32 +35,42 @@
         ;; We're good
         all-ans))))
 
-(defn expand-fragments
+(defn expand-fragments*
   "Given `sql-template` produced by `parse`, expand out any fragments,
    represented as hashmap parameters with a `:frag` key. Throws an exception
    if an unknown fragment is encountered."
   [sql-template]
   (loop [sql-temp  sql-template
-         sql-temp' []]
-    (if-some [sql-elem (first sql-temp)]
-      (if-let [frag-name (and (map? sql-elem)
-                              (some-> sql-elem :frag first keyword))]
-        (if-some [frag-sql (@frag-sql-atom frag-name)]
+         sql-temp' '[]]
+    (if-some [{param-type :type param-name :name :as sql-elem}
+              (first sql-temp)]
+      (if (= :frag param-type)
+        (if-some [frag-sql (@frag-sql-atom param-name)]
           (recur (rest sql-temp)
                  (concat sql-temp' frag-sql))
-          (throw (ex-info (str "Unknown ancestor fragment " frag-name "!\n"
+          (throw (ex-info (str "Unknown ancestor fragment " param-name "!\n"
                                "SQL: " (pr-str (sql-template)))
                           {})))
         (recur (rest sql-temp)
-               (conj sql-temp' sql-elem)))
-      sql-temp')))
+               (concat sql-temp' [sql-elem]))) ; force conj at end of list
+      (do
+        ;; (println (format "sql-template: %s" (pr-str (type sql-temp))))
+        ;; (println (format "sql-template': %s" (pr-str (type sql-temp'))))
+        sql-temp'))))
+
+(defn expand-fragments
+  [pdef]
+  (update pdef :sql expand-fragments*)
+  #_(let [pdef' (update pdef :sql expand-fragments*)]
+    (when (not= pdef pdef') (println (pr-str pdef')))
+    pdef'))
 
 (defn register-fragment!
-  "Given a new fragment `frag`, validate and store in the fragment registry.
+  "Given a parsed def `pdef`, validate and store in the fragment registry.
    Expands any ancestor fragments before storing. Throws an exception if
    a cyclic dependency is encountered"
-  [frag]
-  (let [{:keys [hdr sql]} frag]
+  [pdef]
+  (let [{:keys [hdr sql]} pdef]
     (when-some [frag (:frag hdr)]
       (let [frag-name (->> frag first keyword)
             frag-ans  (->> sql

@@ -189,6 +189,8 @@ update :i:table set
 ~*/
 where id = :id
 
+/* Snippets */
+
 -- :snip select-snip
 select :i*:cols
 
@@ -220,12 +222,47 @@ order by :i*:fields
 --~ (when (:where params) ":snip:where")
 :snip:order
 
+/* Fragments */
+
 -- :frag select-frag
-select :i*:cols
+select id, name
 
 -- :frag from-frag
-from :i*:tables
+from test
 
--- :name :frag-test
-:frag:select
-:frag:from
+-- :frag where-frag-0
+where 1
+
+-- :frag where-frag-1
+and id = :id
+
+-- :frag where-frag-2
+and name = :name
+
+-- :frag where-frag
+:frag:where-frag-0
+:frag:where-frag-1
+:frag:where-frag-2
+
+
+-- :name frag-query :? :*
+:frag:select-frag
+:frag:from-frag
+:frag:where-frag
+
+-- :name frag-query-cond :? :*
+:frag:select-frag
+:frag:from-frag
+:frag:where-frag-0
+--~ (when (:id params) ":frag:where-frag-1")
+--~ (when (:name params) ":frag:where-frag-2")
+
+-- :frag where-frag-cond
+--~ (when (:id params) ":frag:where-frag-1")
+--~ (when (:name params) ":frag:where-frag-2")
+
+-- :name frag-query-cond-2 :? :*
+:frag:select-frag
+:frag:from-frag
+:frag:where-frag-0
+--~ (when (or (:id params) (:name params)) ":frag:where-frag-cond")
