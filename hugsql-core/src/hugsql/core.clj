@@ -558,6 +558,15 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
+(defmacro ^:no-doc dispatch-on-pdef
+  "Mini-macro that extracts out the common functionality of dispatching
+   on fragments, snippets, or DB functions."
+  [pdef options db-func sqlvec-func]
+  `(when-not (fragment-pdef? ~pdef)
+     (if (snippet-pdef? ~pdef)
+       (~sqlvec-func ~pdef ~options)
+       (~db-func ~pdef ~options))))
+
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
    functions in the current namespace.
@@ -600,10 +609,10 @@
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (when-not (fragment-pdef? ~'exp-pdef)
-          (if (snippet-pdef? ~'exp-pdef)
-            (intern-sqlvec-fn ~'exp-pdef ~options)
-            (intern-db-fn ~'exp-pdef ~options)))))))
+        (dispatch-on-pdef ~'exp-pdef
+                          ~options
+                          ~intern-db-fn
+                          ~intern-sqlvec-fn)))))
 
 (defmacro def-db-fns-from-string
   "Given a HugSQL SQL string, define the database
@@ -626,10 +635,10 @@
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (when-not (fragment-pdef? ~'exp-pdef)
-          (if (snippet-pdef? ~'exp-pdef)
-            (intern-sqlvec-fn ~'exp-pdef ~options)
-            (intern-db-fn ~'exp-pdef ~options)))))))
+        (dispatch-on-pdef ~'exp-pdef
+                          ~options
+                          ~intern-db-fn
+                          ~intern-sqlvec-fn)))))
 
 (defmacro map-of-db-fns
   "Given a HugSQL SQL file, return a hashmap of database
@@ -664,10 +673,7 @@
           (compile-exprs ~'exp-pdef))
         (apply merge
                (map
-                #(when-not (fragment-pdef? %)
-                   (if (snippet-pdef? %)
-                     (sqlvec-fn-map % ~options)
-                     (db-fn-map % ~options)))
+                #(dispatch-on-pdef % ~options ~db-fn-map ~sqlvec-fn-map)
                 ~'exp-pdefs))))))
 
 (defmacro map-of-db-fns-from-string
@@ -701,10 +707,7 @@
           (compile-exprs ~'exp-pdef))
         (apply merge
                (map
-                #(when-not (fragment-pdef? %)
-                   (if (snippet-pdef? %)
-                     (sqlvec-fn-map % ~options)
-                     (db-fn-map % ~options)))
+                #(dispatch-on-pdef % ~options ~db-fn-map ~sqlvec-fn-map)
                 ~'exp-pdefs))))))
 
 (defn db-run
