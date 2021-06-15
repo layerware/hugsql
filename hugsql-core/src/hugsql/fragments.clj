@@ -1,7 +1,6 @@
 (ns hugsql.fragments
   "Fragment-specific code."
-  (:require [clojure.set :as cset]
-            [clojure.string :as string]))
+  (:require [clojure.set :as cset]))
 
 ;; Make atoms private so that they are only accessible via functions
 
@@ -36,10 +35,8 @@
         ;; We're good
         all-ans))))
 
-(def ^:private frag-regex #":frag:([\pL\pM\pS\d\_\-\.\+\*\?\/\:]*)")
-
 (defn expand-fragments*
-  "Given `sql-template` produced by `parse`, expand out any fragments,
+  "Given a vector of sql strings and param maps, expand out any fragments,
    represented as hashmap parameters with a `:frag` key. Throws an exception
    if an unknown fragment is encountered."
   [sql-template]
@@ -47,8 +44,8 @@
          sql-temp' '[]]
     (if-some [sql-elem (first sql-temp)]
       (cond
-        ;; Fragment param - 
-        (and (map? sql-elem) (= :frag (:type sql-elem)))
+        (and (map? sql-elem)
+             (= :frag (:type sql-elem)))
         (if-some [frag-sql (@frag-sql-atom (:name sql-elem))]
           (recur (rest sql-temp)
                  (concat sql-temp' frag-sql))
@@ -57,43 +54,17 @@
                        "SQL: " (pr-str (sql-template)))
                   {})))
 
-        ;; Clojure string with fragment
-        ;; (and (seq? sql-elem)
-        ;;      (string? (first sql-elem))
-        ;;      (re-matches frag-regex (first sql-elem)))
-        ;; (if-some [frag-sql (->> (first sql-elem)
-        ;;                         (re-matches frag-regex)
-        ;;                         second
-        ;;                         keyword
-        ;;                         (get @frag-sql-atom))]
-        ;;   (recur (rest sql-temp)
-        ;;          (concat sql-temp' ; force conj at end of list
-        ;;                  [(string/replace (first sql-elem)
-        ;;                                   frag-regex
-        ;;                                   (pr-str frag-sql))]))
-        ;;   (throw (ex-info
-        ;;           (str "Unknown ancestor fragment!\n"
-        ;;                "Clojure string:" (first sql-elem)
-        ;;                "Full SQL: " (pr-str (sql-template)))
-        ;;           {})))
-
-        ;; No fragments found
         :else
         (recur (rest sql-temp)
                (concat sql-temp' [sql-elem]))) ; force conj at end of list
-      (do
-        ;; (println (format "sql-template: %s" (pr-str (type sql-temp))))
-        ;; (println (format "sql-template': %s" (pr-str (type sql-temp'))))
-        sql-temp'))))
+      sql-temp')))
 
 (defn expand-fragments
+  "Given a parsed def, "
   [pdef]
-  (update pdef :sql expand-fragments*)
-  #_(let [pdef' (update pdef :sql expand-fragments*)]
-      (when (not= pdef pdef') (println (pr-str pdef')))
-      pdef'))
+  (update pdef :sql expand-fragments*))
 
-(defn register-fragment!
+(defn register-fragment
   "Given a parsed def `pdef`, validate and store in the fragment registry.
    Expands any ancestor fragments before storing. Throws an exception if
    a cyclic dependency is encountered"
@@ -109,11 +80,3 @@
         (swap! frag-ans-atom assoc frag-name all-ans)
         (swap! frag-sql-atom assoc frag-name sql)
         nil))))
-
-(defn get-fragment
-  [get-vec]
-  (let [frag-sql (-> get-vec first (@frag-sql-atom))]
-    ;; (println (first get-vec))
-    ;; (println frag-sql)
-    ;; (println (expand-fragments* frag-sql))
-    (vec (expand-fragments* frag-sql))))

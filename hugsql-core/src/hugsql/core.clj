@@ -179,6 +179,21 @@
         :else
         (recur (first pile) (rest pile) (conj rsql curr) expr)))))
 
+(defn ^:no-doc frag-expr-pass
+  "Takes an sql template and evaluates all Clojure expressions, including any
+   fragments nested in them. Supports multiple levels of nesting. Returns when
+   all expressions and fragments have been expanded."
+  [sql-template param-data options]
+  (loop [sql-temp sql-template]
+    (let [sql-temp' (-> (expr-pass sql-temp param-data options)
+                        frags/expand-fragments*)]
+      (if (some #(or (= :frag (:type %)) (= :end (last %)))
+                sql-temp')
+        ;; There are still some un-expanded exprs and frags; repeat
+        (recur sql-temp')
+        ;; All exprs and frags have been expanded
+        sql-temp'))))
+
 (defn ^:no-doc prepare-sql
   "Takes an sql template (from hugsql parser) and the runtime-provided
   param data and creates a vector of [\"sql\" val1 val2] suitable for
@@ -190,28 +205,16 @@
   keywords.  For value parameter types, we replace use the jdbc
   prepared statement syntax of a '?' to placehold for the value."
   ([sql-template param-data options]
-   (let [sql-template
-         (loop [sql-temp sql-template]
-           (let [sql-temp' (-> (expr-pass sql-temp param-data options)
-                               frags/expand-fragments*)]
-             (if (some #(or (= :frag (:type %))
-                            (= :end (last %)))
-                       sql-temp')
-               (recur sql-temp')
-               sql-temp')))
-         _
-         (validate-parameters! sql-template param-data)
-         applied
-         (map #(if (string? %)
-                 [%]
-                 (parameters/apply-hugsql-param % param-data options))
-              sql-template)
-         sql
-         (-> (string/join "" (map first applied))
-             (string/replace #"\n\n+" "\n") ; remove extra linebreaks
-             string/trim) ; remove leading and trailing whitespace
-         params
-         (apply concat (filterv seq (map rest applied)))]
+   (let [sql-template (frag-expr-pass sql-template param-data options)
+         _ (validate-parameters! sql-template param-data)
+         applied (map #(if (string? %)
+                         [%]
+                         (parameters/apply-hugsql-param % param-data options))
+                      sql-template)
+         sql (-> (string/join "" (map first applied))
+                 (string/replace #"\n\n+" "\n") ; remove extra linebreaks
+                 string/trim) ; remove leading and trailing whitespace
+         params (apply concat (filterv seq (map rest applied)))]
      (apply vector sql params))))
 
 (def default-sqlvec-options
@@ -361,7 +364,7 @@
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
-        (frags/register-fragment! ~'exp-pdef)
+        (frags/register-fragment ~'exp-pdef)
         (compile-exprs ~'exp-pdef)
         (intern-sqlvec-fn ~'exp-pdef ~options)))))
 
@@ -389,7 +392,7 @@
    `(doseq [~'pdef (parsed-defs-from-string ~s)]
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
-        (frags/register-fragment! ~'exp-pdef)
+        (frags/register-fragment ~'exp-pdef)
         (compile-exprs ~'exp-pdef)
         (intern-sqlvec-fn ~'exp-pdef ~options)))))
 
@@ -427,7 +430,7 @@
       (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef)
-          (frags/register-fragment! ~'exp-pdef))
+          (frags/register-fragment ~'exp-pdef))
         (apply merge
                (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
 
@@ -463,7 +466,7 @@
       (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef)
-          (frags/register-fragment! ~'exp-pdef))
+          (frags/register-fragment ~'exp-pdef))
         (apply merge
                (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
 
@@ -591,7 +594,7 @@
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (frags/register-fragment! ~'exp-pdef)
+        (frags/register-fragment ~'exp-pdef)
         (when-not (fragment-pdef? ~'exp-pdef)
           (if (snippet-pdef? ~'exp-pdef)
             (intern-sqlvec-fn ~'exp-pdef ~options)
@@ -618,7 +621,7 @@
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (frags/expand-fragments ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (frags/register-fragment! ~'exp-pdef)
+        (frags/register-fragment ~'exp-pdef)
         (when-not (fragment-pdef? ~'exp-pdef)
           (if (snippet-pdef? ~'exp-pdef)
             (intern-sqlvec-fn ~'exp-pdef ~options)
@@ -655,7 +658,7 @@
       (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef)
-          (frags/register-fragment! ~'exp-pdef))
+          (frags/register-fragment ~'exp-pdef))
         (apply merge
                (map
                 #(when-not (fragment-pdef? %)
@@ -693,7 +696,7 @@
       (let [~'exp-pdefs (map frags/expand-fragments ~'pdefs)]
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef)
-          (frags/register-fragment! ~'exp-pdef))
+          (frags/register-fragment ~'exp-pdef))
         (apply merge
                (map
                 #(when-not (fragment-pdef? %)

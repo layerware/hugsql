@@ -209,6 +209,9 @@
     (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
            (frag-query-cond-sqlvec
             {:name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-cond-2-sqlvec
+            {:id 1 :name "Ed"})))
     (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
            (frag-query-cond-2-sqlvec
             {:name "Ed"}))))
