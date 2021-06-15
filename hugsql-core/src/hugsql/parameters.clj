@@ -1,5 +1,6 @@
 (ns hugsql.parameters
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [hugsql.fragments :as frag]))
 
 (defprotocol ValueParam
   "Protocol to convert Clojure value to SQL value"
@@ -45,6 +46,9 @@
 (defprotocol SQLVecParamList
   "Protocol to splice in a collection of sqlvecs (or snippets)"
   (sqlvec-param-list [param data options]))
+
+(defprotocol FragmentParam
+  (frag-param [param data options]))
 
 (defn identifier-param-quote
   "Quote the identifier value based on options."
@@ -143,7 +147,16 @@
      #(apply vector
              (string/join " " [(first %1) (first %2)])
              (concat (rest %1) (rest %2)))
-     (get-in data (deep-get-vec (:name param))))))
+     (get-in data (deep-get-vec (:name param)))))
+  
+  FragmentParam
+  (frag-param [param data options]
+              param
+    #_(let [fp (frag/get-fragment (deep-get-vec (:name param)))]
+      #_(println (str fp))
+      (-> (map #(if (map? %) (apply-hugsql-param % data options) %) fp)
+          flatten)
+      #_(apply-hugsql-param fp data options))))
 
 (defmulti apply-hugsql-param
   "Implementations of this multimethod apply a hugsql parameter
@@ -182,5 +195,4 @@
 (defmethod apply-hugsql-param :sqlvec* [param data options] (sqlvec-param-list param data options))
 (defmethod apply-hugsql-param :snip [param data options] (sqlvec-param param data options))
 (defmethod apply-hugsql-param :snip* [param data options] (sqlvec-param-list param data options))
-;; (defmethod apply-hugsql-param :frag [param data options] (sqlvec-param param data options))
-;; (defmethod apply-hugsql-param :frag* [param data options] (sqlvec-param-list param data options))
+(defmethod apply-hugsql-param :frag [param data options] (frag-param param data options))

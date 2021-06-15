@@ -165,12 +165,16 @@
         (or (vector? curr) (seq expr)) ;; expr start OR already in expr
         ;; expr end found, so run
         (if (and (vector? curr) (= :end (last curr)))
-          (recur (first pile) (rest pile)
+          (recur (first pile)
+                 (rest pile)
                  (if-let [r (run-expr (conj expr curr) params options)]
                    (vec (concat rsql (if (string? r) (vector r) r)))
-                   rsql) [])
-          (recur (first pile) (rest pile)
-                 rsql (conj expr curr)))
+                   rsql)
+                 [])
+          (recur (first pile)
+                 (rest pile)
+                 rsql
+                 (conj expr curr)))
 
         :else
         (recur (first pile) (rest pile) (conj rsql curr) expr)))))
@@ -186,18 +190,28 @@
   keywords.  For value parameter types, we replace use the jdbc
   prepared statement syntax of a '?' to placehold for the value."
   ([sql-template param-data options]
-   (let [sql-template (-> (expr-pass sql-template param-data options)
-                          frags/expand-fragments*) ; expand frags in Clojure
-         _ (validate-parameters! sql-template param-data)
-         applied (map
-                  #(if (string? %)
-                     [%]
-                     (parameters/apply-hugsql-param % param-data options))
-                  sql-template)
-         sql    (-> (string/join "" (map first applied))
-                    (string/replace #"\n\n+" "\n") ; remove extra linebreaks
-                    string/trim) ; remove leading and trailing whitespace
-         params (apply concat (filterv seq (map rest applied)))]
+   (let [sql-template
+         (loop [sql-temp sql-template]
+           (let [sql-temp' (-> (expr-pass sql-temp param-data options)
+                               frags/expand-fragments*)]
+             (if (some #(or (= :frag (:type %))
+                            (= :end (last %)))
+                       sql-temp')
+               (recur sql-temp')
+               sql-temp')))
+         _
+         (validate-parameters! sql-template param-data)
+         applied
+         (map #(if (string? %)
+                 [%]
+                 (parameters/apply-hugsql-param % param-data options))
+              sql-template)
+         sql
+         (-> (string/join "" (map first applied))
+             (string/replace #"\n\n+" "\n") ; remove extra linebreaks
+             string/trim) ; remove leading and trailing whitespace
+         params
+         (apply concat (filterv seq (map rest applied)))]
      (apply vector sql params))))
 
 (def default-sqlvec-options
