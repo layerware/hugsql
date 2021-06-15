@@ -219,3 +219,13 @@ order by :i*:fields
 :snip:from
 --~ (when (:where params) ":snip:where")
 :snip:order
+
+-- :frag select-frag
+select :i*:cols
+
+-- :frag from-frag
+from :i*:tables
+
+-- :name :frag-test
+:frag:select
+:frag:from

@@ -182,3 +182,5 @@
 (defmethod apply-hugsql-param :sqlvec* [param data options] (sqlvec-param-list param data options))
 (defmethod apply-hugsql-param :snip [param data options] (sqlvec-param param data options))
 (defmethod apply-hugsql-param :snip* [param data options] (sqlvec-param-list param data options))
+;; (defmethod apply-hugsql-param :frag [param data options] (sqlvec-param param data options))
+;; (defmethod apply-hugsql-param :frag* [param data options] (sqlvec-param-list param data options))

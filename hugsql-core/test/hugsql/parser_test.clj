@@ -72,7 +72,17 @@
                      :file nil
                      :line 1}
                :sql ["select * from emp"]}]
-             (parse "-- :name test\nselect * from emp"))))
+             (parse "-- :name test\nselect * from emp")))
+      (is (= [{:hdr {:snip ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp"]}]
+             (parse "-- :snip test\nselect * from emp")))
+      (is (= [{:hdr {:frag ["test"]
+                     :file nil
+                     :line 1}
+               :sql ["select * from emp"]}]
+             (parse "-- :frag test\nselect * from emp"))))
 
     (testing ":param-name (default value parameter type)"
       (is (= [{:hdr {:name ["test"]

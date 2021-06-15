@@ -1,5 +1,5 @@
 (ns hugsql.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [hugsql.core :as hugsql]
             [hugsql.adapter]
             [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
@@ -220,13 +220,13 @@
       (is (fn? (get-in db-fns-str [:test3-select :fn])))
       (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
 
-  (testing "missing header :name, :name-, :snip, or :snip-"
+  (testing "missing header :name, :name-, :snip, :snip-, or :frag"
     (is (thrown-with-msg? ExceptionInfo
                           #"Missing HugSQL Header of "
                           (hugsql/def-db-fns-from-string
                             "-- :name: almost-a-yesql-name-hdr\nselect * from test"))))
 
-  (testing "nil header :name, :name-, :snip, or :snip-"
+  (testing "nil header :name, :name-, :snip, :snip-, or :frag"
     (is (thrown-with-msg? ExceptionInfo
                           #"HugSQL Header .* not given."
                           (hugsql/def-db-fns-from-string

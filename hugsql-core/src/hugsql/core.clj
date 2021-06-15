@@ -1,6 +1,7 @@
 (ns hugsql.core
   (:require [hugsql.parser :as parser]
             [hugsql.parameters :as parameters]
+            [hugsql.fragments :as frags]
             [hugsql.adapter :as adapter]
             [hugsql.expr-run]
             [clojure.java.io :as io]
@@ -55,16 +56,19 @@
   "Ensure SQL required headers are provided
    and throw an exception if not."
   [pdef]
-  (let [hdr (:hdr pdef)]
-    (when-not (or (:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr))
-      (throw (ex-info
-              (str "Missing HugSQL Header of :name, :name-, :snip, or :snip-\n"
-                   "Found headers include: " (pr-str (vec (keys hdr))) "\n"
-                   "SQL: " (pr-str (:sql pdef))) {})))
-    (when (every? empty? [(:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr)])
-      (throw (ex-info
-              (str "HugSQL Header :name, :name-, :snip, or :snip- not given.\n"
-                   "SQL: " (pr-str (:sql pdef))) {})))))
+  (let [hdr  (:hdr pdef)
+        hdr' (select-keys hdr [:name :name- :snip :snip- :frag])]
+    (when (empty? hdr')
+      (throw
+       (ex-info
+        (str "Missing HugSQL Header of :name, :name-, :snip, :snip-, or :frag\n"
+             "Found headers include: " (pr-str (vec (keys hdr))) "\n"
+             "SQL: " (pr-str (:sql pdef))) {})))
+    (when (every? empty? (vals hdr'))
+      (throw
+       (ex-info
+        (str "HugSQL Header :name, :name-, :snip, :snip-, or :frag not given.\n"
+             "SQL: " (pr-str (:sql pdef))) {})))))
 
 (defn ^:no-doc validate-parameters!
   "Ensure SQL template parameters match provided param-data,
@@ -121,10 +125,14 @@
      (load-string clj))))
 
 (defn ^:no-doc compile-exprs
-  "Compile (def) all expressions in a parsed def"
+  "Compile (def) all expressions in a parsed def. All fragments are expanded
+   and `pdef` is registered if it itself a fragment."
   [pdef]
-  (let [require-str (string/join " " (:require (:hdr pdef)))]
-    (doseq [expr (filter vector? (:sql pdef))]
+  (let [exp-sql (frags/expand-fragments (:sql pdef))
+        pdef'   (assoc pdef :sql exp-sql)
+        _       (frags/register-fragment! pdef')
+        require-str (string/join " " (:require (:hdr pdef')))]
+    (doseq [expr (filter vector? (:sql pdef'))]
       (def-expr expr require-str))))
 
 (defn ^:no-doc run-expr

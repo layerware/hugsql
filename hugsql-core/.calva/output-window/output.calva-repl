@@ -1,0 +1,150 @@
+; This is the Calva evaluation results output window.
+; TIPS: The keyboard shortcut `ctrl+alt+c o` shows and focuses this window
+;   when connected to a REPL session.
+; Please see https://calva.io/output/ for more info.
+; Happy coding! ♥️
+
+; Jacking in...
+; Starting Jack-in Terminal: lein update-in :dependencies conj '[nrepl,"0.8.3"]' -- update-in :plugins conj '[cider/cider-nrepl,"0.26.0"]' -- update-in '[:repl-options,:nrepl-middleware]' conj '["cider.nrepl/cider-middleware"]' -- with-profile +1.10 repl :headless
+; Hooking up nREPL sessions...
+; Connected session: clj
+; TIPS: 
+;   - You can edit the contents here. Use it as a REPL if you like.
+;   - `alt+enter` evaluates the current top level form.
+;   - `ctrl+enter` evaluates the current form.
+;   - `alt+up` and `alt+down` traverse up and down the REPL command history
+;      when the cursor is after the last contents at the prompt
+;   - Clojure lines in stack traces are peekable and clickable.
+clj꞉user꞉>  ; Use `alt+enter` to evaluate
+; Jack-in done.
+clj꞉user꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉user꞉> 
+clj꞉hugsql.core-test꞉> 
+; Evaluating file: fragments.clj
+#'hugsql.fragments/register-fragment!
+clj꞉hugsql.fragments꞉> 
+; Evaluating file: core.clj
+#'hugsql.core/db-run
+clj꞉hugsql.core꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.core꞉> 
+clj꞉hugsql.core-test꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.core-test꞉> 
+; Running tests for hugsql.core-test...
+; No tests found. 😱, ns: 0, vars: 0
+clj꞉hugsql.core-test꞉> 
+; Syntax error compiling at (test/hugsql/core_test.clj:89:5).
+; Unable to resolve symbol: test2-select in this context
+clj꞉hugsql.core-test꞉> 
+nil
+clj꞉hugsql.core-test꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.core-test꞉> 
+clj꞉hugsql.core-test꞉> 
+; Evaluating file: parser_test.clj
+#'hugsql.parser-test/parsing
+clj꞉hugsql.parser-test꞉> 
+; Evaluating file: parser_test.clj
+#'hugsql.parser-test/parsing
+; Running tests for hugsql.parser-test...
+; 36 tests finished, all passing 👍, ns: 1, vars: 1
+clj꞉hugsql.parser-test꞉> 
+; Evaluating file: unbound_fn.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/unbound_fn.clj:5:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file unbound_fn.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.parser-test꞉> 
+clj꞉hugsql.unbound-fn꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; contains? not supported on type: clojure.lang.LazySeq
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.unbound-fn꞉> 
+clj꞉hugsql.core-test꞉> 
+nil
+clj꞉hugsql.core-test꞉> 
+#'hugsql.core-test/adapters
+clj꞉hugsql.core-test꞉> 
+#'hugsql.core-test/tmpdir
+clj꞉hugsql.core-test꞉> 
+#'hugsql.core-test/dbs
+clj꞉hugsql.core-test꞉> 
+; Execution error (IllegalArgumentException) at hugsql.fragments/all-frag-ancestors (fragments.clj:21).
+; contains? not supported on type: clojure.lang.LazySeq
+clj꞉hugsql.core-test꞉> 
+; Execution error (IllegalArgumentException) at hugsql.fragments/all-frag-ancestors (fragments.clj:21).
+; contains? not supported on type: clojure.lang.LazySeq
+clj꞉hugsql.core-test꞉> 
+#'hugsql.fragments/all-frag-ancestors
+clj꞉hugsql.fragments꞉> 
+; Evaluating file: fragments.clj
+#'hugsql.fragments/register-fragment!
+clj꞉hugsql.fragments꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; no conversion to symbol
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.fragments꞉> 
+clj꞉hugsql.core-test꞉> 
+; Execution error (IllegalArgumentException) at hugsql.core/db-fn-map (core.clj:489).
+; no conversion to symbol
+clj꞉hugsql.core-test꞉> 
+nil
+clj꞉hugsql.fragments꞉> 
+#'hugsql.fragments/all-frag-ancestors
+clj꞉hugsql.fragments꞉> 
+nil
+clj꞉hugsql.fragments꞉> 
+#'hugsql.fragments/all-frag-ancestors
+clj꞉hugsql.fragments꞉> 
+QUIT
+clj꞉hugsql.fragments꞉> 
+#'hugsql.fragments/all-frag-ancestors
+clj꞉hugsql.fragments꞉> 
+#{:foo-ans-2 :foo :foo-ans-1}
+clj꞉hugsql.fragments꞉> 
+; Syntax error compiling at (src/hugsql/fragments.clj:78:3).
+; Unable to resolve symbol: frag-sql-atom in this context
+clj꞉hugsql.fragments꞉> 
+; Evaluating file: fragments.clj
+nil
+clj꞉hugsql.fragments꞉> 
+{:foo [{:name ["bar"]}]}
+clj꞉hugsql.fragments꞉> 
+[{:frag ["foo"]}]
+clj꞉hugsql.fragments꞉> 
+#'hugsql.fragments/expand-fragments
+clj꞉hugsql.fragments꞉> 
+({:name ["bar"]})
+clj꞉hugsql.fragments꞉> 
+({:name ["bee"]} {:name ["bar"]})
+clj꞉hugsql.fragments꞉> 
+; Evaluating file: core_test.clj
+; Syntax error (IllegalArgumentException) compiling at (test/hugsql/core_test.clj:68:1).
+; no conversion to symbol
+; Evaluation of file core_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉hugsql.fragments꞉> 
+clj꞉hugsql.core-test꞉> 
+; nREPL Connection was closed
