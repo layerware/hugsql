@@ -461,7 +461,7 @@
                                                 :id 3})))
           (is (= 0 (drop-test-table db))))
 
-        (testing "snippets"
+        (testing "snippets and fragments"
           (is (= 0 (create-test-table db)))
           (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
           (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
@@ -475,6 +475,12 @@
                    :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
                                               (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
                    :order (order-snip {:fields ["id"]})})))
+          (is (= [{:id 1 :name "A"}]
+                 (frag-query db {:id 1 :name "A"})))
+          (is (= [{:id 1 :name "A"}]
+                 (frag-query-cond db {:id 1})))
+          (is (= [{:id 1 :name "A"}]
+                 (frag-query-cond-2 db {:id 1})))
 
           (is (= 0 (drop-test-table db))))
 
