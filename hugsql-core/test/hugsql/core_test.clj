@@ -91,7 +91,8 @@
 
   (testing "defs from string worked"
     (is (fn? test3-select))
-    (is (fn? snip1)))
+    (is (fn? snip1))
+    (is (not (resolve `frag1))))
 
   (testing "sql file does not exist/can't be read"
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
@@ -263,6 +264,10 @@
                             "-- :name \nselect * from test"))))
 
   (testing "fragment errors"
+    (is (thrown-with-msg? ExceptionInfo
+                          #"Unknown ancestor fragment :unknown-frag!.*"
+                          (hugsql/def-db-fns-from-string
+                           "-- :name bad-query\nselect * from :frag:unknown-frag")))
     (is (thrown-with-msg? ExceptionInfo
                           #"Fragment :bad-frag contains itself!.*"
                           (hugsql/def-db-fns-from-string
