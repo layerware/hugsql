@@ -144,8 +144,7 @@
      (load-string clj))))
 
 (defn ^:no-doc compile-exprs
-  "Compile (def) all expressions in a parsed def. All fragments are expanded
-   and `pdef` is registered if it itself a fragment."
+  "Compile (def) all expressions in a parsed def."
   [pdef]
   (let [require-str (string/join " " (:require (:hdr pdef)))]
     (doseq [expr (filter vector? (:sql pdef))]
@@ -226,13 +225,14 @@
   ([sql-template param-data options]
    (let [sql-template (frag-expr-pass sql-template param-data options)
          _ (validate-parameters! sql-template param-data)
-         applied (map #(if (string? %)
-                         [%]
-                         (parameters/apply-hugsql-param % param-data options))
-                      sql-template)
-         sql (-> (string/join "" (map first applied))
-                 (string/replace #"\n\n+" "\n") ; remove extra linebreaks
-                 string/trim) ; remove leading and trailing whitespace
+         applied (map
+                  #(if (string? %)
+                     [%]
+                     (parameters/apply-hugsql-param % param-data options))
+                  sql-template)
+         sql     (-> (string/join "" (map first applied))
+                     (string/replace #"\n\n+" "\n") ; remove extra linebreaks
+                     string/trim) ; remove leading and trailing whitespace
          params (apply concat (filterv seq (map rest applied)))]
      (apply vector sql params))))
 
@@ -529,12 +529,9 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [{:keys [sql hdr file line] :as pdef} options]
+  [{:keys [sql hdr file line]} options]
   (let [pnm (:name- hdr)
-        nam (try (symbol (first (or (:name hdr) pnm)))
-                 (catch IllegalArgumentException e
-                   (println (pr-str pdef))
-                   (throw e)))
+        nam (symbol (first (or (:name hdr) pnm)))
         doc (or (first (:doc hdr)) "")
         cmd (command-sym hdr)
         res (result-sym hdr)
@@ -563,13 +560,13 @@
             (-> fm fk :fn))))
 
 (defn ^:no-doc dispatch-on-pdef
-  "Mini-macro that extracts out the common functionality of dispatching
+  "Helper fn that extracts out the common functionality of dispatching
    on fragments, snippets, or DB functions."
   [pdef options db-func sqlvec-func]
   (when-not (fragment-pdef? pdef)
-     (if (snippet-pdef? pdef)
-       (sqlvec-func pdef options)
-       (db-func pdef options))))
+    (if (snippet-pdef? pdef)
+      (sqlvec-func pdef options)
+      (db-func pdef options))))
 
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database
