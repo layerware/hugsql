@@ -37,7 +37,7 @@
 
 (defn ^:no-doc fragment-pdef?
   [pdef]
-  (:frag (:hdr pdef)))
+  (-> pdef :hdr :frag some?))
 
 (defn ^:no-doc parsed-defs-from-string
   "Given a hugsql SQL string,
@@ -383,7 +383,8 @@
    `(doseq [~'pdef (parsed-defs-from-file ~file)]
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (expand-compile-frags ~'pdef)]
-        (intern-sqlvec-fn ~'exp-pdef ~options)))))
+        (when-not (fragment-pdef? ~'exp-pdef)
+          (intern-sqlvec-fn ~'exp-pdef ~options))))))
 
 (defmacro def-sqlvec-fns-from-string
   "Given a HugSQL SQL string, define the <name>-sqlvec functions in the
@@ -410,7 +411,8 @@
       (validate-parsed-def! ~'pdef)
       (let [~'exp-pdef (expand-compile-frags ~'pdef)]
         (compile-exprs ~'exp-pdef)
-        (intern-sqlvec-fn ~'exp-pdef ~options)))))
+        (when-not (fragment-pdef? ~'exp-pdef)
+          (intern-sqlvec-fn ~'exp-pdef ~options))))))
 
 (defmacro map-of-sqlvec-fns
   "Given a HugSQL SQL file, return a hashmap of database
@@ -447,7 +449,8 @@
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef))
         (apply merge
-               (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
+               (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % ~options))
+                    ~'pdefs))))))
 
 (defmacro map-of-sqlvec-fns-from-string
   "Given a HugSQL SQL string, return a hashmap of sqlvec
@@ -482,7 +485,8 @@
         (doseq [~'exp-pdef ~'exp-pdefs]
           (compile-exprs ~'exp-pdef))
         (apply merge
-               (map #(sqlvec-fn-map % ~options) ~'pdefs))))))
+               (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % ~options))
+                    ~'pdefs))))))
 
 (defn db-fn*
   "Given parsed sql and optionally a command, result, and options,
@@ -558,14 +562,14 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
-(defmacro ^:no-doc dispatch-on-pdef
+(defn ^:no-doc dispatch-on-pdef
   "Mini-macro that extracts out the common functionality of dispatching
    on fragments, snippets, or DB functions."
   [pdef options db-func sqlvec-func]
-  `(when-not (fragment-pdef? ~pdef)
-     (if (snippet-pdef? ~pdef)
-       (~sqlvec-func ~pdef ~options)
-       (~db-func ~pdef ~options))))
+  (when-not (fragment-pdef? pdef)
+     (if (snippet-pdef? pdef)
+       (sqlvec-func pdef options)
+       (db-func pdef options))))
 
 (defmacro def-db-fns
   "Given a HugSQL SQL file, define the database

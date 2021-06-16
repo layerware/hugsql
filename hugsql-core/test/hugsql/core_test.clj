@@ -80,7 +80,8 @@
 ;; Use a string
 (def hugsql-string-defs
   (str "-- :name test3-select\n select * from test3"
-       "-- :snip snip1\n select *"))
+       "-- :snip snip1\n select *"
+       "-- :frag frag1\n select *"))
 (hugsql/def-db-fns-from-string hugsql-string-defs)
 
 (deftest core
@@ -192,7 +193,6 @@
                                         (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
              :order (order-snip {:fields ["id"]})}))))
 
-  
   (testing "fragments"
     (testing "fragments should not be interned as exprs"
       (is (not (resolve `where-frag)))
@@ -215,7 +215,7 @@
     (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
            (frag-query-cond-2-sqlvec
             {:name "Ed"}))))
-  
+
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
     (is (:private (meta #'another-private-fn)))
@@ -242,7 +242,13 @@
       (is (fn? (get-in sql-fns [:select-snip :fn])))
       (is (= "One value param (sqlvec)" (get-in sql-fns [:one-value-param-sqlvec :meta :doc])))
       (is (fn? (get-in db-fns-str [:test3-select :fn])))
-      (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
+      (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))
+      (is (fn? (get-in sql-fns-str [:snip1 :fn])))
+      (testing "fragments are not included in maps"
+        (is (nil? (get db-fns :select-frag)))
+        (is (nil? (get sql-fns :select-frag)))
+        (is (nil? (get db-fns-str :frag1)))
+        (is (nil? (get sql-fns-str :frag1))))))
 
   (testing "missing header :name, :name-, :snip, :snip-, or :frag"
     (is (thrown-with-msg? ExceptionInfo
@@ -255,6 +261,20 @@
                           #"HugSQL Header .* not given."
                           (hugsql/def-db-fns-from-string
                             "-- :name \nselect * from test"))))
+
+  (testing "fragment errors"
+    (is (thrown-with-msg? ExceptionInfo
+                          #"Fragment :bad-frag contains itself!.*"
+                          (hugsql/def-db-fns-from-string
+                            "-- :frag bad-frag\nselect * from :frag:bad-frag")))
+    (do (hugsql/def-db-fns-from-string
+          "-- :frag dumb-frag-1\nselect * from test")
+        (hugsql/def-db-fns-from-string
+          "-- :frag dumb-frag-2\n:frag:dumb-frag-1 where 1")
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Fragment :dumb-frag-1 has cyclic dependency!.*"
+                              (hugsql/def-db-fns-from-string
+                                "-- :frag dumb-frag-1\n:frag:dumb-frag-2 and 1")))))
 
   (testing "value parameters allow vectors for ISQLParameter/etc overrides"
     (is (= ["insert into test (id, myarr) values (?, ?)" 1 [1 2 3]]
@@ -276,190 +296,190 @@
             {:col_num 1}))))
 
   #_(doseq [[db-name db-spec] dbs]
-    (doseq [[adapter-name adapter] adapters]
-      (let [db (or (adapter-name db-spec) (:default db-spec))]
+      (doseq [[adapter-name adapter] adapters]
+        (let [db (or (adapter-name db-spec) (:default db-spec))]
 
-        (testing "throw if adapter not set"
-          (hugsql/set-adapter! nil)
-          (is (thrown-with-msg? ExceptionInfo
-                                #"No adapter set: use set-adapter!"
-                                (one-value-param db {:x 1}))))
+          (testing "throw if adapter not set"
+            (hugsql/set-adapter! nil)
+            (is (thrown-with-msg? ExceptionInfo
+                                  #"No adapter set: use set-adapter!"
+                                  (one-value-param db {:x 1}))))
 
-        (testing "adapter set"
-          (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
+          (testing "adapter set"
+            (is (satisfies? hugsql.adapter/HugsqlAdapter (hugsql/set-adapter! adapter))))
 
-        (testing "parameter placeholder vs data mismatch"
-          (is (thrown-with-msg? ExceptionInfo
-                                #"Parameter Mismatch: :id parameter data not found."
-                                (one-value-param-sqlvec {:x 1})))
-          (is (thrown-with-msg? ExceptionInfo
-                                #"Parameter Mismatch: :id parameter data not found."
-                                (one-value-param db {:x 1})))
+          (testing "parameter placeholder vs data mismatch"
+            (is (thrown-with-msg? ExceptionInfo
+                                  #"Parameter Mismatch: :id parameter data not found."
+                                  (one-value-param-sqlvec {:x 1})))
+            (is (thrown-with-msg? ExceptionInfo
+                                  #"Parameter Mismatch: :id parameter data not found."
+                                  (one-value-param db {:x 1})))
           ;; does not throw on false
-          (is (= ["select * from test where id = ?" false]
-                 (one-value-param-sqlvec {:id false})))
+            (is (= ["select * from test where id = ?" false]
+                   (one-value-param-sqlvec {:id false})))
 
           ;; deep-get check
-          (is (thrown-with-msg? ExceptionInfo
-                                #"Parameter Mismatch: :emps.0.id parameter data not found."
-                                (hugsql/sqlvec "select * from emp where id = :emps.0.id"
-                                               {:emps [{:not-id 1}]})))
+            (is (thrown-with-msg? ExceptionInfo
+                                  #"Parameter Mismatch: :emps.0.id parameter data not found."
+                                  (hugsql/sqlvec "select * from emp where id = :emps.0.id"
+                                                 {:emps [{:not-id 1}]})))
 
           ;; namespaced keywords
-          (is (thrown-with-msg? ExceptionInfo
-                                #"Parameter Mismatch: :emp/id parameter data not found."
-                                (hugsql/sqlvec "select * from emp where id = :emp/id"
-                                               {:id 42}))))
+            (is (thrown-with-msg? ExceptionInfo
+                                  #"Parameter Mismatch: :emp/id parameter data not found."
+                                  (hugsql/sqlvec "select * from emp where id = :emp/id"
+                                                 {:id 42}))))
 
-        (testing "database commands/queries"
-          (condp = db-name
-            :mysql (is (= 0 (create-test-table-mysql db)))
-            :h2 (is (= 0 (create-test-table-h2 db)))
-            :hsqldb (is (= 0 (create-test-table-hsqldb db)))
-            (is (= 0 (create-test-table db))))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+          (testing "database commands/queries"
+            (condp = db-name
+              :mysql (is (= 0 (create-test-table-mysql db)))
+              :h2 (is (= 0 (create-test-table-h2 db)))
+              :hsqldb (is (= 0 (create-test-table-hsqldb db)))
+              (is (= 0 (create-test-table db))))
+            (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+            (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
 
-          (testing "tuple"
+            (testing "tuple"
             ;; tuple use is not supported by certain dbs
-            (when (not-any? #(= % db-name) [:derby :sqlite :hsqldb])
-              (is (= [{:id 1 :name "A"}] (tuple-param db {:id-name [1 "A"]})))))
+              (when (not-any? #(= % db-name) [:derby :sqlite :hsqldb])
+                (is (= [{:id 1 :name "A"}] (tuple-param db {:id-name [1 "A"]})))))
 
-          (testing "insert multiple values"
+            (testing "insert multiple values"
             ;; only hsqldb appears to not support multi-insert values for :tuple*
-            (when (not (= db-name :hsqldb))
-              (is (= 3 (insert-multi-into-test-table db {:values [[4 "D"] [5 "E"] [6 "F"]]})))))
+              (when (not (= db-name :hsqldb))
+                (is (= 3 (insert-multi-into-test-table db {:values [[4 "D"] [5 "E"] [6 "F"]]})))))
 
-          (testing "returning"
+            (testing "returning"
             ;; returning support is lacking in many dbs
-            (when (not-any? #(= % db-name) [:mysql :h2 :derby :sqlite :hsqldb])
-              (is (= [{:id 7}]
-                     (insert-into-test-table-returning db {:id 7 :name "G"})))))
+              (when (not-any? #(= % db-name) [:mysql :h2 :derby :sqlite :hsqldb])
+                (is (= [{:id 7}]
+                       (insert-into-test-table-returning db {:id 7 :name "G"})))))
 
-          (testing "insert w/ return of .getGeneratedKeys"
+            (testing "insert w/ return of .getGeneratedKeys"
             ;; return generated keys, which has varying support and return values
             ;; clojure.java.jdbc returns a hashmap, clojure.jdbc returns a vector of hashmaps
-            (when (= adapter-name :clojure.java.jdbc)
-              (condp = db-name
-                :postgresql
-                (is (= {:id 8 :name "H"}
-                       (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
+              (when (= adapter-name :clojure.java.jdbc)
+                (condp = db-name
+                  :postgresql
+                  (is (= {:id 8 :name "H"}
+                         (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
 
-                :mysql
-                (is (= {:generated_key 9}
-                       (insert-into-test-table-return-keys db {:id 9 :name "I"})))
+                  :mysql
+                  (is (= {:generated_key 9}
+                         (insert-into-test-table-return-keys db {:id 9 :name "I"})))
 
-                :sqlite
-                (is (= {(keyword "last_insert_rowid()") 10}
-                       (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
+                  :sqlite
+                  (is (= {(keyword "last_insert_rowid()") 10}
+                         (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
 
-                :h2
-                (is (= {(keyword "scope_identity()") 11}
-                       (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
-
-                ;; hsql and derby don't seem to support .getGeneratedKeys
-                nil))
-
-            (when (= adapter-name :clojure.jdbc)
-              (condp = db-name
-                :postgresql
-                (is (= [{:id 8 :name "H"}]
-                       (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
-
-                :mysql
-                (is (= [{:generated_key 9}]
-                       (insert-into-test-table-return-keys db {:id 9 :name "I"})))
-
-                :sqlite
-                (is (= [{(keyword "last_insert_rowid()") 10}]
-                       (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
-
-                :h2
-                (is (= [{(keyword "scope_identity()") 11}]
-                       (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
+                  :h2
+                  (is (= {(keyword "scope_identity()") 11}
+                         (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
 
                 ;; hsql and derby don't seem to support .getGeneratedKeys
-                nil)))
+                  nil))
 
-          (is (= 1 (update-test-table db {:id 1 :name "C"})))
-          (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
-          (is (= {:id 1 :name "C"} (select-deep-get db {:records [{:id 1}]})))
-          (is (= {:id 1 :name "C"} (select-namespaced-keyword db {:test/id 1})))
-          (is (= {:id 1 :name "C"} (select-namespaced-keyword-deep-get db {:test.x/records [{:id 1}]})))
-          (is (= 0 (drop-test-table db))))
+              (when (= adapter-name :clojure.jdbc)
+                (condp = db-name
+                  :postgresql
+                  (is (= [{:id 8 :name "H"}]
+                         (insert-into-test-table-return-keys db {:id 8 :name "H"} {})))
 
-        (testing "db-fn"
-          (is (= 0 (create-test-table db)))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (fn? (hugsql/db-fn "select * from test where id = :id" :? :1)))
-          (is (= "A" (:name
-                      (let [f (hugsql/db-fn "select * from test where id = :id" :? :1)]
-                        (f db {:id 1})))))
-          (is (= 0 (drop-test-table db))))
+                  :mysql
+                  (is (= [{:generated_key 9}]
+                         (insert-into-test-table-return-keys db {:id 9 :name "I"})))
 
-        (testing "db-run"
-          (is (= 0 (create-test-table db)))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (= "A" (:name
-                      (hugsql/db-run db "select * from test where id = :id" {:id 1} :? :1))))
-          (is (= 0 (drop-test-table db))))
+                  :sqlite
+                  (is (= [{(keyword "last_insert_rowid()") 10}]
+                         (insert-into-test-table-return-keys db {:id 10 :name "J"} {})))
 
-        (testing "adapter-specific command option pass-through"
-          (is (= 0 (create-test-table db)))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+                  :h2
+                  (is (= [{(keyword "scope_identity()") 11}]
+                         (insert-into-test-table-return-keys db {:id 11 :name "J"} {})))
 
-          (when (= adapter-name :clojure.java.jdbc)
-            (is (= [[:name] ["A"] ["B"]]
-                   (select-ordered db
-                                   {:cols ["name"] :sort-by ["name"]} {} {:as-arrays? true}))))
+                ;; hsql and derby don't seem to support .getGeneratedKeys
+                  nil)))
 
-          (is (= 0 (drop-test-table db))))
+            (is (= 1 (update-test-table db {:id 1 :name "C"})))
+            (is (= {:id 1 :name "C"} (select-one-test-by-id db {:id 1})))
+            (is (= {:id 1 :name "C"} (select-deep-get db {:records [{:id 1}]})))
+            (is (= {:id 1 :name "C"} (select-namespaced-keyword db {:test/id 1})))
+            (is (= {:id 1 :name "C"} (select-namespaced-keyword-deep-get db {:test.x/records [{:id 1}]})))
+            (is (= 0 (drop-test-table db))))
 
-        (testing "Clojure expressions"
-          (is (= 0 (create-test-table db)))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
-          (is (= 1 (insert-into-test-table db {:id 3 :name "C"})))
+          (testing "db-fn"
+            (is (= 0 (create-test-table db)))
+            (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+            (is (fn? (hugsql/db-fn "select * from test where id = :id" :? :1)))
+            (is (= "A" (:name
+                        (let [f (hugsql/db-fn "select * from test where id = :id" :? :1)]
+                          (f db {:id 1})))))
+            (is (= 0 (drop-test-table db))))
 
-          (is (= {:name "A"} (clj-expr-single db {:cols ["name"]})))
-          (is (= {:id 1 :name "A"} (clj-expr-single db)))
+          (testing "db-run"
+            (is (= 0 (create-test-table db)))
+            (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+            (is (= "A" (:name
+                        (hugsql/db-run db "select * from test where id = :id" {:id 1} :? :1))))
+            (is (= 0 (drop-test-table db))))
 
-          (is (= {:name "A"} (clj-expr-multi db {:cols ["name"]})))
-          (is (= {:id 1 :name "A"} (clj-expr-multi db)))
-
-          (is (= {:id 1 :name "A"} (clj-expr-multi-when db)))
-          (is (= {:id 2 :name "B"} (clj-expr-multi-when db {:id 2})))
-
-          (is (= 1 (clj-expr-generic-update db {:table "test"
-                                                :updates {:name "X"}
-                                                :id 3})))
-          (is (= 0 (drop-test-table db))))
-
-        (testing "snippets"
-          (is (= 0 (create-test-table db)))
-          (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
-          (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
-
-          (is (= [{:id 1 :name "A"}
-                  {:id 2 :name "B"}]
-                 (snip-query
-                  db
-                  {:select (select-snip {:cols ["id","name"]})
-                   :from (from-snip {:tables ["test"]})
-                   :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
-                                              (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
-                   :order (order-snip {:fields ["id"]})})))
-
-          (is (= 0 (drop-test-table db))))
-
-        (when (and (= db-name :postgresql) (= adapter-name :clojure.java.jdbc))
-          (testing "command & result used in public and private fns"
+          (testing "adapter-specific command option pass-through"
             (is (= 0 (create-test-table db)))
             (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
             (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
 
-            (is (= {:id 1} (update-test-table-returning db {:id 1 :name "C"})))
-            (is (= {:id 2} (update-test-table-returning-private db {:id 2 :name "D"})))
+            (when (= adapter-name :clojure.java.jdbc)
+              (is (= [[:name] ["A"] ["B"]]
+                     (select-ordered db
+                                     {:cols ["name"] :sort-by ["name"]} {} {:as-arrays? true}))))
 
-            (is (= 0 (drop-test-table db)))))))))
+            (is (= 0 (drop-test-table db))))
+
+          (testing "Clojure expressions"
+            (is (= 0 (create-test-table db)))
+            (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+            (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+            (is (= 1 (insert-into-test-table db {:id 3 :name "C"})))
+
+            (is (= {:name "A"} (clj-expr-single db {:cols ["name"]})))
+            (is (= {:id 1 :name "A"} (clj-expr-single db)))
+
+            (is (= {:name "A"} (clj-expr-multi db {:cols ["name"]})))
+            (is (= {:id 1 :name "A"} (clj-expr-multi db)))
+
+            (is (= {:id 1 :name "A"} (clj-expr-multi-when db)))
+            (is (= {:id 2 :name "B"} (clj-expr-multi-when db {:id 2})))
+
+            (is (= 1 (clj-expr-generic-update db {:table "test"
+                                                  :updates {:name "X"}
+                                                  :id 3})))
+            (is (= 0 (drop-test-table db))))
+
+          (testing "snippets"
+            (is (= 0 (create-test-table db)))
+            (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+            (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+            (is (= [{:id 1 :name "A"}
+                    {:id 2 :name "B"}]
+                   (snip-query
+                    db
+                    {:select (select-snip {:cols ["id","name"]})
+                     :from (from-snip {:tables ["test"]})
+                     :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
+                                                (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
+                     :order (order-snip {:fields ["id"]})})))
+
+            (is (= 0 (drop-test-table db))))
+
+          (when (and (= db-name :postgresql) (= adapter-name :clojure.java.jdbc))
+            (testing "command & result used in public and private fns"
+              (is (= 0 (create-test-table db)))
+              (is (= 1 (insert-into-test-table db {:id 1 :name "A"})))
+              (is (= 1 (insert-into-test-table db {:id 2 :name "B"})))
+
+              (is (= {:id 1} (update-test-table-returning db {:id 1 :name "C"})))
+              (is (= {:id 2} (update-test-table-returning-private db {:id 2 :name "D"})))
+
+              (is (= 0 (drop-test-table db)))))))))

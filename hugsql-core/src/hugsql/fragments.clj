@@ -24,7 +24,7 @@
    ancestors. Throws an exception upon detecting a cycle."
   [pdef]
   (let [{:keys [hdr sql]} pdef
-        frag-name (->> hdr :frag first)
+        frag-name (->> hdr :frag first keyword)
         frag-ans  (->> sql
                        (filter #(and (map? %) (= :frag (:type %))))
                        (map #(-> % :name keyword))
@@ -63,7 +63,7 @@
                  (concat sql-temp' frag-sql))
           (throw (ex-info
                   (str "Unknown ancestor fragment " (:name sql-elem) "!\n"
-                       "SQL: " (pr-str (sql-template)))
+                       "SQL: " (pr-str sql-template))
                   {})))
 
         :else
