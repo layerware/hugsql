@@ -1,5 +1,5 @@
 (ns hugsql.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [hugsql.core :as hugsql]
             [hugsql.adapter]
             [hugsql.adapter.clojure-java-jdbc :as cjj-adapter]
@@ -80,7 +80,8 @@
 ;; Use a string
 (def hugsql-string-defs
   (str "-- :name test3-select\n select * from test3"
-       "-- :snip snip1\n select *"))
+       "-- :snip snip1\n select *"
+       "-- :frag frag1\n select *"))
 (hugsql/def-db-fns-from-string hugsql-string-defs)
 
 (deftest core
@@ -90,7 +91,8 @@
 
   (testing "defs from string worked"
     (is (fn? test3-select))
-    (is (fn? snip1)))
+    (is (fn? snip1))
+    (is (not (resolve `frag1))))
 
   (testing "sql file does not exist/can't be read"
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
@@ -181,7 +183,7 @@
     (is (= ["select * from test where id = ?" 1]
            (hugsql/sqlvec "select * from test where id = :id" {:id 1}))))
 
-  (testing "Snippets"
+  (testing "snippets"
     (is (= ["select id, name"] (select-snip {:cols ["id","name"]})))
     (is (= ["from test"] (from-snip {:tables ["test"]})))
     (is (= ["select id, name\nfrom test\nwhere id = ? or id = ?\norder by id" 1 2]
@@ -191,6 +193,29 @@
              :where (where-snip {:cond [(cond-snip {:conj "" :cond ["id" "=" 1]})
                                         (cond-snip {:conj "or" :cond ["id" "=" 2]})]})
              :order (order-snip {:fields ["id"]})}))))
+
+  (testing "fragments"
+    (testing "fragments should not be interned as exprs"
+      (is (not (resolve `where-frag)))
+      (is (resolve `frag-query-sqlvec)))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-sqlvec
+            {:id 1 :name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-cond-sqlvec
+            {:id 1 :name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?" 1]
+           (frag-query-cond-sqlvec
+            {:id 1})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
+           (frag-query-cond-sqlvec
+            {:name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+           (frag-query-cond-2-sqlvec
+            {:id 1 :name "Ed"})))
+    (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
+           (frag-query-cond-2-sqlvec
+            {:name "Ed"}))))
 
   (testing "metadata"
     (is (:private (meta #'a-private-fn)))
@@ -218,19 +243,43 @@
       (is (fn? (get-in sql-fns [:select-snip :fn])))
       (is (= "One value param (sqlvec)" (get-in sql-fns [:one-value-param-sqlvec :meta :doc])))
       (is (fn? (get-in db-fns-str [:test3-select :fn])))
-      (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))))
+      (is (fn? (get-in sql-fns-str [:test3-select-sqlvec :fn])))
+      (is (fn? (get-in sql-fns-str [:snip1 :fn])))
+      (testing "fragments are not included in maps"
+        (is (nil? (get db-fns :select-frag)))
+        (is (nil? (get sql-fns :select-frag)))
+        (is (nil? (get db-fns-str :frag1)))
+        (is (nil? (get sql-fns-str :frag1))))))
 
-  (testing "missing header :name, :name-, :snip, or :snip-"
+  (testing "missing header :name, :name-, :snip, :snip-, or :frag"
     (is (thrown-with-msg? ExceptionInfo
                           #"Missing HugSQL Header of "
                           (hugsql/def-db-fns-from-string
                             "-- :name: almost-a-yesql-name-hdr\nselect * from test"))))
 
-  (testing "nil header :name, :name-, :snip, or :snip-"
+  (testing "nil header :name, :name-, :snip, :snip-, or :frag"
     (is (thrown-with-msg? ExceptionInfo
                           #"HugSQL Header .* not given."
                           (hugsql/def-db-fns-from-string
                             "-- :name \nselect * from test"))))
+
+  (testing "fragment errors"
+    (is (thrown-with-msg? ExceptionInfo
+                          #"Unknown ancestor fragment :unknown-frag!.*"
+                          (hugsql/def-db-fns-from-string
+                            "-- :name bad-query\nselect * from :frag:unknown-frag")))
+    (is (thrown-with-msg? ExceptionInfo
+                          #"Fragment :bad-frag contains itself!.*"
+                          (hugsql/def-db-fns-from-string
+                            "-- :frag bad-frag\nselect * from :frag:bad-frag")))
+    (do (hugsql/def-db-fns-from-string
+          "-- :frag dumb-frag-1\nselect * from test")
+        (hugsql/def-db-fns-from-string
+          "-- :frag dumb-frag-2\n:frag:dumb-frag-1 where 1")
+        (is (thrown-with-msg? ExceptionInfo
+                              #"Fragment :dumb-frag-1 has cyclic dependency!.*"
+                              (hugsql/def-db-fns-from-string
+                                "-- :frag dumb-frag-1\n:frag:dumb-frag-2 and 1")))))
 
   (testing "value parameters allow vectors for ISQLParameter/etc overrides"
     (is (= ["insert into test (id, myarr) values (?, ?)" 1 [1 2 3]]
