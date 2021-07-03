@@ -6,7 +6,7 @@ A Clojure library for embracing SQL.
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.layerware/hugsql.svg)](https://clojars.org/com.layerware/hugsql)
 
-[![CircleCI](https://circleci.com/gh/layerware/hugsql.svg?style=svg)](https://circleci.com/gh/layerware/hugsql)
+[![Tests](https://github.com/layerware/hugsql/actions/workflows/lint-test-build.yml/badge.svg)](https://github.com/layerware/hugsql/actions/workflows/lint-test-build.yml)
 
 ## Documentation
 

@@ -1,0 +1,67 @@
+name: Lint, Test, Build
+on:
+  pull_request:
+  push:
+
+jobs:
+  lint-test-build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java: ['8','11','16']
+
+    services:
+      postgres:
+        image: postgres:13.3
+        env:
+          POSTGRES_DB: hugtest
+          POSTGRES_USER: hugtest
+          POSTGRES_PASSWORD: hugtest
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_DATABASE: hugtest
+          MYSQL_USER: hugtest
+          MYSQL_PASSWORD: hugtest
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@3.2
+        with:
+          lein: 2.9.6
+
+      - name: Install jars locally
+        run: lein install-all
+
+      - name: Dependencies
+        run: lein deps
+
+      - name: Test
+        working-directory: ./hugsql-core
+        run: lein test-all
