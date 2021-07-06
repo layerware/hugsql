@@ -198,22 +198,22 @@
     (testing "fragments should not be interned as exprs"
       (is (not (resolve `where-frag)))
       (is (resolve `frag-query-sqlvec)))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+    (is (= ["select id, name\nfrom test\nwhere true\nand id = ?\nand name = ?" 1 "Ed"]
            (frag-query-sqlvec
             {:id 1 :name "Ed"})))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+    (is (= ["select id, name\nfrom test\nwhere true\nand id = ?\nand name = ?" 1 "Ed"]
            (frag-query-cond-sqlvec
             {:id 1 :name "Ed"})))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?" 1]
+    (is (= ["select id, name\nfrom test\nwhere true\nand id = ?" 1]
            (frag-query-cond-sqlvec
             {:id 1})))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
+    (is (= ["select id, name\nfrom test\nwhere true\nand name = ?" "Ed"]
            (frag-query-cond-sqlvec
             {:name "Ed"})))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand id = ?\nand name = ?" 1 "Ed"]
+    (is (= ["select id, name\nfrom test\nwhere true\nand id = ?\nand name = ?" 1 "Ed"]
            (frag-query-cond-2-sqlvec
             {:id 1 :name "Ed"})))
-    (is (= ["select id, name\nfrom test\nwhere 1\nand name = ?" "Ed"]
+    (is (= ["select id, name\nfrom test\nwhere true\nand name = ?" "Ed"]
            (frag-query-cond-2-sqlvec
             {:name "Ed"}))))
 
@@ -275,7 +275,7 @@
     (do (hugsql/def-db-fns-from-string
           "-- :frag dumb-frag-1\nselect * from test")
         (hugsql/def-db-fns-from-string
-          "-- :frag dumb-frag-2\n:frag:dumb-frag-1 where 1")
+          "-- :frag dumb-frag-2\n:frag:dumb-frag-1 where true")
         (is (thrown-with-msg? ExceptionInfo
                               #"Fragment :dumb-frag-1 has cyclic dependency!.*"
                               (hugsql/def-db-fns-from-string
