@@ -231,7 +231,7 @@ select id, name
 from test
 
 -- :frag where-frag-0
-where 1
+where true
 
 -- :frag where-frag-1
 and id = :id
