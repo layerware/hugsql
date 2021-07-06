@@ -31,7 +31,7 @@
                        set)]
     (if (contains? frag-ans frag-name)
       ;; No self loops
-      (throw (ex-info (str "Fragment " frag-name " contains itself!\n"
+      (throw (ex-info (str "Fragment " frag-name " contains itself.\n"
                            "Immediate ancestors: " (pr-str frag-ans))
                       {}))
       (let [deep-ans (->> frag-ans
@@ -40,7 +40,7 @@
             all-ans  (cset/union frag-ans deep-ans)]
         ;; No cycles
         (if (contains? all-ans frag-name)
-          (throw (ex-info (str "Fragment " frag-name " has cyclic dependency!\n"
+          (throw (ex-info (str "Fragment " frag-name " has cyclic dependency.\n"
                                "All ancestors: " (pr-str all-ans))
                           {}))
           ;; We're good
@@ -62,7 +62,7 @@
           (recur (rest sql-temp)
                  (concat sql-temp' frag-sql))
           (throw (ex-info
-                  (str "Unknown ancestor fragment " (:name sql-elem) "!\n"
+                  (str "Unknown ancestor fragment: " (:name sql-elem) "\n"
                        "SQL: " (pr-str sql-template))
                   {})))
 

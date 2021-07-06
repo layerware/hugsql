@@ -265,11 +265,11 @@
 
   (testing "fragment errors"
     (is (thrown-with-msg? ExceptionInfo
-                          #"Unknown ancestor fragment :unknown-frag!.*"
+                          #"Unknown ancestor fragment: :unknown-frag.*"
                           (hugsql/def-db-fns-from-string
                             "-- :name bad-query\nselect * from :frag:unknown-frag")))
     (is (thrown-with-msg? ExceptionInfo
-                          #"Fragment :bad-frag contains itself!.*"
+                          #"Fragment :bad-frag contains itself\..*"
                           (hugsql/def-db-fns-from-string
                             "-- :frag bad-frag\nselect * from :frag:bad-frag")))
     (do (hugsql/def-db-fns-from-string
@@ -277,7 +277,7 @@
         (hugsql/def-db-fns-from-string
           "-- :frag dumb-frag-2\n:frag:dumb-frag-1 where true")
         (is (thrown-with-msg? ExceptionInfo
-                              #"Fragment :dumb-frag-1 has cyclic dependency!.*"
+                              #"Fragment :dumb-frag-1 has cyclic dependency\..*"
                               (hugsql/def-db-fns-from-string
                                 "-- :frag dumb-frag-1\n:frag:dumb-frag-2 and 1")))))
 
