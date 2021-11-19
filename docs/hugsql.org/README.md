@@ -1,5 +1,5 @@
 # HugSQL source for documentation site
 
-Go to [http://hugsql.org](hugsql.org)
+Go to [hugsql.org](http://hugsql.org)
 
-Site is generated with [https://jekyllrb.com/](jekyll).
+Site is generated with [jekyll](https://jekyllrb.com/).
