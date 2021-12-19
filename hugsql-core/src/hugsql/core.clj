@@ -21,7 +21,7 @@
    '(do
       (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
       (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc))))
-  (catch Exception e))
+  (catch Exception _))
 
 (defn ^:no-doc get-adapter
   "Get an adapter.  Throws exception if no adapter is set."
@@ -228,25 +228,25 @@
       :raw))))
 
 (defmulti hugsql-command-fn identity)
-(defmethod hugsql-command-fn :! [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :execute [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :i! [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :insert [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :<! [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :returning-execute [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :? [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :query [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :default [sym] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :! [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :execute [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :i! [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :insert [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :<! [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :returning-execute [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :? [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :query [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :default [_] 'hugsql.adapter/query)
 
 (defmulti hugsql-result-fn identity)
-(defmethod hugsql-result-fn :1 [sym] 'hugsql.adapter/result-one)
-(defmethod hugsql-result-fn :one [sym] 'hugsql.adapter/result-one)
-(defmethod hugsql-result-fn :* [sym] 'hugsql.adapter/result-many)
-(defmethod hugsql-result-fn :many [sym] 'hugsql.adapter/result-many)
-(defmethod hugsql-result-fn :n [sym] 'hugsql.adapter/result-affected)
-(defmethod hugsql-result-fn :affected [sym] 'hugsql.adapter/result-affected)
-(defmethod hugsql-result-fn :raw [sym] 'hugsql.adapter/result-raw)
-(defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
+(defmethod hugsql-result-fn :1 [_] 'hugsql.adapter/result-one)
+(defmethod hugsql-result-fn :one [_] 'hugsql.adapter/result-one)
+(defmethod hugsql-result-fn :* [_] 'hugsql.adapter/result-many)
+(defmethod hugsql-result-fn :many [_] 'hugsql.adapter/result-many)
+(defmethod hugsql-result-fn :n [_] 'hugsql.adapter/result-affected)
+(defmethod hugsql-result-fn :affected [_] 'hugsql.adapter/result-affected)
+(defmethod hugsql-result-fn :raw [_] 'hugsql.adapter/result-raw)
+(defmethod hugsql-result-fn :default [_] 'hugsql.adapter/result-raw)
 
 (defn sqlvec-fn*
   "Given parsed sql and optional options, return an
@@ -476,7 +476,7 @@
    with the form:
    {:fn-name {:meta {:doc \"doc string\"}
               :fn <anon-db-fn>}"
-  [{:keys [sql hdr file line]} options]
+  [{:keys [sql hdr]} options]
   (let [pnm (:name- hdr)
         nam (symbol (first (or (:name hdr) pnm)))
         doc (or (first (:doc hdr)) "")

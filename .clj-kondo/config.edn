@@ -1,0 +1,3 @@
+{:linters {:refer-all {:exclude [clojure.test]}
+           :unused-binding {:exclude-destructured-as true
+                            :exclude-destructured-keys-in-fn-args true}}}
