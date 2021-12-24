@@ -163,7 +163,7 @@
    Implementations must return a vector containing any resulting SQL
    in the first position and any values in the remaining positions.
    (e.g., [\"?\" 42])"
-  (fn [param data options] (:type param)))
+  (fn [param _data _options] (:type param)))
 
 (defmethod apply-hugsql-param :v  [param data options] (value-param param data options))
 (defmethod apply-hugsql-param :value [param data options] (value-param param data options))

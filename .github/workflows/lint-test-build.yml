@@ -10,11 +10,11 @@ jobs:
 
     strategy:
       matrix:
-        java: ['8','11','16']
+        java: ['8','11','17']
 
     services:
       postgres:
-        image: postgres:13.3
+        image: postgres:14.1
         env:
           POSTGRES_DB: hugtest
           POSTGRES_USER: hugtest
@@ -48,13 +48,13 @@ jobs:
       - name: Install Java
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
-          java-version: 11
+          distribution: temurin
+          java-version: 17
 
       - name: Install Clojure
-        uses: DeLaGuardo/setup-clojure@3.2
+        uses: DeLaGuardo/setup-clojure@3.5
         with:
-          lein: 2.9.6
+          lein: 2.9.8
 
       - name: Install jars locally
         run: lein install-all

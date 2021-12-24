@@ -28,22 +28,14 @@
   [c]
   (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/]" (str c))))
 
-(defn- skip-ws
-  "Read from reader until a non-whitespace char is encountered."
-  [rdr]
-  (loop [c (r/peek-char rdr)]
-    (when (whitespace? c)
-      (do (r/read-char rdr)
-          (recur (r/peek-char rdr))))))
-
 (defn- skip-ws-to-next-line
   "Read from reader until a non-whitespace or newline char is encountered."
   [rdr]
   (loop [c (r/peek-char rdr)]
     (when (and (whitespace? c)
                (not (= \newline c)))
-      (do (r/read-char rdr)
-          (recur (r/peek-char rdr))))))
+      (r/read-char rdr)
+      (recur (r/peek-char rdr)))))
 
 (defn- skip-to-next-line
   "Read from reader until a new line is encountered.
@@ -207,7 +199,7 @@
     (str "/*+" hint "*/")))
 
 (defn- read-sing-line-comment
-  [rdr c]
+  [rdr]
   (r/read-char rdr) ; eat second dash (-) of comment start
   (skip-ws-to-next-line rdr)
   (condp = (r/peek-char rdr)
@@ -216,7 +208,7 @@
     (skip-to-next-line rdr)))
 
 (defn- read-mult-line-comment
-  [rdr c]
+  [rdr]
   (r/read-char rdr) ; eat second comment char (*)
   (skip-ws-to-next-line rdr)
   (condp = (r/peek-char rdr)
@@ -240,7 +232,7 @@
         (recur (sb-append s c) (r/read-char rdr))))))
 
 (defn- read-hugsql-param
-  [rdr c]
+  [rdr]
   (let [{:keys [name namespace type]} (read-keyword rdr)]
     {:type (keyword (or type "v"))
      :name (if namespace
@@ -292,8 +284,8 @@
               (sing-line-comment-start? c rdr)
               (mult-line-comment-start? c rdr))
              (if-let [x (if (sing-line-comment-start? c rdr)
-                          (read-sing-line-comment rdr c)
-                          (read-mult-line-comment rdr c))]
+                          (read-sing-line-comment rdr)
+                          (read-mult-line-comment rdr))]
                ;; hdr was read from comment
                (cond
                  (map? x)
@@ -338,7 +330,7 @@
              (hugsql-param-start? c)
              (recur hdr
                     (vec (filter seq
-                                 (conj sql (str sb) (read-hugsql-param rdr c))))
+                                 (conj sql (str sb) (read-hugsql-param rdr))))
                     (nsb)
                     all)
 
