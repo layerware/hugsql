@@ -72,6 +72,9 @@ const config = {
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
         hashed: true,
+        indexDocs:true,
+        indexPages:false,
+        indexBlog:false,
         docsRouteBasePath: "/",
         searchResultLimits: 10,
         searchResultContextMaxLength: 100,
