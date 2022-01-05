@@ -16,7 +16,7 @@ Value Parameters are the default parameter type, so you can omit the type portio
 --:name value-param :? :*
 select * from characters where id = :id
 
---name value-param-with-param-type :? :*
+--:name value-param-with-param-type :? :*
 select * from characters where id = :v:id
 ```
 
