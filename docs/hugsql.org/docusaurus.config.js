@@ -33,6 +33,17 @@ const config = {
     ],
   ],
 
+  scripts: [
+    {
+      src: "/js/redirects.js",
+      async: true,
+    },
+    {
+      src: "/js/ga.js",
+      async: true,
+    },
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -72,9 +83,9 @@ const config = {
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
         hashed: true,
-        indexDocs:true,
-        indexPages:false,
-        indexBlog:false,
+        indexDocs: true,
+        indexPages: false,
+        indexBlog: false,
         docsRouteBasePath: "/",
         searchResultLimits: 10,
         searchResultContextMaxLength: 100,
