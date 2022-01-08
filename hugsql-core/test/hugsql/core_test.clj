@@ -94,7 +94,7 @@
 
   (testing "sql file does not exist/can't be read"
     (is (thrown-with-msg? ExceptionInfo #"Can not read file"
-                          (eval '(hugsql.core/def-db-fns "non/existent/file.sql")))))
+                          (hugsql.core/def-db-fns "non/existent/file.sql"))))
 
   (testing "fn definition"
     (is (fn? no-params-select))

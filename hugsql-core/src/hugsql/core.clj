@@ -313,7 +313,7 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
-(defmacro def-sqlvec-fns
+(defn def-sqlvec-fns
   "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
   parameter values. (e.g., [\"select * from test where id = ?\" 42])
@@ -334,14 +334,14 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([file] `(def-sqlvec-fns ~file {}))
+  ([file] (def-sqlvec-fns file {}))
   ([file options]
-   `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (validate-parsed-def! ~'pdef)
-      (compile-exprs ~'pdef)
-      (intern-sqlvec-fn ~'pdef ~options))))
+   (doseq [pdef (parsed-defs-from-file file)]
+     (validate-parsed-def! pdef)
+     (compile-exprs pdef)
+     (intern-sqlvec-fn pdef options))))
 
-(defmacro def-sqlvec-fns-from-string
+(defn def-sqlvec-fns-from-string
   "Given a HugSQL SQL string, define the <name>-sqlvec functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
   parameter values. (e.g., [\"select * from test where id = ?\" 42])
@@ -360,14 +360,14 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([s] `(def-sqlvec-fns-from-string ~s {}))
+  ([s] (def-sqlvec-fns-from-string s {}))
   ([s options]
-   `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (validate-parsed-def! ~'pdef)
-      (compile-exprs ~'pdef)
-      (intern-sqlvec-fn ~'pdef ~options))))
+   (doseq [pdef (parsed-defs-from-string s)]
+     (validate-parsed-def! pdef)
+     (compile-exprs pdef)
+     (intern-sqlvec-fn pdef options))))
 
-(defmacro map-of-sqlvec-fns
+(defn map-of-sqlvec-fns
   "Given a HugSQL SQL file, return a hashmap of database
    functions of the form:
 
@@ -393,16 +393,16 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([file] `(map-of-sqlvec-fns ~file {}))
+  ([file] (map-of-sqlvec-fns file {}))
   ([file options]
-   `(let [~'pdefs (parsed-defs-from-file ~file)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef)
-        (compile-exprs ~'pdef))
-      (apply merge
-             (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
+   (let [pdefs (parsed-defs-from-file file)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef)
+       (compile-exprs pdef))
+     (apply merge
+            (map #(sqlvec-fn-map % options) pdefs)))))
 
-(defmacro map-of-sqlvec-fns-from-string
+(defn map-of-sqlvec-fns-from-string
   "Given a HugSQL SQL string, return a hashmap of sqlvec
    functions of the form:
 
@@ -426,14 +426,14 @@
 
    :fn-suffix is appended to the defined function names to
    differentiate them from the functions defined by def-db-fns."
-  ([s] `(map-of-sqlvec-fns-from-string ~s {}))
+  ([s] (map-of-sqlvec-fns-from-string s {}))
   ([s options]
-   `(let [~'pdefs (parsed-defs-from-string ~s)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef)
-        (compile-exprs ~'pdef))
-      (apply merge
-             (map #(sqlvec-fn-map % ~options) ~'pdefs)))))
+   (let [pdefs (parsed-defs-from-string s)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef)
+       (compile-exprs pdef))
+     (apply merge
+            (map #(sqlvec-fn-map % options) pdefs)))))
 
 (defn db-fn*
   "Given parsed sql and optionally a command, result, and options,
@@ -510,7 +510,7 @@
   [pdef]
   (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
 
-(defmacro def-db-fns
+(defn def-db-fns
   "Given a HugSQL SQL file, define the database
    functions in the current namespace.
 
@@ -546,16 +546,16 @@
    See also hugsql.core/set-adapter! to set adapter for all def-db-fns
    calls.  Also, :adapter can be specified for individual function
    calls (overriding set-adapter! and the :adapter option here)."
-  ([file] `(def-db-fns ~file {}))
+  ([file] (def-db-fns file {}))
   ([file options]
-   `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (validate-parsed-def! ~'pdef)
-      (compile-exprs ~'pdef)
-      (if (snippet-pdef? ~'pdef)
-        (intern-sqlvec-fn ~'pdef ~options)
-        (intern-db-fn ~'pdef ~options)))))
+   (doseq [pdef (parsed-defs-from-file file)]
+     (validate-parsed-def! pdef)
+     (compile-exprs pdef)
+     (if (snippet-pdef? pdef)
+       (intern-sqlvec-fn pdef options)
+       (intern-db-fn pdef options)))))
 
-(defmacro def-db-fns-from-string
+(defn def-db-fns-from-string
   "Given a HugSQL SQL string, define the database
    functions in the current namespace.
 
@@ -570,16 +570,16 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] `(def-db-fns-from-string ~s {}))
+  ([s] (def-db-fns-from-string s {}))
   ([s options]
-   `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (validate-parsed-def! ~'pdef)
-      (compile-exprs ~'pdef)
-      (if (snippet-pdef? ~'pdef)
-        (intern-sqlvec-fn ~'pdef ~options)
-        (intern-db-fn ~'pdef ~options)))))
+   (doseq [pdef (parsed-defs-from-string s)]
+     (validate-parsed-def! pdef)
+     (compile-exprs pdef)
+     (if (snippet-pdef? pdef)
+       (intern-sqlvec-fn pdef options)
+       (intern-db-fn pdef options)))))
 
-(defmacro map-of-db-fns
+(defn map-of-db-fns
   "Given a HugSQL SQL file, return a hashmap of database
    functions of the form:
 
@@ -602,20 +602,20 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([file] `(map-of-db-fns ~file {}))
+  ([file] (map-of-db-fns file {}))
   ([file options]
-   `(let [~'pdefs (parsed-defs-from-file ~file)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef)
-        (compile-exprs ~'pdef))
-      (apply merge
-             (map
-              #(if (snippet-pdef? %)
-                 (sqlvec-fn-map % ~options)
-                 (db-fn-map % ~options))
-              ~'pdefs)))))
+   (let [pdefs (parsed-defs-from-file file)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef)
+       (compile-exprs pdef))
+     (apply merge
+            (map
+             #(if (snippet-pdef? %)
+                (sqlvec-fn-map % options)
+                (db-fn-map % options))
+             pdefs)))))
 
-(defmacro map-of-db-fns-from-string
+(defn map-of-db-fns-from-string
   "Given a HugSQL SQL string, return a hashmap of database
    functions of the form:
 
@@ -636,18 +636,18 @@
        :adapter adapter }
 
    See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] `(map-of-db-fns-from-string ~s {}))
+  ([s] (map-of-db-fns-from-string s {}))
   ([s options]
-   `(let [~'pdefs (parsed-defs-from-string ~s)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef)
-        (compile-exprs ~'pdef))
-      (apply merge
-             (map
-              #(if (snippet-pdef? %)
-                 (sqlvec-fn-map % ~options)
-                 (db-fn-map % ~options))
-              ~'pdefs)))))
+   (let [pdefs (parsed-defs-from-string s)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef)
+       (compile-exprs pdef))
+     (apply merge
+            (map
+             #(if (snippet-pdef? %)
+                (sqlvec-fn-map % options)
+                (db-fn-map % options))
+             pdefs)))))
 
 (defn db-run
   "Given a database spec/connection, sql string,
