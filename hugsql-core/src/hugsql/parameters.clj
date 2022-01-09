@@ -59,10 +59,10 @@
     (string/join "." (map qtfn parts))))
 
 (defn deep-get-vec
-  "Takes a param :name and returns a vector
-   suitable for get-in lookups where the
-   param :name starts with the form:
-     :employees.0.id
+  "Takes a parameter name and returns a vector
+   suitable for get-in lookups where the name starts
+   with the form:
+     `:employees.0.id`
    Names must be keyword keys in hashmaps in
    param data.
    Numbers must be vector indexes in vectors
@@ -149,20 +149,22 @@
   "Implementations of this multimethod apply a hugsql parameter
    for a specified parameter type.  For example:
 
+   ```
    (defmethod apply-hugsql-param :value
      [param data options]
      (value-param param data options)
+   ```
 
-   - the :value keyword is the parameter type to match on.
-   - param is the parameter map as parsed from SQL
-     (e.g., {:type :value :name \"id\"} )
-   - data is the run-time parameter map data to be applied
-     (e.g., {:id 42} )
-   - options contain hugsql options (see hugsql.core/def-sqlvec-fns)
+   - the `:value` keyword is the parameter type to match on.
+   - `param` is the parameter map as parsed from SQL
+     (e.g., `{:type :value :name \"id\"}`)
+   - `data` is the run-time parameter map data to be applied
+     (e.g., `{:id 42}`)
+   - `options` contain hugsql options (see [[hugsql.core/def-sqlvec-fns]])
 
-   Implementations must return a vector containing any resulting SQL
-   in the first position and any values in the remaining positions.
-   (e.g., [\"?\" 42])"
+   Implementations must return an sqlvec: a vector containing the resulting
+   SQL string in the first position and any values in the remaining positions.
+   (e.g., `[\"?\" 42]`)"
   (fn [param _data _options] (:type param)))
 
 (defmethod apply-hugsql-param :v  [param data options] (value-param param data options))

@@ -46,7 +46,7 @@
       (recur (r/read-char rdr)))))
 
 (defn- skip-to-chars
-  "Read from reader until the 2 chars are encountered.
+  "Read from reader until the two chars `c1 and `c2` are encountered.
    Read (eat) the encountered chars."
   [rdr c1 c2]
   (loop [rc (r/read-char rdr)
@@ -57,7 +57,7 @@
       (recur (r/read-char rdr) (r/peek-char rdr)))))
 
 (defn- read-to-char
-  "Read and return a string up to the encountered char c.
+  "Read and return a string up to the encountered char `c`.
    Does not read the encountered character."
   [rdr c]
   (loop [s (StringBuilder.)
@@ -68,7 +68,7 @@
              (r/peek-char rdr)))))
 
 (defn- read-to-chars
-  "Read and return a string up to the encountered chars.
+  "Read and return a string up to the encountered chars `c1` and `c2`.
    Does not read the encountered characters"
   [rdr c1 c2]
   (loop [s (StringBuilder.)
@@ -240,9 +240,11 @@
              (keyword name))}))
 
 (defn parse
-  "Parse hugsql SQL string and return
+  "Parse hugsql SQL string `sql` and return
    sequence of statement definitions
    of the form:
+
+   ```
    {:hdr {:name   [\"my-query\"]
           :doc    [\"my doc string\"]
           :command [\":?\"]
@@ -251,8 +253,9 @@
           :line 12}
     :sql [\"select * from emp where id = \"
           {:type :v :name :id}]}
+   ```
 
-   Throws clojure.lang.ExceptionInfo on error."
+   Throws `clojure.lang.ExceptionInfo` on error."
   ([sql] (parse sql {}))
   ([sql {:keys [no-header file]}]
    (if (string/blank? sql)
