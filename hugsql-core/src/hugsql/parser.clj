@@ -26,7 +26,7 @@
 
 (defn- symbol-char?
   [c]
-  (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/]" (str c))))
+  (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/%]" (str c))))
 
 (defn- skip-ws-to-next-line
   "Read from reader until a non-whitespace or newline char is encountered."
