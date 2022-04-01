@@ -24,7 +24,7 @@ const config = {
         docs: {
           routeBasePath: "/",
           sidebarPath: require.resolve("./sidebars.js"),
-          editUrl: "https://github.com/layerware/hugsql/docs/hugsql.org/",
+          editUrl: "https://github.com/layerware/hugsql/edit/master/docs/hugsql.org/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
