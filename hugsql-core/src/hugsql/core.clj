@@ -49,7 +49,7 @@
       (if-let [f (io/resource file)]
         f
         (throw (ex-info (str "Can not read file: " file) {})))))
-   {:file file}))
+   {:file (str file)}))
 
 (defn ^:no-doc validate-parsed-def!
   "Ensure SQL required headers are provided
