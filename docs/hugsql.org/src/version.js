@@ -1,1 +1,1 @@
-export const hugsqlVersion = '0.5.1';
+export const hugsqlVersion = '0.5.2';

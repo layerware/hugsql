@@ -1,4 +1,4 @@
-(defproject com.layerware/hugsql "0.5.1"
+(defproject com.layerware/hugsql "0.5.2"
   :description "A Clojure library for embracing SQL"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"
@@ -6,8 +6,8 @@
   :scm {:name "HugSQL"
         :url "https://github.com/layerware/hugsql"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.layerware/hugsql-core "0.5.1"]
-                 [com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.1"]]
+                 [com.layerware/hugsql-core "0.5.2"]
+                 [com.layerware/hugsql-adapter-clojure-java-jdbc "0.5.2"]]
   :aliases {"install-all" ["do" ["sub" "install"] "install"]}
   :profiles {:dev
              {:plugins [[lein-codox "0.10.7"]
@@ -17,9 +17,9 @@
                     "hugsql-adapter-clojure-java-jdbc"
                     "hugsql-adapter-clojure-jdbc"
                     "hugsql-adapter-next-jdbc"]
-              :dependencies [[com.layerware/hugsql-adapter-clojure-jdbc "0.5.1"]
-                             [com.layerware/hugsql-adapter-next-jdbc "0.5.1"]]
-              :codox {:source-uri "http://github.com/layerware/hugsql/blob/0.5.1/{filepath}#L{line}"
+              :dependencies [[com.layerware/hugsql-adapter-clojure-jdbc "0.5.2"]
+                             [com.layerware/hugsql-adapter-next-jdbc "0.5.2"]]
+              :codox {:source-uri "http://github.com/layerware/hugsql/blob/0.5.2/{filepath}#L{line}"
                       :output-path "../gh-pages"
                       :source-paths ["hugsql-core/src"
                                      "hugsql-adapter/src"
