@@ -1,4 +1,4 @@
-(defproject com.layerware/hugsql-adapter "0.5.2"
+(defproject com.layerware/hugsql-adapter "0.5.3"
   :description "hugsql adapter support/protocol"
   :url "https://github.com/layerware/hugsql"
   :license {:name "Apache License, Version 2.0"

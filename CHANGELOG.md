@@ -1,5 +1,9 @@
 # HugSQL CHANGELOG
 
+## 0.5.3
+
+- cljdoc-related fixes; otherwise, same as version 0.5.2
+
 ## 0.5.2
 
 - new (markdown-based) docs! ([hugsql.org](https://www.hugsql.org)) [#131](https://github.com/layerware/hugsql/pull/131)
