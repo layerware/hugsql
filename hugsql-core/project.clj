@@ -5,7 +5,7 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :scm {:dir ".."}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/tools.reader "1.3.2"]
+                 [org.clojure/tools.reader "1.3.6"]
                  [com.layerware/hugsql-adapter "0.5.1"]]
   :profiles {:dev
              {:plugins [[lein-auto "0.1.2"]]
