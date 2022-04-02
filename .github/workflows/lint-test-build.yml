@@ -52,7 +52,7 @@ jobs:
           java-version: 17
 
       - name: Install Clojure
-        uses: DeLaGuardo/setup-clojure@3.5
+        uses: DeLaGuardo/setup-clojure@4.0
         with:
           lein: 2.9.8
 
