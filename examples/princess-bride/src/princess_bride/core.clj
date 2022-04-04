@@ -1,4 +1,5 @@
 (ns princess-bride.core
+  (:gen-class)
   (:require [princess-bride.db :refer [db]]
             [princess-bride.db.characters :as characters]
             [princess-bride.db.quotes :as quotes]
@@ -8,8 +9,9 @@
 
 ;; save some typing
 (def pp pprint/pprint)
-(defn ppl [x]
+(defn ppl 
   "pretty print w/ extra trailing line"
+  [x]
   (pp x) (println))
 
 (defn ppr

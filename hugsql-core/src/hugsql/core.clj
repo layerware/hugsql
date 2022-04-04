@@ -22,7 +22,7 @@
    '(do
       (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
       (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc))))
-  (catch Exception e))
+  (catch Exception _))
 
 (defn ^:no-doc get-adapter
   "Get an adapter.  Throws exception if no adapter is set."
@@ -40,14 +40,14 @@
   (-> pdef :hdr :frag some?))
 
 (defn ^:no-doc parsed-defs-from-string
-  "Given a hugsql SQL string,
+  "Given a hugsql `sql` string,
    parse it, and return the defs."
   [sql]
   (parser/parse sql))
 
 (defn ^:no-doc parsed-defs-from-file
-  "Given a hugsql SQL file in the classpath,
-   a resource, or a java.io.File, parse it, and return the defs."
+  "Given a hugsql SQL `file` in the classpath,
+   a resource, or a `java.io.File`, parse it, and return the defs."
   [file]
   (parser/parse
    (slurp
@@ -58,7 +58,7 @@
       (if-let [f (io/resource file)]
         f
         (throw (ex-info (str "Can not read file: " file) {})))))
-   {:file file}))
+   {:file (str file)}))
 
 (defn ^:no-doc validate-parsed-def!
   "Ensure SQL required headers are provided
@@ -79,7 +79,7 @@
              "SQL: " (pr-str (:sql pdef))) {})))))
 
 (defn ^:no-doc validate-parameters!
-  "Ensure SQL template parameters match provided param-data,
+  "Ensure `sql-template` parameters match provided `param-data`,
    and throw an exception if mismatch."
   [sql-template param-data]
   (let [not-found (Object.)]
@@ -152,13 +152,19 @@
 
 (defn ^:no-doc run-expr
   "Run expression and return result.
-   Example assuming cols is [\"id\"]:
+   Example assuming cols is `[\"id\"]`:
 
+   ```
    [[\"(if (seq (:cols params))\" :cont]
      {:type :i* :name :cols}
      [:cont] \"*\" [\")\" :end]]
+   ```
+
    to:
-   {:type :i* :name :cols}"
+
+   ```
+   {:type :i* :name :cols}
+   ```"
   [expr params options]
   (let [expr-fn #(get @hugsql.expr-run/exprs (keyword (expr-name expr)))]
     (when (nil? (expr-fn)) (def-expr expr))
@@ -169,7 +175,7 @@
         result))))
 
 (defn ^:no-doc expr-pass
-  "Takes an sql template (from hugsql parser) and evaluates the
+  "Takes an `sql-template` (from hugsql parser) and evaluates the
   Clojure expressions resulting in returning an sql template
   containing only sql strings and hashmap parameters"
   [sql-template params options]
@@ -213,15 +219,15 @@
         sql-temp'))))
 
 (defn ^:no-doc prepare-sql
-  "Takes an sql template (from hugsql parser) and the runtime-provided
-  param data and creates a vector of [\"sql\" val1 val2] suitable for
+  "Takes an `sql-template` (from hugsql parser) and the runtime-provided
+  `param-data` and creates a vector of `[\"sql\" val1 val2]` suitable for
   jdbc query/execute.
 
-  The :sql vector (sql-template) has interwoven sql strings, vectors
+  The `:sql` vector `sql-template` has interwoven sql strings, vectors
   of Clojure code, and hashmap parameters.  We directly apply
   parameters to non-prepared parameter types such as identifiers and
   keywords.  For value parameter types, we replace use the jdbc
-  prepared statement syntax of a '?' to placehold for the value."
+  prepared statement syntax of a `?` to placehold for the value."
   ([sql-template param-data options]
    (let [sql-template (frag-expr-pass sql-template param-data options)
          _ (validate-parameters! sql-template param-data)
@@ -272,28 +278,28 @@
       :raw))))
 
 (defmulti hugsql-command-fn identity)
-(defmethod hugsql-command-fn :! [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :execute [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :i! [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :insert [sym] 'hugsql.adapter/execute)
-(defmethod hugsql-command-fn :<! [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :returning-execute [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :? [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :query [sym] 'hugsql.adapter/query)
-(defmethod hugsql-command-fn :default [sym] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :! [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :execute [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :i! [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :insert [_] 'hugsql.adapter/execute)
+(defmethod hugsql-command-fn :<! [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :returning-execute [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :? [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :query [_] 'hugsql.adapter/query)
+(defmethod hugsql-command-fn :default [_] 'hugsql.adapter/query)
 
 (defmulti hugsql-result-fn identity)
-(defmethod hugsql-result-fn :1 [sym] 'hugsql.adapter/result-one)
-(defmethod hugsql-result-fn :one [sym] 'hugsql.adapter/result-one)
-(defmethod hugsql-result-fn :* [sym] 'hugsql.adapter/result-many)
-(defmethod hugsql-result-fn :many [sym] 'hugsql.adapter/result-many)
-(defmethod hugsql-result-fn :n [sym] 'hugsql.adapter/result-affected)
-(defmethod hugsql-result-fn :affected [sym] 'hugsql.adapter/result-affected)
-(defmethod hugsql-result-fn :raw [sym] 'hugsql.adapter/result-raw)
-(defmethod hugsql-result-fn :default [sym] 'hugsql.adapter/result-raw)
+(defmethod hugsql-result-fn :1 [_] 'hugsql.adapter/result-one)
+(defmethod hugsql-result-fn :one [_] 'hugsql.adapter/result-one)
+(defmethod hugsql-result-fn :* [_] 'hugsql.adapter/result-many)
+(defmethod hugsql-result-fn :many [_] 'hugsql.adapter/result-many)
+(defmethod hugsql-result-fn :n [_] 'hugsql.adapter/result-affected)
+(defmethod hugsql-result-fn :affected [_] 'hugsql.adapter/result-affected)
+(defmethod hugsql-result-fn :raw [_] 'hugsql.adapter/result-raw)
+(defmethod hugsql-result-fn :default [_] 'hugsql.adapter/result-raw)
 
 (defn sqlvec-fn*
-  "Given parsed sql and optional options, return an
+  "Given parsed sql `psql` and optional `options`, return an
    anonymous function that returns hugsql sqlvec format"
   ([psql] (sqlvec-fn* psql {}))
   ([psql options]
@@ -304,29 +310,33 @@
       (prepare-sql psql param-data (merge default-sqlvec-options options opts))))))
 
 (defn sqlvec-fn
-  "Given an sql string and optional options, return an
+  "Given an `sql` string and optional `options`, return an
    anonymous function that returns hugsql sqlvec format"
   ([sql] (sqlvec-fn sql {}))
   ([sql options]
    (let [psql (:sql (first (parser/parse sql {:no-header true})))]
      (sqlvec-fn* psql options))))
 
-(def snip-fn "Alias for sqlvec-fn" sqlvec-fn)
+(def snip-fn "Alias for `sqlvec-fn`" sqlvec-fn)
 
 (defn sqlvec
-  "Given an sql string, optional options, and param data, return an sqlvec"
+  "Given an `sql` string, optional `options`, and `param-data`, return an sqlvec"
   ([sql param-data] (sqlvec sql {} param-data))
   ([sql options param-data]
    (let [f (sqlvec-fn sql options)]
      (f param-data))))
 
-(def snip "Alias for sqlvec" sqlvec)
+(def snip "Alias for `sqlvec`" sqlvec)
 
 (defn sqlvec-fn-map
   "Hashmap of sqlvec/snip fn from a parsed def
    with the form:
+
+   ```
    {:fn-name {:meta {:doc \"doc string\"}
-              :fn <anon-db-fn>}"
+              :fn <anon-db-fn>}
+   ```
+   "
   [{:keys [sql hdr]} options]
   (let [sn- (:snip- hdr) ;; private snippet
         snn (:snip hdr)  ;; public snippet
@@ -349,7 +359,7 @@
                     :fn (sqlvec-fn* sql (assoc options :fn-name nam))}}))
 
 (defn intern-sqlvec-fn
-  "Intern the sqlvec fn from a parsed def"
+  "Intern the sqlvec fn from a parsed def `pdef`"
   [pdef options]
   (let [fm (sqlvec-fn-map pdef options)
         fk (ffirst fm)]
@@ -357,139 +367,143 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
-(defmacro def-sqlvec-fns
-  "Given a HugSQL SQL file, define the <name>-sqlvec functions in the
+(defn def-sqlvec-fns
+  "Given a HugSQL SQL `file`, define the `<name>-sqlvec` functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
-  parameter values. (e.g., [\"select * from test where id = ?\" 42])
+  parameter values. (e.g., `[\"select * from test where id = ?\" 42]`
 
   Usage:
 
-   (def-sqlvec-fns file options?)
+   `(def-sqlvec-fns file options?)`
 
    where:
-    - file is a string file path in your classpath,
-      a resource object (java.net.URL),
-      or a file object (java.io.File)
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :fn-suffix \"-sqlvec\" (default)
+    - `file` is a string file path in your classpath,
+      a resource object `java.net.URL`,
+      or a file object `java.io.File`
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+        :fn-suffix \"-sqlvec\" (default) }`
 
-   See hugsql.core/def-db-fns for :quoting option details.
+   See [[hugsql.core/def-db-fns]] for `:quoting` option details.
 
-   :fn-suffix is appended to the defined function names to
-   differentiate them from the functions defined by def-db-fns."
-  ([file] `(def-sqlvec-fns ~file {}))
+   `:fn-suffix` is appended to the defined function names to
+   differentiate them from the functions defined by `def-db-fns`."
+  ([file] (def-sqlvec-fns file {}))
   ([file options]
-   `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
-        (when-not (fragment-pdef? ~'exp-pdef)
-          (intern-sqlvec-fn ~'exp-pdef ~options))))))
+   (doseq [pdef (parsed-defs-from-file file)]
+     (validate-parsed-def! pdef)
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (when-not (fragment-pdef? exp-pdef)
+         (intern-sqlvec-fn pdef options))))))
 
-(defmacro def-sqlvec-fns-from-string
-  "Given a HugSQL SQL string, define the <name>-sqlvec functions in the
+(defn def-sqlvec-fns-from-string
+  "Given a HugSQL SQL string `s`, define the `<name>-sqlvec` functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
-  parameter values. (e.g., [\"select * from test where id = ?\" 42])
+  parameter values. (e.g., `[\"select * from test where id = ?\" 42]`
 
   Usage:
 
-   (def-sqlvec-fns-from-string s options?)
+   `(def-sqlvec-fns-from-string s options?)`
 
    where:
-    - s is a HugSQL-flavored sql string
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :fn-suffix \"-sqlvec\" (default)
+    - `s` is a HugSQL-flavored sql string
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+        :fn-suffix \"-sqlvec\" (default) }`
 
-   See hugsql.core/def-db-fns for :quoting option details.
+   See [[hugsql.core/def-db-fns]] for `:quoting` option details.
 
-   :fn-suffix is appended to the defined function names to
-   differentiate them from the functions defined by def-db-fns."
-  ([s] `(def-sqlvec-fns-from-string ~s {}))
+   `:fn-suffix` is appended to the defined function names to
+   differentiate them from the functions defined by `def-db-fns`."
+  ([s] (def-sqlvec-fns-from-string s {}))
   ([s options]
-   `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
-        (compile-exprs ~'exp-pdef)
-        (when-not (fragment-pdef? ~'exp-pdef)
-          (intern-sqlvec-fn ~'exp-pdef ~options))))))
+   (doseq [pdef (parsed-defs-from-string s)]
+     (validate-parsed-def! pdef)
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (compile-exprs exp-pdef)
+       (when-not (fragment-pdef? exp-pdef)
+         (intern-sqlvec-fn pdef options))))))
 
-(defmacro map-of-sqlvec-fns
-  "Given a HugSQL SQL file, return a hashmap of database
+(defn map-of-sqlvec-fns
+  "Given a HugSQL SQL `file`, return a hashmap of database
    functions of the form:
 
+   ```
    {:fn1-name {:meta {:doc \"doc string\"}
                :fn <fn1>}
     :fn2-name {:meta {:doc \"doc string\"
                       :private true}
                :fn <fn2>}}
+   ```
 
   Usage:
 
-   (map-sqlvec-fns file options?)
+  `(map-sqlvec-fns file options?)`
 
    where:
-    - file is a string file path in your classpath,
-      a resource object (java.net.URL),
-      or a file object (java.io.File)
-    - options (optional) hashmap:
+    - `file` is a string file path in your classpath,
+      a resource object `java.net.URL`,
+      or a file object `java.io.File`
+    - `options` (optional) hashmap:
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :fn-suffix \"-sqlvec\" (default)
 
-   See hugsql.core/def-db-fns for :quoting option details.
+   See [[hugsql.core/def-db-fns]] for `:quoting` option details.
 
-   :fn-suffix is appended to the defined function names to
-   differentiate them from the functions defined by def-db-fns."
-  ([file] `(map-of-sqlvec-fns ~file {}))
+   `:fn-suffix` is appended to the defined function names to
+   differentiate them from the functions defined by `def-db-fns`."
+  ([file] (map-of-sqlvec-fns file {}))
   ([file options]
-   `(let [~'pdefs (parsed-defs-from-file ~file)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
-        (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef))
-        (apply merge
-               (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % ~options))
-                    ~'pdefs))))))
+   (let [pdefs (parsed-defs-from-file file)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % options))
+                   pdefs))))))
 
-(defmacro map-of-sqlvec-fns-from-string
+(defn map-of-sqlvec-fns-from-string
   "Given a HugSQL SQL string, return a hashmap of sqlvec
    functions of the form:
 
+   ```
    {:fn1-name {:meta {:doc \"doc string\"}
                :fn <fn1>}
     :fn2-name {:meta {:doc \"doc string\"
                       :private true}
                :fn <fn2>}}
+   ```
 
   Usage:
 
-   (map-sqlvec-fns-from-string s options?)
+  `(map-sqlvec-fns-from-string s options?)`
 
    where:
-    - s is a HugSQL-flavored sql string
-    - options (optional) hashmap:
+    - `s` is a HugSQL-flavored sql string
+    - `options` (optional) hashmap:
       {:quoting :off(default) | :ansi | :mysql | :mssql
        :fn-suffix \"-sqlvec\" (default)
 
-   See hugsql.core/def-db-fns for :quoting option details.
+   See [[hugsql.core/def-db-fns]] for `:quoting` option details.
 
-   :fn-suffix is appended to the defined function names to
-   differentiate them from the functions defined by def-db-fns."
-  ([s] `(map-of-sqlvec-fns-from-string ~s {}))
+   `:fn-suffix` is appended to the defined function names to
+   differentiate them from the functions defined by `def-db-fns`."
+  ([s] (map-of-sqlvec-fns-from-string s {}))
   ([s options]
-   `(let [~'pdefs (parsed-defs-from-string ~s)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
-        (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef))
-        (apply merge
-               (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % ~options))
-                    ~'pdefs))))))
+   (let [pdefs (parsed-defs-from-string s)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % options))
+                   pdefs))))))
 
 (defn db-fn*
-  "Given parsed sql and optionally a command, result, and options,
+  "Given parsed sql `psql` and optionally a `command`, `result`, and `options`,
   return an anonymous function that can run hugsql database
   execute/queries and supports hugsql parameter replacement"
   ([psql] (db-fn* psql :default :default {}))
@@ -525,11 +539,14 @@
      (db-fn* psql command result options))))
 
 (defn db-fn-map
-  "Hashmap of db fn from a parsed def
-   with the form:
+  "Hashmap of db fn from a parsed def with the form:
+
+   ```
    {:fn-name {:meta {:doc \"doc string\"}
-              :fn <anon-db-fn>}"
-  [{:keys [sql hdr file line]} options]
+              :fn <anon-db-fn>}
+   ```
+   "
+  [{:keys [sql hdr]} options]
   (let [pnm (:name- hdr)
         nam (symbol (first (or (:name hdr) pnm)))
         doc (or (first (:doc hdr)) "")
@@ -568,153 +585,156 @@
       (sqlvec-func pdef options)
       (db-func pdef options))))
 
-(defmacro def-db-fns
+(defn def-db-fns
   "Given a HugSQL SQL file, define the database
    functions in the current namespace.
 
    Usage:
 
-   (def-db-fns file options?)
+   `(def-db-fns file options?)`
 
    where:
-    - file is a string file path in your classpath,
-      a resource object (java.net.URL),
-      or a file object (java.io.File)
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :adapter adapter }
+    - `file` is a string file path in your classpath,
+      a resource object `java.net.URL`,
+      or a file object `java.io.File`
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+       :adapter adapter}`
 
-   :quoting options for identifiers are:
-     :ansi double-quotes: \"identifier\"
-     :mysql backticks: `identifier`
-     :mssql square brackets: [identifier]
-     :off no quoting (default)
+   `:quoting` options for identifiers are:
+     `:ansi` double-quotes: \"identifier\"
+     `:mysql` backticks: `` `identifier` ``
+     `:mssql` square brackets: [identifier]
+     `:off` no quoting (default)
 
-   Identifiers containing a period/dot . are split, quoted separately,
-   and then rejoined. This supports myschema.mytable conventions.
+   Identifiers containing a period/dot `.` are split, quoted separately,
+   and then rejoined. This supports `myschema.mytable` conventions.
 
-   :quoting can be overridden as an option in the calls to functions
-   created by def-db-fns.
+   `:quoting` can be overridden as an option in the calls to functions
+   created by `def-db-fns`.
 
-   :adapter specifies the HugSQL adapter to use for all defined
+   `:adapter` specifies the HugSQL adapter to use for all defined
    functions. The default adapter used is
-   (hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
-   when :adapter is not given.
+   `(hugsql.adapter.clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)`
+   when `:adapter` is not given.
 
-   See also hugsql.core/set-adapter! to set adapter for all def-db-fns
-   calls.  Also, :adapter can be specified for individual function
-   calls (overriding set-adapter! and the :adapter option here)."
-  ([file] `(def-db-fns ~file {}))
+   See also [[hugsql.core/set-adapter!]] to set adapter for all `def-db-fns`
+   calls.  Also, `:adapter` can be specified for individual function
+   calls (overriding `set-adapter!` and the `:adapter` option here)."
+  ([file] (def-db-fns file {}))
   ([file options]
-   `(doseq [~'pdef (parsed-defs-from-file ~file)]
-      (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
-        (compile-exprs ~'exp-pdef)
-        (dispatch-on-pdef ~'exp-pdef
-                          ~options
-                          ~intern-db-fn
-                          ~intern-sqlvec-fn)))))
+   (doseq [pdef (parsed-defs-from-file file)]
+     (validate-parsed-def! pdef)
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (dispatch-on-pdef exp-pdef
+                         options
+                         intern-db-fn
+                         intern-sqlvec-fn)))))
 
-(defmacro def-db-fns-from-string
+(defn def-db-fns-from-string
   "Given a HugSQL SQL string, define the database
    functions in the current namespace.
 
    Usage:
 
-   (def-db-fns-from-string s options?)
+   `(def-db-fns-from-string s options?)`
 
    where:
-    - s is a string of HugSQL-flavored sql statements
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :adapter adapter }
+    - `s` is a string of HugSQL-flavored sql statements
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+       :adapter adapter}`
 
-   See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] `(def-db-fns-from-string ~s {}))
+   See [[hugsql.core/def-db-fns]] for `:quoting` and `:adapter` details."
+  ([s] (def-db-fns-from-string s {}))
   ([s options]
-   `(doseq [~'pdef (parsed-defs-from-string ~s)]
-      (validate-parsed-def! ~'pdef)
-      (let [~'exp-pdef (expand-compile-frags ~'pdef)]
-        (compile-exprs ~'exp-pdef)
-        (dispatch-on-pdef ~'exp-pdef
-                          ~options
-                          ~intern-db-fn
-                          ~intern-sqlvec-fn)))))
+   (doseq [pdef (parsed-defs-from-string s)]
+     (validate-parsed-def! pdef)
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (compile-exprs exp-pdef)
+       (dispatch-on-pdef exp-pdef
+                         options
+                         intern-db-fn
+                         intern-sqlvec-fn)))))
 
-(defmacro map-of-db-fns
+(defn map-of-db-fns
   "Given a HugSQL SQL file, return a hashmap of database
    functions of the form:
 
+   ```
    {:fn1-name {:meta {:doc \"doc string\"}
                :fn <fn1>}
     :fn2-name {:meta {:doc \"doc string\"
                       :private true}
                :fn <fn2>}}
+   ```
 
    Usage:
 
-   (map-of-db-fns file options?)
+   `(map-of-db-fns file options?)`
 
    where:
-    - file is a string file path in your classpath,
-      a resource object (java.net.URL),
-      or a file object (java.io.File)
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :adapter adapter }
+    - `file` is a string file path in your classpath,
+      a resource object (`java.net.URL`),
+      or a file object (`java.io.File`)
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+       :adapter adapter}`
 
-   See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([file] `(map-of-db-fns ~file {}))
+   See [[hugsql.core/def-db-fns]] for `:quoting` and `:adapter` details."
+  ([file] (map-of-db-fns file {}))
   ([file options]
-   `(let [~'pdefs (parsed-defs-from-file ~file)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
-        (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef))
-        (apply merge
-               (map
-                #(dispatch-on-pdef % ~options ~db-fn-map ~sqlvec-fn-map)
-                ~'exp-pdefs))))))
+   (let [pdefs (parsed-defs-from-file file)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map
+               #(dispatch-on-pdef % options db-fn-map sqlvec-fn-map)
+               exp-pdefs))))))
 
-(defmacro map-of-db-fns-from-string
+(defn map-of-db-fns-from-string
   "Given a HugSQL SQL string, return a hashmap of database
    functions of the form:
 
+   ```
    {:fn1-name {:meta {:doc \"doc string\"}
                :fn <fn1>}
     :fn2-name {:meta {:doc \"doc string\"
                       :private true}
                :fn <fn2>}}
+   ```
 
    Usage:
 
-   (map-of-db-fns-from-string s options?)
+   `(map-of-db-fns-from-string s options?)`
 
    where:
-    - s is a string of HugSQL-flavored sql statements
-    - options (optional) hashmap:
-      {:quoting :off(default) | :ansi | :mysql | :mssql
-       :adapter adapter }
+    - `s` is a string of HugSQL-flavored sql statements
+    - `options` (optional) hashmap:
+      `{:quoting :off (default) | :ansi | :mysql | :mssql
+       :adapter adapter}`
 
-   See hugsql.core/def-db-fns for :quoting and :adapter details."
-  ([s] `(map-of-db-fns-from-string ~s {}))
+   See [[hugsql.core/def-db-fns]] for `:quoting` and `:adapter` details."
+  ([s] (map-of-db-fns-from-string s {}))
   ([s options]
-   `(let [~'pdefs (parsed-defs-from-string ~s)]
-      (doseq [~'pdef ~'pdefs]
-        (validate-parsed-def! ~'pdef))
-      (let [~'exp-pdefs (map expand-compile-frags ~'pdefs)]
-        (doseq [~'exp-pdef ~'exp-pdefs]
-          (compile-exprs ~'exp-pdef))
-        (apply merge
-               (map
-                #(dispatch-on-pdef % ~options ~db-fn-map ~sqlvec-fn-map)
-                ~'exp-pdefs))))))
+   (let [pdefs (parsed-defs-from-string s)]
+     (doseq [pdef pdefs]
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map
+               #(dispatch-on-pdef % options db-fn-map sqlvec-fn-map)
+               exp-pdefs))))))
 
 (defn db-run
-  "Given a database spec/connection, sql string,
-   parameter data, and optional command, result,
-   and options, run the sql statement"
+  "Given a database spec/connection `db`, `sql` string,
+   `param-data`, and optional `command`, `result`,
+   and `options`, run the `sql` statement"
   ([db sql] (db-run db sql :default :default {} {}))
   ([db sql param-data] (db-run db sql param-data :default :default {}))
   ([db sql param-data command] (db-run db sql param-data command :default {}))

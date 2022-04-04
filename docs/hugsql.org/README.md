@@ -1,5 +1,25 @@
-# HugSQL source for documentation site
+# hugsql.org docs
 
-Go to [http://hugsql.org](hugsql.org)
+Built with [Docusaurus 2](https://docusaurus.io/).
 
-Site is generated with [https://jekyllrb.com/](jekyll).
+### Installation
+
+```shell
+$ yarn
+```
+
+### Local Development
+
+```shell
+$ yarn start
+```
+
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+
+### Build
+
+```shell
+$ yarn build
+```
+
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
