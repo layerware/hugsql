@@ -1,0 +1,10 @@
+{:paths ["src" "resources"]
+ :deps {com.layerware/hugsql {:mvn/version "0.5.3"}
+        com.h2database/h2    {:mvn/version "1.4.196"}}
+ :aliases {:uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}
+                     :exec-fn      hf.depstar/uberjar
+                     :exec-args    {:main-class princess-bride.core
+                                    :jar "princess-bride.jar"
+                                    :aot true
+                                    :exclude ["^.*\\.clj$" "^.*\\.sql$"]
+                                    :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}}}

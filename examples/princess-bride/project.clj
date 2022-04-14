@@ -5,7 +5,8 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :main princess-bride.core
   :aliases {"as-you-wish" ["run"]}
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:uberjar {:aot :all
+                       :omit-source true}}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.layerware/hugsql "0.5.3"]
                  [com.h2database/h2 "1.4.196"]])
