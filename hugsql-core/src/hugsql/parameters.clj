@@ -1,6 +1,8 @@
 (ns hugsql.parameters
   (:require [clojure.string :as string]))
 
+;; Note: Fragments are handled separately from other parameters.
+
 (defprotocol ValueParam
   "Protocol to convert Clojure value to SQL value"
   (value-param [param data options]))

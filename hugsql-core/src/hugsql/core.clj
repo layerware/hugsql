@@ -1,6 +1,7 @@
 (ns hugsql.core
   (:require [hugsql.parser :as parser]
             [hugsql.parameters :as parameters]
+            [hugsql.fragments :as frags]
             [hugsql.adapter :as adapter]
             [hugsql.expr-run]
             [clojure.java.io :as io]
@@ -30,6 +31,14 @@
     (throw (ex-info "No adapter set: use set-adapter!" {})))
   @adapter)
 
+(defn ^:no-doc snippet-pdef?
+  [pdef]
+  (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
+
+(defn ^:no-doc fragment-pdef?
+  [pdef]
+  (-> pdef :hdr :frag some?))
+
 (defn ^:no-doc parsed-defs-from-string
   "Given a hugsql `sql` string,
    parse it, and return the defs."
@@ -55,16 +64,19 @@
   "Ensure SQL required headers are provided
    and throw an exception if not."
   [pdef]
-  (let [hdr (:hdr pdef)]
-    (when-not (or (:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr))
-      (throw (ex-info
-              (str "Missing HugSQL Header of :name, :name-, :snip, or :snip-\n"
-                   "Found headers include: " (pr-str (vec (keys hdr))) "\n"
-                   "SQL: " (pr-str (:sql pdef))) {})))
-    (when (every? empty? [(:name hdr) (:name- hdr) (:snip hdr) (:snip- hdr)])
-      (throw (ex-info
-              (str "HugSQL Header :name, :name-, :snip, or :snip- not given.\n"
-                   "SQL: " (pr-str (:sql pdef))) {})))))
+  (let [hdr  (:hdr pdef)
+        hdr' (select-keys hdr [:name :name- :snip :snip- :frag])]
+    (when (empty? hdr')
+      (throw
+       (ex-info
+        (str "Missing HugSQL Header of :name, :name-, :snip, :snip-, or :frag\n"
+             "Found headers include: " (pr-str (vec (keys hdr))) "\n"
+             "SQL: " (pr-str (:sql pdef))) {})))
+    (when (every? empty? (vals hdr'))
+      (throw
+       (ex-info
+        (str "HugSQL Header :name, :name-, :snip, :snip-, or :frag not given.\n"
+             "SQL: " (pr-str (:sql pdef))) {})))))
 
 (defn ^:no-doc validate-parameters!
   "Ensure `sql-template` parameters match provided `param-data`,
@@ -83,6 +95,17 @@
         (throw (ex-info
                 (str "Parameter Mismatch: "
                      k " parameter data not found.") {}))))))
+
+(defn ^:no-doc expand-compile-frags
+  "Expand all fragments in the sql template of `pdef`. If `pdef` happens
+   to be a fragment def, store it in the fragment registry as well."
+  [pdef]
+  (if (fragment-pdef? pdef)
+    (let [frag-ans (frags/frag-ancestors pdef) ; assert no cycles
+          exp-pdef (frags/expand-fragments pdef)]
+      (frags/register-fragment exp-pdef frag-ans)
+      exp-pdef)
+    (frags/expand-fragments pdef)))
 
 (defn ^:no-doc expr-name
   [expr]
@@ -121,7 +144,7 @@
      (load-string clj))))
 
 (defn ^:no-doc compile-exprs
-  "Compile (def) all expressions in a parsed def"
+  "Compile (def) all expressions in a parsed def."
   [pdef]
   (let [require-str (string/join " " (:require (:hdr pdef)))]
     (doseq [expr (filter vector? (:sql pdef))]
@@ -166,15 +189,34 @@
         (or (vector? curr) (seq expr)) ;; expr start OR already in expr
         ;; expr end found, so run
         (if (and (vector? curr) (= :end (last curr)))
-          (recur (first pile) (rest pile)
+          (recur (first pile)
+                 (rest pile)
                  (if-let [r (run-expr (conj expr curr) params options)]
                    (vec (concat rsql (if (string? r) (vector r) r)))
-                   rsql) [])
-          (recur (first pile) (rest pile)
-                 rsql (conj expr curr)))
+                   rsql)
+                 [])
+          (recur (first pile)
+                 (rest pile)
+                 rsql
+                 (conj expr curr)))
 
         :else
         (recur (first pile) (rest pile) (conj rsql curr) expr)))))
+
+(defn ^:no-doc frag-expr-pass
+  "Takes an sql template and evaluates all Clojure expressions, including any
+   fragments nested in them. Supports multiple levels of nesting. Returns when
+   all expressions and fragments have been expanded."
+  [sql-template param-data options]
+  (loop [sql-temp sql-template]
+    (let [sql-temp' (-> (expr-pass sql-temp param-data options)
+                        frags/expand-fragments*)]
+      (if (some #(or (= :frag (:type %)) (= :end (last %)))
+                sql-temp')
+        ;; There are still some un-expanded exprs and frags; repeat
+        (recur sql-temp')
+        ;; All exprs and frags have been expanded
+        sql-temp'))))
 
 (defn ^:no-doc prepare-sql
   "Takes an `sql-template` (from hugsql parser) and the runtime-provided
@@ -187,16 +229,18 @@
   keywords.  For value parameter types, we replace use the jdbc
   prepared statement syntax of a `?` to placehold for the value."
   ([sql-template param-data options]
-   (let [sql-template (expr-pass sql-template param-data options)
+   (let [sql-template (frag-expr-pass sql-template param-data options)
          _ (validate-parameters! sql-template param-data)
          applied (map
                   #(if (string? %)
                      [%]
                      (parameters/apply-hugsql-param % param-data options))
                   sql-template)
-         sql    (string/join "" (map first applied))
+         sql     (-> (string/join "" (map first applied))
+                     (string/replace #"\n\n+" "\n") ; remove extra linebreaks
+                     string/trim) ; remove leading and trailing whitespace
          params (apply concat (filterv seq (map rest applied)))]
-     (apply vector (string/trim sql) params))))
+     (apply vector sql params))))
 
 (def default-sqlvec-options
   {:quoting :off
@@ -348,8 +392,9 @@
   ([file options]
    (doseq [pdef (parsed-defs-from-file file)]
      (validate-parsed-def! pdef)
-     (compile-exprs pdef)
-     (intern-sqlvec-fn pdef options))))
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (when-not (fragment-pdef? exp-pdef)
+         (intern-sqlvec-fn pdef options))))))
 
 (defn def-sqlvec-fns-from-string
   "Given a HugSQL SQL string `s`, define the `<name>-sqlvec` functions in the
@@ -374,8 +419,10 @@
   ([s options]
    (doseq [pdef (parsed-defs-from-string s)]
      (validate-parsed-def! pdef)
-     (compile-exprs pdef)
-     (intern-sqlvec-fn pdef options))))
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (compile-exprs exp-pdef)
+       (when-not (fragment-pdef? exp-pdef)
+         (intern-sqlvec-fn pdef options))))))
 
 (defn map-of-sqlvec-fns
   "Given a HugSQL SQL `file`, return a hashmap of database
@@ -409,13 +456,16 @@
   ([file options]
    (let [pdefs (parsed-defs-from-file file)]
      (doseq [pdef pdefs]
-       (validate-parsed-def! pdef)
-       (compile-exprs pdef))
-     (apply merge
-            (map #(sqlvec-fn-map % options) pdefs)))))
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % options))
+                   pdefs))))))
 
 (defn map-of-sqlvec-fns-from-string
-  "Given a HugSQL SQL string `s`, return a hashmap of sqlvec
+  "Given a HugSQL SQL string, return a hashmap of sqlvec
    functions of the form:
 
    ```
@@ -444,10 +494,13 @@
   ([s options]
    (let [pdefs (parsed-defs-from-string s)]
      (doseq [pdef pdefs]
-       (validate-parsed-def! pdef)
-       (compile-exprs pdef))
-     (apply merge
-            (map #(sqlvec-fn-map % options) pdefs)))))
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map #(when-not (fragment-pdef? %) (sqlvec-fn-map % options))
+                   pdefs))))))
 
 (defn db-fn*
   "Given parsed sql `psql` and optionally a `command`, `result`, and `options`,
@@ -523,9 +576,14 @@
             (with-meta (symbol (name fk)) (-> fm fk :meta))
             (-> fm fk :fn))))
 
-(defn ^:no-doc snippet-pdef?
-  [pdef]
-  (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
+(defn ^:no-doc dispatch-on-pdef
+  "Helper fn that extracts out the common functionality of dispatching
+   on fragments, snippets, or DB functions."
+  [pdef options db-func sqlvec-func]
+  (when-not (fragment-pdef? pdef)
+    (if (snippet-pdef? pdef)
+      (sqlvec-func pdef options)
+      (db-func pdef options))))
 
 (defn def-db-fns
   "Given a HugSQL SQL file, define the database
@@ -567,13 +625,14 @@
   ([file options]
    (doseq [pdef (parsed-defs-from-file file)]
      (validate-parsed-def! pdef)
-     (compile-exprs pdef)
-     (if (snippet-pdef? pdef)
-       (intern-sqlvec-fn pdef options)
-       (intern-db-fn pdef options)))))
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (dispatch-on-pdef exp-pdef
+                         options
+                         intern-db-fn
+                         intern-sqlvec-fn)))))
 
 (defn def-db-fns-from-string
-  "Given a HugSQL SQL string `s`, define the database
+  "Given a HugSQL SQL string, define the database
    functions in the current namespace.
 
    Usage:
@@ -591,13 +650,15 @@
   ([s options]
    (doseq [pdef (parsed-defs-from-string s)]
      (validate-parsed-def! pdef)
-     (compile-exprs pdef)
-     (if (snippet-pdef? pdef)
-       (intern-sqlvec-fn pdef options)
-       (intern-db-fn pdef options)))))
+     (let [exp-pdef (expand-compile-frags pdef)]
+       (compile-exprs exp-pdef)
+       (dispatch-on-pdef exp-pdef
+                         options
+                         intern-db-fn
+                         intern-sqlvec-fn)))))
 
 (defn map-of-db-fns
-  "Given a HugSQL SQL `file`, return a hashmap of database
+  "Given a HugSQL SQL file, return a hashmap of database
    functions of the form:
 
    ```
@@ -625,17 +686,17 @@
   ([file options]
    (let [pdefs (parsed-defs-from-file file)]
      (doseq [pdef pdefs]
-       (validate-parsed-def! pdef)
-       (compile-exprs pdef))
-     (apply merge
-            (map
-             #(if (snippet-pdef? %)
-                (sqlvec-fn-map % options)
-                (db-fn-map % options))
-             pdefs)))))
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map
+               #(dispatch-on-pdef % options db-fn-map sqlvec-fn-map)
+               exp-pdefs))))))
 
 (defn map-of-db-fns-from-string
-  "Given a HugSQL SQL string `s`, return a hashmap of database
+  "Given a HugSQL SQL string, return a hashmap of database
    functions of the form:
 
    ```
@@ -661,14 +722,14 @@
   ([s options]
    (let [pdefs (parsed-defs-from-string s)]
      (doseq [pdef pdefs]
-       (validate-parsed-def! pdef)
-       (compile-exprs pdef))
-     (apply merge
-            (map
-             #(if (snippet-pdef? %)
-                (sqlvec-fn-map % options)
-                (db-fn-map % options))
-             pdefs)))))
+       (validate-parsed-def! pdef))
+     (let [exp-pdefs (map expand-compile-frags pdefs)]
+       (doseq [exp-pdef exp-pdefs]
+         (compile-exprs exp-pdef))
+       (apply merge
+              (map
+               #(dispatch-on-pdef % options db-fn-map sqlvec-fn-map)
+               exp-pdefs))))))
 
 (defn db-run
   "Given a database spec/connection `db`, `sql` string,
