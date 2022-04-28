@@ -14,7 +14,7 @@ HugSQL attempts to provide a set of tools that help protect against SQL injectio
 
 ## Identifier Parameters
 
-[Identifier Parameters](/hugsql-in-detail/parameter-types/sql-identifier-parameters) and [Identifier List Parameters\(/hugsql-in-detail/parameter-types/sql-identifier-list-parameters) support quoting and escaping of identifiers with the `:quoting option`. By default, `:quoting` is `:off`, since HugSQL makes no assumptions about your given database. This may be fine for your use case if you are not taking identifiers from user input.
+[Identifier Parameters](/hugsql-in-detail/parameter-types/sql-identifier-parameters) and [Identifier List Parameters](/hugsql-in-detail/parameter-types/sql-identifier-list-parameters) support quoting and escaping of identifiers with the `:quoting option`. By default, `:quoting` is `:off`, since HugSQL makes no assumptions about your given database. This may be fine for your use case if you are not taking identifiers from user input.
 
 :::caution
 
