@@ -251,6 +251,17 @@
             "select col_:sql:col_num from test"
             {:col_num 1}))))
 
+  (testing "inline parameters"
+    (is (= (hugsql/sqlvec "SELECT :sql:sql, :i*:cols FROM characters WHERE id IN (:v*:ids) AND :key AND t = :t:tuple AND :t*:tuple-list"
+                          {:inline true}
+                          {:sql        "count()"
+                           :cols       ["id" "name"]
+                           :ids        [10, 20, 30]
+                           :key        :asd
+                           :tuple      ["string" true 104 nil]
+                           :tuple-list [[1 "a"] [2 "b"]]})
+           ["SELECT count(), id, name FROM characters WHERE id IN (10,20,30) AND asd AND t = ('string',TRUE,104,NULL) AND (1,'a'),(2,'b')"])))
+
   (doseq [[db-name db-spec] dbs]
     (doseq [[adapter-name adapter] adapters]
       (let [db (or (adapter-name db-spec) (:default db-spec))]
