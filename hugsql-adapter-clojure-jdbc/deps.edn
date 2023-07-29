@@ -1,0 +1,3 @@
+{:paths ["src"]
+ :deps  {com.layerware/hugsql-adapter {:mvn/version "1.0.230"}
+         funcool/clojure.jdbc         {:mvn/version "0.9.0"}}}

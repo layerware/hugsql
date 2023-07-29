@@ -24,7 +24,8 @@ const config = {
         docs: {
           routeBasePath: "/",
           sidebarPath: require.resolve("./sidebars.js"),
-          editUrl: "https://github.com/layerware/hugsql/edit/master/docs/hugsql.org/",
+          editUrl:
+            "https://github.com/layerware/hugsql/edit/master/docs/hugsql.org/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
@@ -69,7 +70,7 @@ const config = {
       footer: {
         style: "dark",
         links: [],
-        copyright: `Copyright © ${new Date().getFullYear()} Layerware, Inc.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Curtis Summers`,
       },
       prism: {
         theme: lightCodeTheme,

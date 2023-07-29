@@ -6,27 +6,27 @@
 (deftype HugsqlAdapterClojureJavaJdbc []
 
   adapter/HugsqlAdapter
-  (execute [this db sqlvec options]
+  (execute [_ db sqlvec options]
     (if (some #(= % (:command options)) [:insert :i!])
       (jdbc/db-do-prepared-return-keys db sqlvec)
       (apply jdbc/execute! db sqlvec (:command-options options))))
 
-  (query [this db sqlvec options]
+  (query [_ db sqlvec options]
     (apply jdbc/query db sqlvec (:command-options options)))
 
-  (result-one [this result options]
+  (result-one [_ result _options]
     (first result))
 
-  (result-many [this result options]
+  (result-many [_ result _options]
     result)
 
-  (result-affected [this result options]
+  (result-affected [_ result _options]
     (first result))
 
-  (result-raw [this result options]
+  (result-raw [_ result _options]
     result)
 
-  (on-exception [this exception]
+  (on-exception [_ exception]
     (throw exception)))
 
 (defn hugsql-adapter-clojure-java-jdbc []

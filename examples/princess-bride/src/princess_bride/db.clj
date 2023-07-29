@@ -1,5 +1,4 @@
-(ns princess-bride.db
-  (:require [hugsql.core :as hugsql]))
+(ns princess-bride.db)
 
 (def db
   {:subprotocol "h2"

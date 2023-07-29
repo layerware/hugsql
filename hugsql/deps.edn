@@ -1,0 +1,3 @@
+{:paths []
+ :deps  {com.layerware/hugsql-core                      {:mvn/version "1.0.230"}
+         com.layerware/hugsql-adapter-clojure-java-jdbc {:mvn/version "1.0.230"}}}

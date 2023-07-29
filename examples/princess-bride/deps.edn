@@ -1,4 +1,4 @@
-{:paths ["src" "resources"]
+{:paths ["src"]
  :deps {com.layerware/hugsql {:mvn/version "0.5.3"}
         com.h2database/h2    {:mvn/version "1.4.196"}}
  :aliases {:uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}

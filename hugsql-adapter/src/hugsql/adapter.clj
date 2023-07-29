@@ -3,23 +3,23 @@
 (defprotocol HugsqlAdapter
   "Hugsql Adapter Protocol"
 
-  (execute [this db sqlvec options]
+  (execute [_ db sqlvec options]
     "Execute SQL/DDL/DML statement")
 
-  (query [this db sqlvec options]
+  (query [_ db sqlvec options]
     "Query SQL statement (expecting result set)")
 
-  (result-one [this result options]
+  (result-one [_ result options]
     "Result: returns one hashmap record")
 
-  (result-many [this result options]
+  (result-many [_ result options]
     "Result: returns vector of hashmap records")
 
-  (result-affected [this result options]
+  (result-affected [_ result options]
     "Result: returns integer of affected rows/records")
 
-  (result-raw [this result options]
+  (result-raw [_ result options]
     "Result: returns raw result, untouched")
 
-  (on-exception [this exception]
+  (on-exception [_ exception]
     "Exception handler allows adapter to redirect exceptions from HugSQL"))

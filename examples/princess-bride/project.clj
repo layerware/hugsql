@@ -8,5 +8,5 @@
   :profiles {:uberjar {:aot :all
                        :omit-source true}}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.layerware/hugsql "0.5.3"]
+                 [com.layerware/hugsql "1.0.227"]
                  [com.h2database/h2 "1.4.196"]])

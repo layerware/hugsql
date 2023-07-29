@@ -80,11 +80,11 @@
 ;; Default Object implementations
 (extend-type Object
   ValueParam
-  (value-param [param data options]
+  (value-param [param data _options]
     ["?" (get-in data (deep-get-vec (:name param)))])
 
   ValueParamList
-  (value-param-list [param data options]
+  (value-param-list [param data _options]
     (let [coll (get-in data (deep-get-vec (:name param)))]
       (apply vector
              (string/join "," (repeat (count coll) "?"))
@@ -130,15 +130,15 @@
        (into [] (get-in data (deep-get-vec (:name param))))))])
 
   SQLParam
-  (sql-param [param data options]
+  (sql-param [param data _options]
     [(get-in data (deep-get-vec (:name param)))])
 
   SQLVecParam
-  (sqlvec-param [param data options]
+  (sqlvec-param [param data _options]
     (get-in data (deep-get-vec (:name param))))
 
   SQLVecParamList
-  (sqlvec-param-list [param data options]
+  (sqlvec-param-list [param data _options]
     (reduce
      #(apply vector
              (string/join " " [(first %1) (first %2)])

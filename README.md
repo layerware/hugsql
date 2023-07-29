@@ -11,5 +11,5 @@ A Clojure library for embracing SQL.
 - [CHANGELOG](https://github.com/layerware/hugsql/blob/master/CHANGELOG.md)
 
 ---
-Copyright © 2022 [Layerware, Inc.](http://www.layerware.com)
+Copyright © 2023 Curtis Summers
 Distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)

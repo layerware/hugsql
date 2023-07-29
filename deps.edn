@@ -1,0 +1,50 @@
+{:aliases
+ {:dev                                   {:extra-paths []
+                                          :extra-deps  {}}
+  ;; libraries
+  :hugsql                                {:local/root "hugsql"}
+  :hugsql-core                           {:local/root "hugsql-core"}
+  :hugsql-adapter                        {:local/root "hugsql-adapter"}
+  :hugsql-adapter-clojure-java-jdbc      {:local/root "hugsql-adapter-clojure-java-jdbc"}
+  :hugsql-adapter-clojure-jdbc           {:local/root "hugsql-adapter-clojure-jdbc"}
+  :hugsql-adapter-next-jdbc              {:local/root "hugsql-adapter-next-jdbc"}
+
+  ;; paths (used below, in build.clj, and in tests.edn)
+  :hugsql-core-src                       ["hugsql-core/src"]
+  :hugsql-adapter-src                    ["hugsql-adapter/src"]
+  :hugsql-adapter-clojure-java-jdbc-src  ["hugsql-adapter-clojure-java-jdbc/src"]
+  :hugsql-adapter-clojure-jdbc-src       ["hugsql-adapter-clojure-jdbc/src"]
+  :hugsql-adapter-next-jdbc-src          ["hugsql-adapter-next-jdbc/src"]
+
+  :hugsql-core-test                      ["hugsql-core/test"]
+  :hugsql-adapter-test                   ["hugsql-adapter/test"]
+  :hugsql-adapter-clojure-java-jdbc-test ["hugsql-adapter-clojure-java-jdbc/test"]
+  :hugsql-adapter-clojure-jdbc-test      ["hugsql-adapter-clojure-jdbc/test"]
+  :hugsql-adapter-next-jdbc-test         ["hugsql-adapter-next-jdbc/test"]
+
+  ;; tests
+  :test                                  {:main-opts   ["-m" "kaocha.runner"]
+                                          :extra-deps  {lambdaisland/kaocha         {:mvn/version "1.85.1342"}
+                                                        org.clojure/java.jdbc       {:mvn/version "0.7.12"}
+                                                        funcool/clojure.jdbc        {:mvn/version "0.9.0"}
+                                                        seancorfield/next.jdbc      {:mvn/version "1.2.659"}
+                                                        org.apache.derby/derby      {:mvn/version "10.16.1.1"}
+                                                        org.postgresql/postgresql   {:mvn/version "42.6.0"}
+                                                        com.mysql/mysql-connector-j {:mvn/version "8.1.0"}
+                                                        org.xerial/sqlite-jdbc      {:mvn/version "3.42.0.0"}
+                                                        org.hsqldb/hsqldb           {:mvn/version "2.7.2"}
+                                                        com.h2database/h2           {:mvn/version "2.2.220"}}
+                                          :extra-paths [:hugsql-core-src
+                                                        :hugsql-adapter-src
+                                                        :hugsql-adapter-clojure-java-jdbc-src
+                                                        :hugsql-adapter-clojure-jdbc-src
+                                                        :hugsql-adapter-next-jdbc-src
+                                                        :hugsql-core-test
+                                                        :hugsql-adapter-test
+                                                        :hugsql-adapter-clojure-java-jdbc-test
+                                                        :hugsql-adapter-clojure-jdbc-test
+                                                        :hugsql-adapter-next-jdbc-test]}
+
+  :build                                 {:deps       {io.github.clojure/tools.build {:mvn/version "0.9.4"}
+                                                       borkdude/rewrite-edn          {:mvn/version "0.4.6"}}
+                                          :ns-default build}}}

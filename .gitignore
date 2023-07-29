@@ -1,12 +1,19 @@
-/target
-/classes
-/checkouts
-pom.xml
-pom.xml.asc
-*.jar
-*.class
-/.lein-*
-/.nrepl-port
-.idea/
-*.iml
+# clojure & jvm
+**/classes
+**/target
+.nrepl-port
+.cpcache
 
+# editors and linting
+.idea
+.calva
+.lsp/
+/lsp/
+.clj-kondo/.cache
+.clj-kondo/*/**
+
+# mac
+**/.DS_Store
+
+# other
+derby.log
