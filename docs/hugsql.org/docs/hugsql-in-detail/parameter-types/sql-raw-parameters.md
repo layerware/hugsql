@@ -13,7 +13,7 @@ You should take special care to always properly validate any incoming user input
 SQL Parameters' type is `:sql`.
 
 ```sql title="SQL"
---:name sql-keyword-param :? :*
+--:name sql-keyword-param-sqlvec :? :*
 select * from example
 order by last_name :sql:last_name_sort
 ```
