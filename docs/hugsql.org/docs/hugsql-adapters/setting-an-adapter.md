@@ -11,8 +11,10 @@ Within your Clojure code, you will need to explicitly set the adapter. You can d
 ```clojure title="hugsql.core/set-adapter!"
 (ns my-app
   (:require [hugsql.core :as hugsql]
-            [hugsql.adapter.next-jdbc :as next-adapter
-            [next.jdbc.result-set :as result-set]]]))
+            [hugsql.adapter.next-jdbc :as next-adapter]
+            [next.jdbc.result-set :as result-set]))
+
+
 
 (defn app-init []
   (hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc)))
