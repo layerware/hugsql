@@ -3,9 +3,10 @@
             [hugsql.parameters :as parameters]
             [hugsql.adapter :as adapter]
             [hugsql.expr-run]
-            [clojure.java.io :as io]
+            #?(:clj [clojure.java.io :as io])
             [clojure.string :as string]
-            [clojure.tools.reader.edn :as edn]))
+            #?(:clj [clojure.tools.reader.edn :as edn]
+               :cljs [cljs.tools.reader.edn :as edn])))
 
 (def ^:dynamic ^:no-doc adapter (atom nil))
 
@@ -16,12 +17,13 @@
 
 ; Use the clojure.java.jdbc adapter by default
 ; if it exists (e.g., loaded by hugsql meta jar)
+#?(:clj
 (try
   (eval
    '(do
       (clojure.core/require '[hugsql.adapter.clojure-java-jdbc :as adp])
       (hugsql.core/set-adapter! (adp/hugsql-adapter-clojure-java-jdbc))))
-  (catch Exception _))
+  (catch Exception _)))
 
 (defn ^:no-doc get-adapter
   "Get an adapter.  Throws exception if no adapter is set."
@@ -36,6 +38,7 @@
   [sql]
   (parser/parse sql))
 
+#?(:clj
 (defn ^:no-doc parsed-defs-from-file
   "Given a hugsql SQL `file` in the classpath,
    a resource, or a `java.io.File`, parse it, and return the defs."
@@ -49,7 +52,7 @@
       (if-let [f (io/resource file)]
         f
         (throw (ex-info (str "Can not read file: " file) {})))))
-   {:file (str file)}))
+   {:file (str file)})))
 
 (defn ^:no-doc validate-parsed-def!
   "Ensure SQL required headers are provided
@@ -70,7 +73,7 @@
   "Ensure `sql-template` parameters match provided `param-data`,
    and throw an exception if mismatch."
   [sql-template param-data]
-  (let [not-found (Object.)]
+  (let [not-found #?(:clj (Object.) :cljs (js-obj))]
     (doseq [k (map :name (filter map? sql-template))]
       (when-not
        (not-any?
@@ -88,44 +91,53 @@
   [expr]
   (str "expr-" (hash (pr-str expr))))
 
+(defn ^:no-doc expr-fn-str
+  "The source of the `(fn [params options] ...)` of expression `expr`."
+  [expr]
+  (let [;; tag expressions vs others
+        ;; and collect interspersed items together into a vector
+        tag (reduce
+             (fn [r c]
+               (if (vector? c)
+                 (conj r {:expr c})
+                 (if-let [o (:other (last r))]
+                   (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
+                   (conj r {:other [c]}))))
+             []
+             expr)]
+    (str "(fn [params options] "
+         (string/join
+          " "
+          (filter
+           #(not (= % :cont))
+           (map (fn [x]
+                  (if (:expr x)
+                    (first (:expr x))
+                    (pr-str (:other x)))) tag)))
+         ")")))
+
+#?(:clj
 (defn ^:no-doc def-expr
   ([expr] (def-expr expr nil))
   ([expr require-str]
    (let [nam (keyword (expr-name expr))
-         ;; tag expressions vs others
-         ;; and collect interspersed items together into a vector
-         tag (reduce
-              (fn [r c]
-                (if (vector? c)
-                  (conj r {:expr c})
-                  (if-let [o (:other (last r))]
-                    (conj (vec (butlast r)) (assoc (last r) :other (conj o c)))
-                    (conj r {:other [c]}))))
-              []
-              expr)
          clj (str
               "(ns hugsql.expr-run\n"
               (when-not (string/blank? require-str)
                 (str "(:require " require-str ")"))
               ")\n"
-              "(swap! exprs assoc " nam "(fn [params options] "
-              (string/join
-               " "
-               (filter
-                #(not (= % :cont))
-                (map (fn [x]
-                       (if (:expr x)
-                         (first (:expr x))
-                         (pr-str (:other x)))) tag)))
-              "))")]
-     (load-string clj))))
+              "(swap! exprs assoc " nam (expr-fn-str expr) ")")]
+     (load-string clj)))))
 
 (defn ^:no-doc compile-exprs
   "Compile (def) all expressions in a parsed def"
   [pdef]
+  #?(:clj
   (let [require-str (string/join " " (:require (:hdr pdef)))]
     (doseq [expr (filter vector? (:sql pdef))]
-      (def-expr expr require-str))))
+      (def-expr expr require-str)))
+     ;; on ClojureScript, hugsql.macros compiles the expressions
+     :cljs nil))
 
 (defn ^:no-doc run-expr
   "Run expression and return result.
@@ -144,8 +156,13 @@
    ```"
   [expr params options]
   (let [expr-fn #(get @hugsql.expr-run/exprs (keyword (expr-name expr)))]
-    (when (nil? (expr-fn)) (def-expr expr))
-    (while (nil? (expr-fn)) (Thread/sleep 1))
+    (when (nil? (expr-fn))
+      #?(:clj (def-expr expr)
+         :cljs (throw (ex-info (str "HugSQL expression not compiled: " (pr-str expr)
+                                    "; on ClojureScript, expressions work only in"
+                                    " SQL given to the hugsql.macros macros")
+                               {:expr expr}))))
+    #?(:clj (while (nil? (expr-fn)) (Thread/sleep 1)))
     (let [result ((expr-fn) params options)]
       (if (string? result)
         (:sql (first (parser/parse result {:no-header true})))
@@ -254,6 +271,28 @@
 (defmethod hugsql-result-fn :raw [_] 'hugsql.adapter/result-raw)
 (defmethod hugsql-result-fn :default [_] 'hugsql.adapter/result-raw)
 
+#?(:cljs
+   (def ^:private adapter-fns
+     {'hugsql.adapter/execute adapter/execute
+      'hugsql.adapter/query adapter/query
+      'hugsql.adapter/result-one adapter/result-one
+      'hugsql.adapter/result-many adapter/result-many
+      'hugsql.adapter/result-affected adapter/result-affected
+      'hugsql.adapter/result-raw adapter/result-raw}))
+
+(defn- command-or-result-fn
+  "The fn a `hugsql-command-fn` or `hugsql-result-fn` method names: a
+   symbol is resolved (on ClojureScript, only the `hugsql.adapter` fns'),
+   a fn is itself."
+  [f]
+  (if (symbol? f)
+    #?(:clj (resolve f)
+       :cljs (or (adapter-fns f)
+                 (throw (ex-info (str "Can not resolve " f " on ClojureScript:"
+                                      " return a fn from the method instead")
+                                 {:symbol f}))))
+    f))
+
 (defn sqlvec-fn*
   "Given parsed sql `psql` and optional `options`, return an
    anonymous function that returns hugsql sqlvec format"
@@ -314,6 +353,7 @@
     {(keyword nam) {:meta met
                     :fn (sqlvec-fn* sql (assoc options :fn-name nam))}}))
 
+#?(:clj
 (defn intern-sqlvec-fn
   "Intern the sqlvec fn from a parsed def `pdef`"
   [pdef options]
@@ -321,8 +361,9 @@
         fk (ffirst fm)]
     (intern *ns*
             (with-meta (symbol (name fk)) (-> fm fk :meta))
-            (-> fm fk :fn))))
+            (-> fm fk :fn)))))
 
+#?(:clj
 (defn def-sqlvec-fns
   "Given a HugSQL SQL `file`, define the `<name>-sqlvec` functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
@@ -349,8 +390,9 @@
    (doseq [pdef (parsed-defs-from-file file)]
      (validate-parsed-def! pdef)
      (compile-exprs pdef)
-     (intern-sqlvec-fn pdef options))))
+     (intern-sqlvec-fn pdef options)))))
 
+#?(:clj
 (defn def-sqlvec-fns-from-string
   "Given a HugSQL SQL string `s`, define the `<name>-sqlvec` functions in the
   current namespace.  Returns sqlvec format: a vector of SQL and
@@ -375,8 +417,9 @@
    (doseq [pdef (parsed-defs-from-string s)]
      (validate-parsed-def! pdef)
      (compile-exprs pdef)
-     (intern-sqlvec-fn pdef options))))
+     (intern-sqlvec-fn pdef options)))))
 
+#?(:clj
 (defn map-of-sqlvec-fns
   "Given a HugSQL SQL `file`, return a hashmap of database
    functions of the form:
@@ -412,7 +455,7 @@
        (validate-parsed-def! pdef)
        (compile-exprs pdef))
      (apply merge
-            (map #(sqlvec-fn-map % options) pdefs)))))
+            (map #(sqlvec-fn-map % options) pdefs))))))
 
 (defn map-of-sqlvec-fns-from-string
   "Given a HugSQL SQL string `s`, return a hashmap of sqlvec
@@ -469,9 +512,9 @@
         (try
           (as-> psql x
             (prepare-sql x param-data o)
-            ((resolve (hugsql-command-fn command)) a db x o)
-            ((resolve (hugsql-result-fn result)) a x o))
-          (catch Exception e
+            ((command-or-result-fn (hugsql-command-fn command)) a db x o)
+            ((command-or-result-fn (hugsql-result-fn result)) a x o))
+          (catch #?(:clj Exception :cljs :default) e
             (adapter/on-exception a e))))))))
 
 (defn db-fn
@@ -514,6 +557,7 @@
     {(keyword nam) {:meta met
                     :fn (db-fn* sql cmd res (assoc options :fn-name nam))}}))
 
+#?(:clj
 (defn intern-db-fn
   "Intern the db fn from a parsed def"
   [pdef options]
@@ -521,12 +565,13 @@
         fk (ffirst fm)]
     (intern *ns*
             (with-meta (symbol (name fk)) (-> fm fk :meta))
-            (-> fm fk :fn))))
+            (-> fm fk :fn)))))
 
 (defn ^:no-doc snippet-pdef?
   [pdef]
   (or (:snip- (:hdr pdef)) (:snip (:hdr pdef))))
 
+#?(:clj
 (defn def-db-fns
   "Given a HugSQL SQL file, define the database
    functions in the current namespace.
@@ -570,8 +615,9 @@
      (compile-exprs pdef)
      (if (snippet-pdef? pdef)
        (intern-sqlvec-fn pdef options)
-       (intern-db-fn pdef options)))))
+       (intern-db-fn pdef options))))))
 
+#?(:clj
 (defn def-db-fns-from-string
   "Given a HugSQL SQL string `s`, define the database
    functions in the current namespace.
@@ -594,8 +640,9 @@
      (compile-exprs pdef)
      (if (snippet-pdef? pdef)
        (intern-sqlvec-fn pdef options)
-       (intern-db-fn pdef options)))))
+       (intern-db-fn pdef options))))))
 
+#?(:clj
 (defn map-of-db-fns
   "Given a HugSQL SQL `file`, return a hashmap of database
    functions of the form:
@@ -632,7 +679,7 @@
              #(if (snippet-pdef? %)
                 (sqlvec-fn-map % options)
                 (db-fn-map % options))
-             pdefs)))))
+             pdefs))))))
 
 (defn map-of-db-fns-from-string
   "Given a HugSQL SQL string `s`, return a hashmap of database

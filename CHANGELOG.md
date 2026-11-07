@@ -1,5 +1,16 @@
 # HugSQL CHANGELOG
 
+## Unreleased
+
+- ClojureScript support: `hugsql-core` and `hugsql-adapter` are `.cljc`;
+  `hugsql.macros` defines fns from SQL files and strings at compile time
+  (with shadow-cljs `watch` reload of edited `.sql` files); an adapter may
+  return promises on ClojureScript. See
+  [ClojureScript](https://www.hugsql.org/using-hugsql/clojurescript).
+- `deps.edn` in `hugsql-core` and `hugsql-adapter`, for git deps.
+- A `hugsql-command-fn` or `hugsql-result-fn` method may return a fn as
+  well as a symbol.
+
 ## 0.5.3
 
 - cljdoc-related fixes; otherwise, same as version 0.5.2

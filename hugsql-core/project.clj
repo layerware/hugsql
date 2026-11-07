@@ -23,5 +23,6 @@
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.3"]]}
-             :1.11 {:dependencies [[org.clojure/clojure "1.11.0"]]}}
-  :aliases {"test-all" ["with-profile" "dev,1.10:dev,1.11" "test"]})
+             :1.11 {:dependencies [[org.clojure/clojure "1.11.0"]]}
+             :1.12 {:dependencies [[org.clojure/clojure "1.12.4"]]}}
+  :aliases {"test-all" ["with-profile" "dev,1.10:dev,1.11:dev,1.12" "test"]})

@@ -1,7 +1,12 @@
 (ns hugsql.adapter)
 
 (defprotocol HugsqlAdapter
-  "Hugsql Adapter Protocol"
+  "Hugsql Adapter Protocol
+
+   On ClojureScript, where database drivers are asynchronous, `execute`
+   and `query` may return a promise, and the `result-*` fns then receive
+   that promise and return one. `on-exception` sees only exceptions thrown
+   synchronously; an adapter handles its own rejections."
 
   (execute [this db sqlvec options]
     "Execute SQL/DDL/DML statement")

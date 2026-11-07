@@ -1,6 +1,8 @@
 (ns hugsql.parser
   (:require [clojure.string :as string]
-            [clojure.tools.reader.reader-types :as r]))
+            #?(:clj [clojure.tools.reader.reader-types :as r]
+               :cljs [cljs.tools.reader.reader-types :as r]))
+  #?(:cljs (:import [goog.string StringBuffer])))
 
 (defn- parse-error
   ([rdr msg]
@@ -16,17 +18,34 @@
                :column (r/get-column-number rdr)})))
      (throw (ex-info msg (merge data {:error :parse-error}))))))
 
+(defn- string-builder []
+  #?(:clj (StringBuilder.)
+     :cljs (StringBuffer.)))
+
 (defn- sb-append
   [^StringBuilder sb ^Character c]
   (doto sb (.append c)))
 
+(defn- sb-length
+  [^StringBuilder sb]
+  #?(:clj (.length sb)
+     :cljs (.getLength sb)))
+
 (defn- whitespace? [^Character c]
   (when c
-    (Character/isWhitespace ^Character c)))
+    #?(:clj (Character/isWhitespace ^Character c)
+       ;; Java's isWhitespace: JS \s less the non-breaking spaces and BOM,
+       ;; plus the information separators U+001C..U+001F
+       :cljs (boolean (re-matches #"[^\S\u00A0\u2007\u202F\uFEFF]|[\u001C-\u001F]" (str c))))))
+
+#?(:cljs
+   (def ^:private symbol-char-re
+     (js/RegExp. "^[\\p{L}\\p{M}\\p{S}\\d_\\-.+*?:/%]$" "u")))
 
 (defn- symbol-char?
   [c]
-  (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/%]" (str c))))
+  #?(:clj (boolean (re-matches #"[\pL\pM\pS\d\_\-\.\+\*\?\:\/%]" (str c)))
+     :cljs (boolean (.test symbol-char-re (str c)))))
 
 (defn- skip-ws-to-next-line
   "Read from reader until a non-whitespace or newline char is encountered."
@@ -60,7 +79,7 @@
   "Read and return a string up to the encountered char `c`.
    Does not read the encountered character."
   [rdr c]
-  (loop [s (StringBuilder.)
+  (loop [s (string-builder)
          pc (r/peek-char rdr)]
     (if (or (nil? pc) (= c pc))
       (str s)
@@ -71,7 +90,7 @@
   "Read and return a string up to the encountered chars `c1` and `c2`.
    Does not read the encountered characters"
   [rdr c1 c2]
-  (loop [s (StringBuilder.)
+  (loop [s (string-builder)
          rc (r/read-char rdr)
          pc (r/peek-char rdr)]
     (if (or (nil? rc) (nil? pc)
@@ -84,7 +103,7 @@
 (defn- read-keyword
   [rdr]
   (loop [result {}
-         s  (StringBuilder.)
+         s  (string-builder)
          rc (r/read-char rdr)
          pc (r/peek-char rdr)]
     (let [pgcast? (and (= \: rc) (= \: pc))]
@@ -101,14 +120,14 @@
         (= \: rc)
         ;; This is the end of the type specification.
         (recur (assoc result :type (str s))
-               (StringBuilder.)
+               (string-builder)
                (r/read-char rdr)
                (r/peek-char rdr))
 
         (= \/ rc)
         ;; This is the end of the namespace.
         (recur (assoc result :namespace (str s))
-               (StringBuilder.)
+               (string-builder)
                (r/read-char rdr)
                (r/peek-char rdr))
 
@@ -220,7 +239,7 @@
 (defn- read-sql-quoted
   [rdr c]
   (let [quot c]
-    (loop [s (sb-append (StringBuilder.) c)
+    (loop [s (sb-append (string-builder) c)
            c (r/read-char rdr)]
       (condp = c
         nil    (parse-error rdr "SQL String terminated unexpectedly with EOF")
@@ -262,7 +281,7 @@
      (throw (ex-info "SQL is empty" {}))
      (let [sql (string/replace sql "\r\n" "\n")
            rdr (r/source-logging-push-back-reader sql)
-           nsb #(StringBuilder.)]
+           nsb string-builder]
        (loop [hdr {}
               sql []
               sb  (nsb)
@@ -280,7 +299,7 @@
                                  (string/blank? (string/join (:sql %))))))
                       (conj all
                             {:hdr hdr
-                             :sql (filterv seq (conj sql (string/trimr sb)))})))
+                             :sql (filterv seq (conj sql (string/trimr (str sb))))})))
 
              ;; SQL comments and hugsql header comments
              (or
@@ -293,7 +312,7 @@
                (cond
                  (map? x)
                  ;; if sql is active, then new hdr section
-                 (if (or (> (.length ^StringBuilder sb) 0) (empty? hdr))
+                 (if (or (> (sb-length sb) 0) (empty? hdr))
                    (recur (merge x {:file file :line (max 1 (dec (r/get-line-number rdr)))})
                           []
                           (nsb)
@@ -339,6 +358,6 @@
 
              ;; all else is SQL
              :else
-             (if (and (not (string/blank? sb)) (empty? hdr) (not no-header))
+             (if (and (not (string/blank? (str sb))) (empty? hdr) (not no-header))
                (parse-error rdr "Encountered SQL with no hugsql header")
                (recur hdr sql (sb-append sb c) all)))))))))
