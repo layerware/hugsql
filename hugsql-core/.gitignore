@@ -9,3 +9,5 @@ pom.xml.asc
 /.nrepl-port
 
 derby.log
+.cpcache
+cljs-test-runner-out

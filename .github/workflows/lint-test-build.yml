@@ -65,3 +65,26 @@ jobs:
       - name: Test
         working-directory: ./hugsql-core
         run: lein test-all
+
+  cljs-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@4.0
+        with:
+          cli: 1.11.1.1413
+
+      - name: Test on Node
+        working-directory: ./hugsql-core
+        run: clojure -M:test-cljs

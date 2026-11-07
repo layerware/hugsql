@@ -68,7 +68,7 @@
    Numbers must be vector indexes in vectors
    in param data."
   [nam]
-  (let [kwfn (fn [x] (if (re-find #"^\d+$" x) (Long. ^String x) (keyword x)))
+  (let [kwfn (fn [x] (if (re-find #"^\d+$" x) #?(:clj (Long. ^String x) :cljs (js/parseInt x 10)) (keyword x)))
         nmsp (namespace nam)
         nams (string/split (name nam) #"\.")]
     (if nmsp
@@ -78,7 +78,7 @@
       (mapv kwfn nams))))
 
 ;; Default Object implementations
-(extend-type Object
+(extend-type #?(:clj Object :cljs default)
   ValueParam
   (value-param [param data options]
     ["?" (get-in data (deep-get-vec (:name param)))])
@@ -107,7 +107,8 @@
   IdentifierParam
   (identifier-param [param data options]
     (let [i (get-in data (deep-get-vec (:name param)))
-          coll? (instance? clojure.lang.IPersistentCollection i)
+          coll? #?(:clj (instance? clojure.lang.IPersistentCollection i)
+                 :cljs (cljs.core/coll? i))
           i (if coll? (flatten (into [] i)) i)]
       (if coll?
         [(str (identifier-param-quote (first i) options)
